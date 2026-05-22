@@ -1,0 +1,2325 @@
+operational_decision_tree:
+  version: v1.0
+  generated_at_utc: '2026-05-22T12:51:29.346202+00:00'
+  source_decision_table: data/decision_table/reduced_decision_table_v1.0.csv
+  source_node_set: data/ilp/final_minimal_node_set.csv
+  node_order:
+    - N0
+    - N1
+    - N8
+    - N2
+    - N3
+    - N4
+    - N5
+    - N14
+    - N13
+    - N19
+    - N21
+    - N22
+    - N24
+    - N25
+    - N11
+    - N17
+    - N20
+    - N27
+    - N29
+  forced_nodes:
+    - N0
+    - N1
+    - N8
+    - N2
+    - N3
+    - N4
+    - N5
+  optional_nodes:
+    - N14
+    - N13
+    - N19
+    - N21
+    - N22
+    - N24
+    - N25
+    - N11
+    - N17
+    - N20
+    - N27
+    - N29
+  root: tree_N0
+  internal_nodes:
+    - id: tree_N0
+      node_id: N0
+      question: Is AIC valid AND endpoint_data_type declared as required?
+      detection_rule: A0_state != AIC-MISSING AND (endpoint_data_type declared when A0 in [AIC-PKPD,AIC-ER,AIC-TTE,AIC-BIOMARKER,AIC-CELL_THERAPY,AIC-IMMUNOGEN,AIC-LACTATION])
+      yes_branch: tree_N1
+      no_branch: tree_N1_v2
+    - id: tree_N1
+      node_id: N1
+      question: Is subject identifier resolvable (including dyad linkage for MATERNAL_INFANT_PK)?
+      detection_rule: 'A1_state in [ID-DEFINED,ID-DUPLICATE-RESOLVABLE,ID-DYAD-LINKABLE] AND (if MATERNAL_INFANT_PK: dyad_linkage_key
+        present)'
+      yes_branch: tree_N8
+      no_branch: tree_N8_v2
+    - id: tree_N1_v2
+      node_id: N1
+      question: Is subject identifier resolvable (including dyad linkage for MATERNAL_INFANT_PK)?
+      detection_rule: 'A1_state in [ID-DEFINED,ID-DUPLICATE-RESOLVABLE,ID-DYAD-LINKABLE] AND (if MATERNAL_INFANT_PK: dyad_linkage_key
+        present)'
+      yes_branch: tree_N8_v3
+      no_branch: leaf_QUARANTINE_Q03_forced_f
+    - id: tree_N8
+      node_id: N8
+      question: Are ALL required_policies for proposed action_sequence declared in AIC?
+      detection_rule: All required_policy fields of all functions in expected_action_sequence are present in AIC (non-null/non-empty)
+      yes_branch: tree_N2
+      no_branch: tree_N2_v2
+    - id: tree_N8_v2
+      node_id: N8
+      question: Are ALL required_policies for proposed action_sequence declared in AIC?
+      detection_rule: All required_policy fields of all functions in expected_action_sequence are present in AIC (non-null/non-empty)
+      yes_branch: leaf_QUARANTINE_Q15A_forced_f
+      no_branch: tree_N2_v3
+    - id: tree_N8_v3
+      node_id: N8
+      question: Are ALL required_policies for proposed action_sequence declared in AIC?
+      detection_rule: All required_policy fields of all functions in expected_action_sequence are present in AIC (non-null/non-empty)
+      yes_branch: tree_N2_v4
+      no_branch: tree_N2_v5
+    - id: tree_N2
+      node_id: N2
+      question: Is time axis resolvable (actual/nominal/elapsed/postpartum)?
+      detection_rule: A2_state in [TIME-DEFINED,TIME-ACTUAL-VS-NOMINAL-RESOLVABLE,TIME-INTERVAL-RESOLVABLE,TIME-ELAPSED-RESOLVABLE]
+        AND (delivery_anchor present if pregnancy/lactation)
+      yes_branch: tree_N3
+      no_branch: tree_N3_v2
+    - id: tree_N2_v2
+      node_id: N2
+      question: Is time axis resolvable (actual/nominal/elapsed/postpartum)?
+      detection_rule: A2_state in [TIME-DEFINED,TIME-ACTUAL-VS-NOMINAL-RESOLVABLE,TIME-INTERVAL-RESOLVABLE,TIME-ELAPSED-RESOLVABLE]
+        AND (delivery_anchor present if pregnancy/lactation)
+      yes_branch: tree_N3_v3
+      no_branch: tree_N3_v4
+    - id: tree_N2_v3
+      node_id: N2
+      question: Is time axis resolvable (actual/nominal/elapsed/postpartum)?
+      detection_rule: A2_state in [TIME-DEFINED,TIME-ACTUAL-VS-NOMINAL-RESOLVABLE,TIME-INTERVAL-RESOLVABLE,TIME-ELAPSED-RESOLVABLE]
+        AND (delivery_anchor present if pregnancy/lactation)
+      yes_branch: tree_N3_v5
+      no_branch: leaf_QUARANTINE_Q02_forced_f
+    - id: tree_N2_v4
+      node_id: N2
+      question: Is time axis resolvable (actual/nominal/elapsed/postpartum)?
+      detection_rule: A2_state in [TIME-DEFINED,TIME-ACTUAL-VS-NOMINAL-RESOLVABLE,TIME-INTERVAL-RESOLVABLE,TIME-ELAPSED-RESOLVABLE]
+        AND (delivery_anchor present if pregnancy/lactation)
+      yes_branch: tree_N3_v6
+      no_branch: leaf_QUARANTINE_Q02_forced_f
+    - id: tree_N2_v5
+      node_id: N2
+      question: Is time axis resolvable (actual/nominal/elapsed/postpartum)?
+      detection_rule: A2_state in [TIME-DEFINED,TIME-ACTUAL-VS-NOMINAL-RESOLVABLE,TIME-INTERVAL-RESOLVABLE,TIME-ELAPSED-RESOLVABLE]
+        AND (delivery_anchor present if pregnancy/lactation)
+      yes_branch: tree_N3_v7
+      no_branch: leaf_QUARANTINE_Q02_forced_f
+    - id: tree_N3
+      node_id: N3
+      question: Is dose record complete (regimen + infusion + ADDL)?
+      detection_rule: A3_state not in [DOSE-UNRECOVERABLE,DOSE-AMBIGUOUS] AND A4_state not in [MISSING-NO-POLICY,UNRECOVERABLE,ADDL-ACTUAL-CONFLICT(no
+        policy),TITRATION-ADAPTIVE(no policy),LOADING-MAINTENANCE(no policy),INFUSION-STOP-RESTART(no policy)]
+      yes_branch: tree_N4
+      no_branch: leaf_QUARANTINE_Q08_forced_f
+    - id: tree_N3_v2
+      node_id: N3
+      question: Is dose record complete (regimen + infusion + ADDL)?
+      detection_rule: A3_state not in [DOSE-UNRECOVERABLE,DOSE-AMBIGUOUS] AND A4_state not in [MISSING-NO-POLICY,UNRECOVERABLE,ADDL-ACTUAL-CONFLICT(no
+        policy),TITRATION-ADAPTIVE(no policy),LOADING-MAINTENANCE(no policy),INFUSION-STOP-RESTART(no policy)]
+      yes_branch: tree_N4_v2
+      no_branch: leaf_QUARANTINE_Q08_forced_f
+    - id: tree_N3_v3
+      node_id: N3
+      question: Is dose record complete (regimen + infusion + ADDL)?
+      detection_rule: A3_state not in [DOSE-UNRECOVERABLE,DOSE-AMBIGUOUS] AND A4_state not in [MISSING-NO-POLICY,UNRECOVERABLE,ADDL-ACTUAL-CONFLICT(no
+        policy),TITRATION-ADAPTIVE(no policy),LOADING-MAINTENANCE(no policy),INFUSION-STOP-RESTART(no policy)]
+      yes_branch: tree_N4_v3
+      no_branch: leaf_QUARANTINE_Q08_forced_f
+    - id: tree_N3_v4
+      node_id: N3
+      question: Is dose record complete (regimen + infusion + ADDL)?
+      detection_rule: A3_state not in [DOSE-UNRECOVERABLE,DOSE-AMBIGUOUS] AND A4_state not in [MISSING-NO-POLICY,UNRECOVERABLE,ADDL-ACTUAL-CONFLICT(no
+        policy),TITRATION-ADAPTIVE(no policy),LOADING-MAINTENANCE(no policy),INFUSION-STOP-RESTART(no policy)]
+      yes_branch: tree_N4_v4
+      no_branch: leaf_QUARANTINE_Q08_forced_f
+    - id: tree_N3_v5
+      node_id: N3
+      question: Is dose record complete (regimen + infusion + ADDL)?
+      detection_rule: A3_state not in [DOSE-UNRECOVERABLE,DOSE-AMBIGUOUS] AND A4_state not in [MISSING-NO-POLICY,UNRECOVERABLE,ADDL-ACTUAL-CONFLICT(no
+        policy),TITRATION-ADAPTIVE(no policy),LOADING-MAINTENANCE(no policy),INFUSION-STOP-RESTART(no policy)]
+      yes_branch: tree_N4_v5
+      no_branch: leaf_QUARANTINE_Q08_forced_f
+    - id: tree_N3_v6
+      node_id: N3
+      question: Is dose record complete (regimen + infusion + ADDL)?
+      detection_rule: A3_state not in [DOSE-UNRECOVERABLE,DOSE-AMBIGUOUS] AND A4_state not in [MISSING-NO-POLICY,UNRECOVERABLE,ADDL-ACTUAL-CONFLICT(no
+        policy),TITRATION-ADAPTIVE(no policy),LOADING-MAINTENANCE(no policy),INFUSION-STOP-RESTART(no policy)]
+      yes_branch: tree_N4_v6
+      no_branch: leaf_QUARANTINE_Q08_forced_f
+    - id: tree_N3_v7
+      node_id: N3
+      question: Is dose record complete (regimen + infusion + ADDL)?
+      detection_rule: A3_state not in [DOSE-UNRECOVERABLE,DOSE-AMBIGUOUS] AND A4_state not in [MISSING-NO-POLICY,UNRECOVERABLE,ADDL-ACTUAL-CONFLICT(no
+        policy),TITRATION-ADAPTIVE(no policy),LOADING-MAINTENANCE(no policy),INFUSION-STOP-RESTART(no policy)]
+      yes_branch: tree_N4_v7
+      no_branch: leaf_QUARANTINE_Q08_forced_f
+    - id: tree_N4
+      node_id: N4
+      question: Is observation/CMT resolvable (including analyte_role)?
+      detection_rule: A5_state not in [ABSENT,BIOANALYTICAL-FINAL-FLAG-MISSING,BLQ-NO-POLICY,LLOQ-MISSING,CELLULAR-LLOQ-POLICY-MISSING,IMMUNOGEN-POSITIVITY-MISSING]
+        AND A8_state != CMT-POLICY-MISSING AND (analyte_role declared when modality in [ADC,BISPECIFIC,CELL_THERAPY] AND A8
+        in [MULTI-CMT-DEFINED,DDI-VICTIM-PERPETRATOR,METABOLITE-DEFINED])
+      yes_branch: tree_N5
+      no_branch: leaf_QUARANTINE_Q09_forced_f
+    - id: tree_N4_v2
+      node_id: N4
+      question: Is observation/CMT resolvable (including analyte_role)?
+      detection_rule: A5_state not in [ABSENT,BIOANALYTICAL-FINAL-FLAG-MISSING,BLQ-NO-POLICY,LLOQ-MISSING,CELLULAR-LLOQ-POLICY-MISSING,IMMUNOGEN-POSITIVITY-MISSING]
+        AND A8_state != CMT-POLICY-MISSING AND (analyte_role declared when modality in [ADC,BISPECIFIC,CELL_THERAPY] AND A8
+        in [MULTI-CMT-DEFINED,DDI-VICTIM-PERPETRATOR,METABOLITE-DEFINED])
+      yes_branch: tree_N5_v2
+      no_branch: leaf_QUARANTINE_Q09_forced_f
+    - id: tree_N4_v3
+      node_id: N4
+      question: Is observation/CMT resolvable (including analyte_role)?
+      detection_rule: A5_state not in [ABSENT,BIOANALYTICAL-FINAL-FLAG-MISSING,BLQ-NO-POLICY,LLOQ-MISSING,CELLULAR-LLOQ-POLICY-MISSING,IMMUNOGEN-POSITIVITY-MISSING]
+        AND A8_state != CMT-POLICY-MISSING AND (analyte_role declared when modality in [ADC,BISPECIFIC,CELL_THERAPY] AND A8
+        in [MULTI-CMT-DEFINED,DDI-VICTIM-PERPETRATOR,METABOLITE-DEFINED])
+      yes_branch: tree_N5_v3
+      no_branch: tree_N5_v4
+    - id: tree_N4_v4
+      node_id: N4
+      question: Is observation/CMT resolvable (including analyte_role)?
+      detection_rule: A5_state not in [ABSENT,BIOANALYTICAL-FINAL-FLAG-MISSING,BLQ-NO-POLICY,LLOQ-MISSING,CELLULAR-LLOQ-POLICY-MISSING,IMMUNOGEN-POSITIVITY-MISSING]
+        AND A8_state != CMT-POLICY-MISSING AND (analyte_role declared when modality in [ADC,BISPECIFIC,CELL_THERAPY] AND A8
+        in [MULTI-CMT-DEFINED,DDI-VICTIM-PERPETRATOR,METABOLITE-DEFINED])
+      yes_branch: tree_N5_v5
+      no_branch: leaf_QUARANTINE_Q09_forced_f
+    - id: tree_N4_v5
+      node_id: N4
+      question: Is observation/CMT resolvable (including analyte_role)?
+      detection_rule: A5_state not in [ABSENT,BIOANALYTICAL-FINAL-FLAG-MISSING,BLQ-NO-POLICY,LLOQ-MISSING,CELLULAR-LLOQ-POLICY-MISSING,IMMUNOGEN-POSITIVITY-MISSING]
+        AND A8_state != CMT-POLICY-MISSING AND (analyte_role declared when modality in [ADC,BISPECIFIC,CELL_THERAPY] AND A8
+        in [MULTI-CMT-DEFINED,DDI-VICTIM-PERPETRATOR,METABOLITE-DEFINED])
+      yes_branch: tree_N5_v6
+      no_branch: leaf_QUARANTINE_Q09_forced_f
+    - id: tree_N4_v6
+      node_id: N4
+      question: Is observation/CMT resolvable (including analyte_role)?
+      detection_rule: A5_state not in [ABSENT,BIOANALYTICAL-FINAL-FLAG-MISSING,BLQ-NO-POLICY,LLOQ-MISSING,CELLULAR-LLOQ-POLICY-MISSING,IMMUNOGEN-POSITIVITY-MISSING]
+        AND A8_state != CMT-POLICY-MISSING AND (analyte_role declared when modality in [ADC,BISPECIFIC,CELL_THERAPY] AND A8
+        in [MULTI-CMT-DEFINED,DDI-VICTIM-PERPETRATOR,METABOLITE-DEFINED])
+      yes_branch: tree_N5_v7
+      no_branch: tree_N5_v8
+    - id: tree_N4_v7
+      node_id: N4
+      question: Is observation/CMT resolvable (including analyte_role)?
+      detection_rule: A5_state not in [ABSENT,BIOANALYTICAL-FINAL-FLAG-MISSING,BLQ-NO-POLICY,LLOQ-MISSING,CELLULAR-LLOQ-POLICY-MISSING,IMMUNOGEN-POSITIVITY-MISSING]
+        AND A8_state != CMT-POLICY-MISSING AND (analyte_role declared when modality in [ADC,BISPECIFIC,CELL_THERAPY] AND A8
+        in [MULTI-CMT-DEFINED,DDI-VICTIM-PERPETRATOR,METABOLITE-DEFINED])
+      yes_branch: tree_N5_v9
+      no_branch: tree_N5_v10
+    - id: tree_N5
+      node_id: N5
+      question: Is BLQ/MDV policy applied?
+      detection_rule: A5_state not in [BLQ-NO-POLICY,LLOQ-MISSING,CELLULAR-LLOQ-POLICY-MISSING] AND (cellular_LLOQ present
+        if cellular endpoint)
+      yes_branch: tree_N14
+      no_branch: leaf_QUARANTINE_Q01_forced_f
+    - id: tree_N5_v10
+      node_id: N5
+      question: Is BLQ/MDV policy applied?
+      detection_rule: A5_state not in [BLQ-NO-POLICY,LLOQ-MISSING,CELLULAR-LLOQ-POLICY-MISSING] AND (cellular_LLOQ present
+        if cellular endpoint)
+      yes_branch: leaf_INVALID_NA_8fb0fdbc
+      no_branch: leaf_QUARANTINE_Q01_forced_f
+    - id: tree_N5_v2
+      node_id: N5
+      question: Is BLQ/MDV policy applied?
+      detection_rule: A5_state not in [BLQ-NO-POLICY,LLOQ-MISSING,CELLULAR-LLOQ-POLICY-MISSING] AND (cellular_LLOQ present
+        if cellular endpoint)
+      yes_branch: leaf_QUARANTINE_Q02_459af0d7
+      no_branch: leaf_QUARANTINE_Q01_forced_f
+    - id: tree_N5_v3
+      node_id: N5
+      question: Is BLQ/MDV policy applied?
+      detection_rule: A5_state not in [BLQ-NO-POLICY,LLOQ-MISSING,CELLULAR-LLOQ-POLICY-MISSING] AND (cellular_LLOQ present
+        if cellular endpoint)
+      yes_branch: leaf_QUARANTINE_Q15B_459af0d7
+      no_branch: leaf_QUARANTINE_Q01_forced_f
+    - id: tree_N5_v4
+      node_id: N5
+      question: Is BLQ/MDV policy applied?
+      detection_rule: A5_state not in [BLQ-NO-POLICY,LLOQ-MISSING,CELLULAR-LLOQ-POLICY-MISSING] AND (cellular_LLOQ present
+        if cellular endpoint)
+      yes_branch: tree_N21_v5
+      no_branch: leaf_QUARANTINE_Q01_459af0d7
+    - id: tree_N5_v5
+      node_id: N5
+      question: Is BLQ/MDV policy applied?
+      detection_rule: A5_state not in [BLQ-NO-POLICY,LLOQ-MISSING,CELLULAR-LLOQ-POLICY-MISSING] AND (cellular_LLOQ present
+        if cellular endpoint)
+      yes_branch: leaf_QUARANTINE_Q12_459af0d7
+      no_branch: leaf_QUARANTINE_Q01_forced_f
+    - id: tree_N5_v6
+      node_id: N5
+      question: Is BLQ/MDV policy applied?
+      detection_rule: A5_state not in [BLQ-NO-POLICY,LLOQ-MISSING,CELLULAR-LLOQ-POLICY-MISSING] AND (cellular_LLOQ present
+        if cellular endpoint)
+      yes_branch: leaf_QUARANTINE_Q18_459af0d7
+      no_branch: leaf_QUARANTINE_Q01_forced_f
+    - id: tree_N5_v7
+      node_id: N5
+      question: Is BLQ/MDV policy applied?
+      detection_rule: A5_state not in [BLQ-NO-POLICY,LLOQ-MISSING,CELLULAR-LLOQ-POLICY-MISSING] AND (cellular_LLOQ present
+        if cellular endpoint)
+      yes_branch: leaf_QUARANTINE_Q11_459af0d7
+      no_branch: leaf_QUARANTINE_Q01_forced_f
+    - id: tree_N5_v8
+      node_id: N5
+      question: Is BLQ/MDV policy applied?
+      detection_rule: A5_state not in [BLQ-NO-POLICY,LLOQ-MISSING,CELLULAR-LLOQ-POLICY-MISSING] AND (cellular_LLOQ present
+        if cellular endpoint)
+      yes_branch: leaf_QUARANTINE_Q11_459af0d7
+      no_branch: leaf_QUARANTINE_Q01_forced_f
+    - id: tree_N5_v9
+      node_id: N5
+      question: Is BLQ/MDV policy applied?
+      detection_rule: A5_state not in [BLQ-NO-POLICY,LLOQ-MISSING,CELLULAR-LLOQ-POLICY-MISSING] AND (cellular_LLOQ present
+        if cellular endpoint)
+      yes_branch: leaf_INVALID_NA_8fb0fdbc
+      no_branch: leaf_QUARANTINE_Q01_forced_f
+    - id: tree_N14
+      node_id: N14
+      question: Does sequence include dose reconstruction?
+      detection_rule: action_sequence contains any of reconstruct_dose_* / expand_addl_ii / resolve_addl_actual_conflict
+      yes_branch: tree_N13
+      no_branch: tree_N13_v2
+    - id: tree_N13
+      node_id: N13
+      question: Does sequence include BLQ canonicalization?
+      detection_rule: action_sequence contains canonicalize_blq or canonicalize_cellular_blq
+      yes_branch: leaf_REPAIR_NA_8c7c841f
+      no_branch: leaf_REPAIR_NA_60bd547e
+    - id: tree_N13_v2
+      node_id: N13
+      question: Does sequence include BLQ canonicalization?
+      detection_rule: action_sequence contains canonicalize_blq or canonicalize_cellular_blq
+      yes_branch: tree_N19
+      no_branch: tree_N19_v2
+    - id: tree_N19
+      node_id: N19
+      question: Does sequence include any covariate attachment?
+      detection_rule: action_sequence contains attach_covariate_* or attach_dyad_linkage
+      yes_branch: tree_N21
+      no_branch: tree_N21_v2
+    - id: tree_N19_v2
+      node_id: N19
+      question: Does sequence include any covariate attachment?
+      detection_rule: action_sequence contains attach_covariate_* or attach_dyad_linkage
+      yes_branch: tree_N21_v3
+      no_branch: tree_N21_v4
+    - id: tree_N21
+      node_id: N21
+      question: Is A8 multi-CMT-class state (drives analyte_role check)?
+      detection_rule: A8_state in [MULTI-CMT-DEFINED, DDI-VICTIM-PERPETRATOR, METABOLITE-DEFINED]
+      yes_branch: tree_N22
+      no_branch: tree_N24_v3
+    - id: tree_N21_v2
+      node_id: N21
+      question: Is A8 multi-CMT-class state (drives analyte_role check)?
+      detection_rule: A8_state in [MULTI-CMT-DEFINED, DDI-VICTIM-PERPETRATOR, METABOLITE-DEFINED]
+      yes_branch: tree_N22_v2
+      no_branch: tree_N24_v6
+    - id: tree_N21_v3
+      node_id: N21
+      question: Is A8 multi-CMT-class state (drives analyte_role check)?
+      detection_rule: A8_state in [MULTI-CMT-DEFINED, DDI-VICTIM-PERPETRATOR, METABOLITE-DEFINED]
+      yes_branch: tree_N22_v3
+      no_branch: tree_N24_v9
+    - id: tree_N21_v4
+      node_id: N21
+      question: Is A8 multi-CMT-class state (drives analyte_role check)?
+      detection_rule: A8_state in [MULTI-CMT-DEFINED, DDI-VICTIM-PERPETRATOR, METABOLITE-DEFINED]
+      yes_branch: tree_N22_v4
+      no_branch: tree_N24_v12
+    - id: tree_N21_v5
+      node_id: N21
+      question: Is A8 multi-CMT-class state (drives analyte_role check)?
+      detection_rule: A8_state in [MULTI-CMT-DEFINED, DDI-VICTIM-PERPETRATOR, METABOLITE-DEFINED]
+      yes_branch: tree_N22_v5
+      no_branch: tree_N24_v15
+    - id: tree_N22
+      node_id: N22
+      question: Is A8=DDI-VICTIM-PERPETRATOR?
+      detection_rule: A8_state == DDI-VICTIM-PERPETRATOR
+      yes_branch: tree_N24
+      no_branch: tree_N24_v2
+    - id: tree_N22_v2
+      node_id: N22
+      question: Is A8=DDI-VICTIM-PERPETRATOR?
+      detection_rule: A8_state == DDI-VICTIM-PERPETRATOR
+      yes_branch: tree_N24_v4
+      no_branch: tree_N24_v5
+    - id: tree_N22_v3
+      node_id: N22
+      question: Is A8=DDI-VICTIM-PERPETRATOR?
+      detection_rule: A8_state == DDI-VICTIM-PERPETRATOR
+      yes_branch: tree_N24_v7
+      no_branch: tree_N24_v8
+    - id: tree_N22_v4
+      node_id: N22
+      question: Is A8=DDI-VICTIM-PERPETRATOR?
+      detection_rule: A8_state == DDI-VICTIM-PERPETRATOR
+      yes_branch: tree_N24_v10
+      no_branch: tree_N24_v11
+    - id: tree_N22_v5
+      node_id: N22
+      question: Is A8=DDI-VICTIM-PERPETRATOR?
+      detection_rule: A8_state == DDI-VICTIM-PERPETRATOR
+      yes_branch: tree_N24_v13
+      no_branch: tree_N24_v14
+    - id: tree_N24
+      node_id: N24
+      question: Is A4=ADDL-ACTUAL-CONFLICT?
+      detection_rule: A4_state == ADDL-ACTUAL-CONFLICT
+      yes_branch: tree_N25
+      no_branch: tree_N25_v2
+    - id: tree_N24_v10
+      node_id: N24
+      question: Is A4=ADDL-ACTUAL-CONFLICT?
+      detection_rule: A4_state == ADDL-ACTUAL-CONFLICT
+      yes_branch: tree_N25_v19
+      no_branch: tree_N25_v20
+    - id: tree_N24_v11
+      node_id: N24
+      question: Is A4=ADDL-ACTUAL-CONFLICT?
+      detection_rule: A4_state == ADDL-ACTUAL-CONFLICT
+      yes_branch: tree_N25_v21
+      no_branch: tree_N25_v22
+    - id: tree_N24_v12
+      node_id: N24
+      question: Is A4=ADDL-ACTUAL-CONFLICT?
+      detection_rule: A4_state == ADDL-ACTUAL-CONFLICT
+      yes_branch: tree_N25_v23
+      no_branch: tree_N25_v24
+    - id: tree_N24_v13
+      node_id: N24
+      question: Is A4=ADDL-ACTUAL-CONFLICT?
+      detection_rule: A4_state == ADDL-ACTUAL-CONFLICT
+      yes_branch: tree_N25_v25
+      no_branch: tree_N25_v26
+    - id: tree_N24_v14
+      node_id: N24
+      question: Is A4=ADDL-ACTUAL-CONFLICT?
+      detection_rule: A4_state == ADDL-ACTUAL-CONFLICT
+      yes_branch: tree_N25_v27
+      no_branch: tree_N25_v28
+    - id: tree_N24_v15
+      node_id: N24
+      question: Is A4=ADDL-ACTUAL-CONFLICT?
+      detection_rule: A4_state == ADDL-ACTUAL-CONFLICT
+      yes_branch: leaf_QUARANTINE_Q15A_459af0d7
+      no_branch: tree_N25_v29
+    - id: tree_N24_v2
+      node_id: N24
+      question: Is A4=ADDL-ACTUAL-CONFLICT?
+      detection_rule: A4_state == ADDL-ACTUAL-CONFLICT
+      yes_branch: tree_N25_v3
+      no_branch: tree_N25_v4
+    - id: tree_N24_v3
+      node_id: N24
+      question: Is A4=ADDL-ACTUAL-CONFLICT?
+      detection_rule: A4_state == ADDL-ACTUAL-CONFLICT
+      yes_branch: tree_N25_v5
+      no_branch: tree_N25_v6
+    - id: tree_N24_v4
+      node_id: N24
+      question: Is A4=ADDL-ACTUAL-CONFLICT?
+      detection_rule: A4_state == ADDL-ACTUAL-CONFLICT
+      yes_branch: tree_N25_v7
+      no_branch: tree_N25_v8
+    - id: tree_N24_v5
+      node_id: N24
+      question: Is A4=ADDL-ACTUAL-CONFLICT?
+      detection_rule: A4_state == ADDL-ACTUAL-CONFLICT
+      yes_branch: tree_N25_v9
+      no_branch: tree_N25_v10
+    - id: tree_N24_v6
+      node_id: N24
+      question: Is A4=ADDL-ACTUAL-CONFLICT?
+      detection_rule: A4_state == ADDL-ACTUAL-CONFLICT
+      yes_branch: tree_N25_v11
+      no_branch: tree_N25_v12
+    - id: tree_N24_v7
+      node_id: N24
+      question: Is A4=ADDL-ACTUAL-CONFLICT?
+      detection_rule: A4_state == ADDL-ACTUAL-CONFLICT
+      yes_branch: tree_N25_v13
+      no_branch: tree_N25_v14
+    - id: tree_N24_v8
+      node_id: N24
+      question: Is A4=ADDL-ACTUAL-CONFLICT?
+      detection_rule: A4_state == ADDL-ACTUAL-CONFLICT
+      yes_branch: tree_N25_v15
+      no_branch: tree_N25_v16
+    - id: tree_N24_v9
+      node_id: N24
+      question: Is A4=ADDL-ACTUAL-CONFLICT?
+      detection_rule: A4_state == ADDL-ACTUAL-CONFLICT
+      yes_branch: tree_N25_v17
+      no_branch: tree_N25_v18
+    - id: tree_N25
+      node_id: N25
+      question: Modality supports analyte_role tagging?
+      detection_rule: modality_class in [ADC, BISPECIFIC, CELL_THERAPY, GENE_THERAPY]
+      yes_branch: tree_N27
+      no_branch: leaf_REPAIR_NA_a6c25aa4
+    - id: tree_N25_v10
+      node_id: N25
+      question: Modality supports analyte_role tagging?
+      detection_rule: modality_class in [ADC, BISPECIFIC, CELL_THERAPY, GENE_THERAPY]
+      yes_branch: leaf_REPAIR_NA_b0a07c38
+      no_branch: tree_N11_v4
+    - id: tree_N25_v11
+      node_id: N25
+      question: Modality supports analyte_role tagging?
+      detection_rule: modality_class in [ADC, BISPECIFIC, CELL_THERAPY, GENE_THERAPY]
+      yes_branch: leaf_REPAIR_NA_f67c49c7
+      no_branch: tree_N11_v5
+    - id: tree_N25_v12
+      node_id: N25
+      question: Modality supports analyte_role tagging?
+      detection_rule: modality_class in [ADC, BISPECIFIC, CELL_THERAPY, GENE_THERAPY]
+      yes_branch: leaf_REPAIR_NA_f67c49c7
+      no_branch: tree_N11_v6
+    - id: tree_N25_v13
+      node_id: N25
+      question: Modality supports analyte_role tagging?
+      detection_rule: modality_class in [ADC, BISPECIFIC, CELL_THERAPY, GENE_THERAPY]
+      yes_branch: leaf_REPAIR_NA_8759fdd7
+      no_branch: leaf_REPAIR_NA_5a6233bc
+    - id: tree_N25_v14
+      node_id: N25
+      question: Modality supports analyte_role tagging?
+      detection_rule: modality_class in [ADC, BISPECIFIC, CELL_THERAPY, GENE_THERAPY]
+      yes_branch: leaf_REPAIR_NA_8759fdd7
+      no_branch: leaf_REPAIR_NA_5a6233bc
+    - id: tree_N25_v15
+      node_id: N25
+      question: Modality supports analyte_role tagging?
+      detection_rule: modality_class in [ADC, BISPECIFIC, CELL_THERAPY, GENE_THERAPY]
+      yes_branch: leaf_REPAIR_NA_99ef783e
+      no_branch: leaf_REPAIR_NA_15a5313d
+    - id: tree_N25_v16
+      node_id: N25
+      question: Modality supports analyte_role tagging?
+      detection_rule: modality_class in [ADC, BISPECIFIC, CELL_THERAPY, GENE_THERAPY]
+      yes_branch: leaf_REPAIR_NA_99ef783e
+      no_branch: leaf_REPAIR_NA_15a5313d
+    - id: tree_N25_v17
+      node_id: N25
+      question: Modality supports analyte_role tagging?
+      detection_rule: modality_class in [ADC, BISPECIFIC, CELL_THERAPY, GENE_THERAPY]
+      yes_branch: leaf_REPAIR_NA_8291e7f5
+      no_branch: leaf_REPAIR_NA_97865932
+    - id: tree_N25_v18
+      node_id: N25
+      question: Modality supports analyte_role tagging?
+      detection_rule: modality_class in [ADC, BISPECIFIC, CELL_THERAPY, GENE_THERAPY]
+      yes_branch: leaf_REPAIR_NA_8291e7f5
+      no_branch: leaf_REPAIR_NA_97865932
+    - id: tree_N25_v19
+      node_id: N25
+      question: Modality supports analyte_role tagging?
+      detection_rule: modality_class in [ADC, BISPECIFIC, CELL_THERAPY, GENE_THERAPY]
+      yes_branch: leaf_REPAIR_NA_9778a409
+      no_branch: tree_N11_v7
+    - id: tree_N25_v2
+      node_id: N25
+      question: Modality supports analyte_role tagging?
+      detection_rule: modality_class in [ADC, BISPECIFIC, CELL_THERAPY, GENE_THERAPY]
+      yes_branch: tree_N27_v2
+      no_branch: leaf_REPAIR_NA_a6c25aa4
+    - id: tree_N25_v20
+      node_id: N25
+      question: Modality supports analyte_role tagging?
+      detection_rule: modality_class in [ADC, BISPECIFIC, CELL_THERAPY, GENE_THERAPY]
+      yes_branch: leaf_REPAIR_NA_9778a409
+      no_branch: tree_N11_v8
+    - id: tree_N25_v21
+      node_id: N25
+      question: Modality supports analyte_role tagging?
+      detection_rule: modality_class in [ADC, BISPECIFIC, CELL_THERAPY, GENE_THERAPY]
+      yes_branch: leaf_REPAIR_NA_067eec0a
+      no_branch: tree_N11_v9
+    - id: tree_N25_v22
+      node_id: N25
+      question: Modality supports analyte_role tagging?
+      detection_rule: modality_class in [ADC, BISPECIFIC, CELL_THERAPY, GENE_THERAPY]
+      yes_branch: leaf_REPAIR_NA_067eec0a
+      no_branch: tree_N11_v10
+    - id: tree_N25_v23
+      node_id: N25
+      question: Modality supports analyte_role tagging?
+      detection_rule: modality_class in [ADC, BISPECIFIC, CELL_THERAPY, GENE_THERAPY]
+      yes_branch: leaf_AUTO_NA_375dc3d8
+      no_branch: tree_N11_v11
+    - id: tree_N25_v24
+      node_id: N25
+      question: Modality supports analyte_role tagging?
+      detection_rule: modality_class in [ADC, BISPECIFIC, CELL_THERAPY, GENE_THERAPY]
+      yes_branch: leaf_AUTO_NA_375dc3d8
+      no_branch: tree_N11_v12
+    - id: tree_N25_v25
+      node_id: N25
+      question: Modality supports analyte_role tagging?
+      detection_rule: modality_class in [ADC, BISPECIFIC, CELL_THERAPY, GENE_THERAPY]
+      yes_branch: tree_N20
+      no_branch: leaf_QUARANTINE_Q15A_459af0d7
+    - id: tree_N25_v26
+      node_id: N25
+      question: Modality supports analyte_role tagging?
+      detection_rule: modality_class in [ADC, BISPECIFIC, CELL_THERAPY, GENE_THERAPY]
+      yes_branch: tree_N20_v2
+      no_branch: leaf_QUARANTINE_Q15A_459af0d7
+    - id: tree_N25_v27
+      node_id: N25
+      question: Modality supports analyte_role tagging?
+      detection_rule: modality_class in [ADC, BISPECIFIC, CELL_THERAPY, GENE_THERAPY]
+      yes_branch: tree_N20_v3
+      no_branch: leaf_QUARANTINE_Q15A_459af0d7
+    - id: tree_N25_v28
+      node_id: N25
+      question: Modality supports analyte_role tagging?
+      detection_rule: modality_class in [ADC, BISPECIFIC, CELL_THERAPY, GENE_THERAPY]
+      yes_branch: tree_N20_v4
+      no_branch: leaf_QUARANTINE_Q15A_459af0d7
+    - id: tree_N25_v29
+      node_id: N25
+      question: Modality supports analyte_role tagging?
+      detection_rule: modality_class in [ADC, BISPECIFIC, CELL_THERAPY, GENE_THERAPY]
+      yes_branch: leaf_QUARANTINE_Q15A_459af0d7
+      no_branch: tree_N11_v13
+    - id: tree_N25_v3
+      node_id: N25
+      question: Modality supports analyte_role tagging?
+      detection_rule: modality_class in [ADC, BISPECIFIC, CELL_THERAPY, GENE_THERAPY]
+      yes_branch: tree_N27_v3
+      no_branch: leaf_REPAIR_NA_e410254a
+    - id: tree_N25_v4
+      node_id: N25
+      question: Modality supports analyte_role tagging?
+      detection_rule: modality_class in [ADC, BISPECIFIC, CELL_THERAPY, GENE_THERAPY]
+      yes_branch: tree_N27_v4
+      no_branch: leaf_REPAIR_NA_e410254a
+    - id: tree_N25_v5
+      node_id: N25
+      question: Modality supports analyte_role tagging?
+      detection_rule: modality_class in [ADC, BISPECIFIC, CELL_THERAPY, GENE_THERAPY]
+      yes_branch: tree_N27_v5
+      no_branch: leaf_REPAIR_NA_8c22237a
+    - id: tree_N25_v6
+      node_id: N25
+      question: Modality supports analyte_role tagging?
+      detection_rule: modality_class in [ADC, BISPECIFIC, CELL_THERAPY, GENE_THERAPY]
+      yes_branch: tree_N27_v6
+      no_branch: leaf_REPAIR_NA_8c22237a
+    - id: tree_N25_v7
+      node_id: N25
+      question: Modality supports analyte_role tagging?
+      detection_rule: modality_class in [ADC, BISPECIFIC, CELL_THERAPY, GENE_THERAPY]
+      yes_branch: leaf_REPAIR_NA_f452000c
+      no_branch: tree_N11
+    - id: tree_N25_v8
+      node_id: N25
+      question: Modality supports analyte_role tagging?
+      detection_rule: modality_class in [ADC, BISPECIFIC, CELL_THERAPY, GENE_THERAPY]
+      yes_branch: leaf_REPAIR_NA_f452000c
+      no_branch: tree_N11_v2
+    - id: tree_N25_v9
+      node_id: N25
+      question: Modality supports analyte_role tagging?
+      detection_rule: modality_class in [ADC, BISPECIFIC, CELL_THERAPY, GENE_THERAPY]
+      yes_branch: leaf_REPAIR_NA_b0a07c38
+      no_branch: tree_N11_v3
+    - id: tree_N11
+      node_id: N11
+      question: is_endpoint MATERNAL_INFANT_PK or MILK_PK?
+      detection_rule: endpoint_data_type in [MATERNAL_INFANT_PK, MILK_PK]
+      yes_branch: leaf_REPAIR_NA_89701750
+      no_branch: leaf_REPAIR_NA_f452000c
+    - id: tree_N11_v10
+      node_id: N11
+      question: is_endpoint MATERNAL_INFANT_PK or MILK_PK?
+      detection_rule: endpoint_data_type in [MATERNAL_INFANT_PK, MILK_PK]
+      yes_branch: leaf_REPAIR_NA_583831ec
+      no_branch: tree_N29_v4
+    - id: tree_N11_v11
+      node_id: N11
+      question: is_endpoint MATERNAL_INFANT_PK or MILK_PK?
+      detection_rule: endpoint_data_type in [MATERNAL_INFANT_PK, MILK_PK]
+      yes_branch: leaf_AUTO_NA_375dc3d8
+      no_branch: tree_N29_v5
+    - id: tree_N11_v12
+      node_id: N11
+      question: is_endpoint MATERNAL_INFANT_PK or MILK_PK?
+      detection_rule: endpoint_data_type in [MATERNAL_INFANT_PK, MILK_PK]
+      yes_branch: leaf_AUTO_NA_375dc3d8
+      no_branch: tree_N17_v2
+    - id: tree_N11_v13
+      node_id: N11
+      question: is_endpoint MATERNAL_INFANT_PK or MILK_PK?
+      detection_rule: endpoint_data_type in [MATERNAL_INFANT_PK, MILK_PK]
+      yes_branch: leaf_QUARANTINE_Q15A_459af0d7
+      no_branch: tree_N20_v5
+    - id: tree_N11_v2
+      node_id: N11
+      question: is_endpoint MATERNAL_INFANT_PK or MILK_PK?
+      detection_rule: endpoint_data_type in [MATERNAL_INFANT_PK, MILK_PK]
+      yes_branch: leaf_REPAIR_NA_89701750
+      no_branch: leaf_REPAIR_NA_f452000c
+    - id: tree_N11_v3
+      node_id: N11
+      question: is_endpoint MATERNAL_INFANT_PK or MILK_PK?
+      detection_rule: endpoint_data_type in [MATERNAL_INFANT_PK, MILK_PK]
+      yes_branch: leaf_REPAIR_NA_d33ddf52
+      no_branch: leaf_REPAIR_NA_ad950bea
+    - id: tree_N11_v4
+      node_id: N11
+      question: is_endpoint MATERNAL_INFANT_PK or MILK_PK?
+      detection_rule: endpoint_data_type in [MATERNAL_INFANT_PK, MILK_PK]
+      yes_branch: leaf_REPAIR_NA_d33ddf52
+      no_branch: leaf_REPAIR_NA_ad950bea
+    - id: tree_N11_v5
+      node_id: N11
+      question: is_endpoint MATERNAL_INFANT_PK or MILK_PK?
+      detection_rule: endpoint_data_type in [MATERNAL_INFANT_PK, MILK_PK]
+      yes_branch: leaf_REPAIR_NA_7388bbe3
+      no_branch: leaf_REPAIR_NA_f67c49c7
+    - id: tree_N11_v6
+      node_id: N11
+      question: is_endpoint MATERNAL_INFANT_PK or MILK_PK?
+      detection_rule: endpoint_data_type in [MATERNAL_INFANT_PK, MILK_PK]
+      yes_branch: leaf_REPAIR_NA_7388bbe3
+      no_branch: tree_N17
+    - id: tree_N11_v7
+      node_id: N11
+      question: is_endpoint MATERNAL_INFANT_PK or MILK_PK?
+      detection_rule: endpoint_data_type in [MATERNAL_INFANT_PK, MILK_PK]
+      yes_branch: leaf_REPAIR_NA_be4ff92f
+      no_branch: tree_N29
+    - id: tree_N11_v8
+      node_id: N11
+      question: is_endpoint MATERNAL_INFANT_PK or MILK_PK?
+      detection_rule: endpoint_data_type in [MATERNAL_INFANT_PK, MILK_PK]
+      yes_branch: leaf_REPAIR_NA_be4ff92f
+      no_branch: tree_N29_v2
+    - id: tree_N11_v9
+      node_id: N11
+      question: is_endpoint MATERNAL_INFANT_PK or MILK_PK?
+      detection_rule: endpoint_data_type in [MATERNAL_INFANT_PK, MILK_PK]
+      yes_branch: leaf_REPAIR_NA_583831ec
+      no_branch: tree_N29_v3
+    - id: tree_N17
+      node_id: N17
+      question: Does sequence include postpartum/elapsed time anchor?
+      detection_rule: action_sequence contains derive_time_postpartum_anchor or derive_time_elapsed
+      yes_branch: leaf_REPAIR_NA_531efd39
+      no_branch: leaf_REPAIR_NA_f67c49c7
+    - id: tree_N17_v2
+      node_id: N17
+      question: Does sequence include postpartum/elapsed time anchor?
+      detection_rule: action_sequence contains derive_time_postpartum_anchor or derive_time_elapsed
+      yes_branch: leaf_REPAIR_NA_498624fe
+      no_branch: tree_N29_v6
+    - id: tree_N20
+      node_id: N20
+      question: Is A5=BIOANALYTICAL-FINAL-FLAG-MISSING?
+      detection_rule: A5_state == BIOANALYTICAL-FINAL-FLAG-MISSING
+      yes_branch: leaf_QUARANTINE_Q15A_459af0d7
+      no_branch: leaf_QUARANTINE_Q16_459af0d7
+    - id: tree_N20_v2
+      node_id: N20
+      question: Is A5=BIOANALYTICAL-FINAL-FLAG-MISSING?
+      detection_rule: A5_state == BIOANALYTICAL-FINAL-FLAG-MISSING
+      yes_branch: leaf_QUARANTINE_Q15A_459af0d7
+      no_branch: leaf_QUARANTINE_Q16_459af0d7
+    - id: tree_N20_v3
+      node_id: N20
+      question: Is A5=BIOANALYTICAL-FINAL-FLAG-MISSING?
+      detection_rule: A5_state == BIOANALYTICAL-FINAL-FLAG-MISSING
+      yes_branch: leaf_QUARANTINE_Q15A_459af0d7
+      no_branch: leaf_QUARANTINE_Q16_459af0d7
+    - id: tree_N20_v4
+      node_id: N20
+      question: Is A5=BIOANALYTICAL-FINAL-FLAG-MISSING?
+      detection_rule: A5_state == BIOANALYTICAL-FINAL-FLAG-MISSING
+      yes_branch: leaf_QUARANTINE_Q15A_459af0d7
+      no_branch: leaf_QUARANTINE_Q16_459af0d7
+    - id: tree_N20_v5
+      node_id: N20
+      question: Is A5=BIOANALYTICAL-FINAL-FLAG-MISSING?
+      detection_rule: A5_state == BIOANALYTICAL-FINAL-FLAG-MISSING
+      yes_branch: leaf_QUARANTINE_Q15A_459af0d7
+      no_branch: leaf_QUARANTINE_Q19_459af0d7
+    - id: tree_N27
+      node_id: N27
+      question: Is A5=CELLULAR-BLQ-DEFINED?
+      detection_rule: A5_state == CELLULAR-BLQ-DEFINED
+      yes_branch: leaf_REPAIR_NA_4f0d18c6
+      no_branch: leaf_REPAIR_NA_d3e4e18d
+    - id: tree_N27_v2
+      node_id: N27
+      question: Is A5=CELLULAR-BLQ-DEFINED?
+      detection_rule: A5_state == CELLULAR-BLQ-DEFINED
+      yes_branch: leaf_REPAIR_NA_4f0d18c6
+      no_branch: leaf_REPAIR_NA_d3e4e18d
+    - id: tree_N27_v3
+      node_id: N27
+      question: Is A5=CELLULAR-BLQ-DEFINED?
+      detection_rule: A5_state == CELLULAR-BLQ-DEFINED
+      yes_branch: leaf_REPAIR_NA_42baa351
+      no_branch: leaf_REPAIR_NA_8ab607dd
+    - id: tree_N27_v4
+      node_id: N27
+      question: Is A5=CELLULAR-BLQ-DEFINED?
+      detection_rule: A5_state == CELLULAR-BLQ-DEFINED
+      yes_branch: leaf_REPAIR_NA_42baa351
+      no_branch: leaf_REPAIR_NA_8ab607dd
+    - id: tree_N27_v5
+      node_id: N27
+      question: Is A5=CELLULAR-BLQ-DEFINED?
+      detection_rule: A5_state == CELLULAR-BLQ-DEFINED
+      yes_branch: leaf_REPAIR_NA_15b180bb
+      no_branch: leaf_REPAIR_NA_c3394219
+    - id: tree_N27_v6
+      node_id: N27
+      question: Is A5=CELLULAR-BLQ-DEFINED?
+      detection_rule: A5_state == CELLULAR-BLQ-DEFINED
+      yes_branch: leaf_REPAIR_NA_15b180bb
+      no_branch: leaf_REPAIR_NA_c3394219
+    - id: tree_N29
+      node_id: N29
+      question: Sequence contains adjudicate_immunogenicity_positivity?
+      detection_rule: action_sequence contains adjudicate_immunogenicity_positivity
+      yes_branch: leaf_REPAIR_NA_6b8ec154
+      no_branch: leaf_REPAIR_NA_9778a409
+    - id: tree_N29_v2
+      node_id: N29
+      question: Sequence contains adjudicate_immunogenicity_positivity?
+      detection_rule: action_sequence contains adjudicate_immunogenicity_positivity
+      yes_branch: leaf_REPAIR_NA_6b8ec154
+      no_branch: leaf_REPAIR_NA_9778a409
+    - id: tree_N29_v3
+      node_id: N29
+      question: Sequence contains adjudicate_immunogenicity_positivity?
+      detection_rule: action_sequence contains adjudicate_immunogenicity_positivity
+      yes_branch: leaf_REPAIR_NA_bc3e0088
+      no_branch: leaf_REPAIR_NA_625092f4
+    - id: tree_N29_v4
+      node_id: N29
+      question: Sequence contains adjudicate_immunogenicity_positivity?
+      detection_rule: action_sequence contains adjudicate_immunogenicity_positivity
+      yes_branch: leaf_REPAIR_NA_bc3e0088
+      no_branch: leaf_REPAIR_NA_625092f4
+    - id: tree_N29_v5
+      node_id: N29
+      question: Sequence contains adjudicate_immunogenicity_positivity?
+      detection_rule: action_sequence contains adjudicate_immunogenicity_positivity
+      yes_branch: leaf_REPAIR_NA_41fcc136
+      no_branch: leaf_AUTO_NA_375dc3d8
+    - id: tree_N29_v6
+      node_id: N29
+      question: Sequence contains adjudicate_immunogenicity_positivity?
+      detection_rule: action_sequence contains adjudicate_immunogenicity_positivity
+      yes_branch: leaf_REPAIR_NA_41fcc136
+      no_branch: leaf_AUTO_NA_375dc3d8
+  leaves:
+    - id: leaf_AUTO_NA_375dc3d8
+      terminal_state: AUTO
+      q_code: null
+      action_label: AUTO_F01_ADC
+      action_label_set:
+        - AUTO_F01_ADC
+        - AUTO_F01_MAB
+        - AUTO_F01_SMALL_MOLECULE
+        - AUTO_F27_MRNA
+        - AUTO_F29_SMALL_MOLECULE
+      action_sequence_hash: 375dc3d886a9
+      parameter_policy_hashes:
+        - 44136fa355b3
+        - 618a0d6b1220
+      action_sequence:
+        - parse_source
+        - assign_cmt_single
+        - assign_evid
+        - sort_records
+        - export_nonmem_ready
+      parameter_policy: {}
+      family_id_examples: []
+      member_classes:
+        - DC00025
+        - DC00040
+        - DC00055
+        - DC00074
+        - DC00101
+        - DC00116
+        - DC00189
+        - DC00207
+        - DC00225
+        - DC00243
+        - DC00291
+        - DC00297
+      member_class_count: 12
+    - id: leaf_INVALID_NA_8fb0fdbc
+      terminal_state: INVALID
+      q_code: null
+      action_label: INVALID_F34
+      action_label_set:
+        - INVALID_F34
+      action_sequence_hash: 8fb0fdbc52b2
+      parameter_policy_hashes:
+        - 44136fa355b3
+      action_sequence:
+        - flag_invalid
+      parameter_policy: {}
+      family_id_examples: []
+      member_classes:
+        - DC00303
+        - DC00304
+        - DC00305
+        - DC00306
+        - DC00307
+        - DC00308
+        - DC00309
+        - DC00310
+        - DC00311
+        - DC00312
+        - DC00313
+        - DC00314
+        - DC00315
+        - DC00316
+        - DC00317
+        - DC00318
+        - DC00319
+        - DC00320
+        - DC00321
+        - DC00322
+        - DC00323
+        - DC00324
+        - DC00325
+        - DC00326
+      member_class_count: 24
+    - id: leaf_QUARANTINE_Q01_459af0d7
+      terminal_state: QUARANTINE
+      q_code: Q01
+      action_label: QUARANTINE_CELLULAR_NO_LLOQ_Q01
+      action_label_set:
+        - QUARANTINE_CELLULAR_NO_LLOQ_Q01
+        - QUARANTINE_LLOQ_MISSING_Q01
+      action_sequence_hash: 459af0d7d91c
+      parameter_policy_hashes:
+        - fdb954438015
+      action_sequence:
+        - parse_source
+        - flag_quarantine
+      parameter_policy:
+        q_code: Q01
+      family_id_examples: []
+      member_classes:
+        - DC00327
+        - DC00332
+      member_class_count: 2
+    - id: leaf_QUARANTINE_Q01_forced_f
+      terminal_state: QUARANTINE
+      q_code: Q01
+      action_label: FORCED_FAIL_N5_Q01
+      action_label_set:
+        - FORCED_FAIL_N5_Q01
+      action_sequence_hash: forced_fail_
+      parameter_policy_hashes: []
+      action_sequence:
+        - parse_source
+        - flag_quarantine
+      parameter_policy:
+        q_code: Q01
+      family_id_examples: []
+      member_classes: []
+      member_class_count: 0
+      synthetic_forced_failure_for: N5
+      note: Synthetic leaf for N5=N. Not present in D3 (no scenario in the universe failed this gate after earlier ones passed),
+        but emitted so the tree always evaluates N5 for new inputs.
+    - id: leaf_QUARANTINE_Q02_459af0d7
+      terminal_state: QUARANTINE
+      q_code: Q02
+      action_label: QUARANTINE_GENERIC_Q02
+      action_label_set:
+        - QUARANTINE_GENERIC_Q02
+      action_sequence_hash: 459af0d7d91c
+      parameter_policy_hashes:
+        - 320e16e9121a
+      action_sequence:
+        - parse_source
+        - flag_quarantine
+      parameter_policy:
+        q_code: Q02
+      family_id_examples: []
+      member_classes:
+        - DC00334
+      member_class_count: 1
+    - id: leaf_QUARANTINE_Q02_forced_f
+      terminal_state: QUARANTINE
+      q_code: Q02
+      action_label: FORCED_FAIL_N2_Q02
+      action_label_set:
+        - FORCED_FAIL_N2_Q02
+      action_sequence_hash: forced_fail_
+      parameter_policy_hashes: []
+      action_sequence:
+        - parse_source
+        - flag_quarantine
+      parameter_policy:
+        q_code: Q02
+      family_id_examples: []
+      member_classes: []
+      member_class_count: 0
+      synthetic_forced_failure_for: N2
+      note: Synthetic leaf for N2=N. Not present in D3 (no scenario in the universe failed this gate after earlier ones passed),
+        but emitted so the tree always evaluates N2 for new inputs.
+    - id: leaf_QUARANTINE_Q03_forced_f
+      terminal_state: QUARANTINE
+      q_code: Q03
+      action_label: FORCED_FAIL_N1_Q03
+      action_label_set:
+        - FORCED_FAIL_N1_Q03
+      action_sequence_hash: forced_fail_
+      parameter_policy_hashes: []
+      action_sequence:
+        - parse_source
+        - flag_quarantine
+      parameter_policy:
+        q_code: Q03
+      family_id_examples: []
+      member_classes: []
+      member_class_count: 0
+      synthetic_forced_failure_for: N1
+      note: Synthetic leaf for N1=N. Not present in D3 (no scenario in the universe failed this gate after earlier ones passed),
+        but emitted so the tree always evaluates N1 for new inputs.
+    - id: leaf_QUARANTINE_Q08_forced_f
+      terminal_state: QUARANTINE
+      q_code: Q08
+      action_label: FORCED_FAIL_N3_Q08
+      action_label_set:
+        - FORCED_FAIL_N3_Q08
+      action_sequence_hash: forced_fail_
+      parameter_policy_hashes: []
+      action_sequence:
+        - parse_source
+        - flag_quarantine
+      parameter_policy:
+        q_code: Q08
+      family_id_examples: []
+      member_classes: []
+      member_class_count: 0
+      synthetic_forced_failure_for: N3
+      note: Synthetic leaf for N3=N. Not present in D3 (no scenario in the universe failed this gate after earlier ones passed),
+        but emitted so the tree always evaluates N3 for new inputs.
+    - id: leaf_QUARANTINE_Q09_forced_f
+      terminal_state: QUARANTINE
+      q_code: Q09
+      action_label: FORCED_FAIL_N4_Q09
+      action_label_set:
+        - FORCED_FAIL_N4_Q09
+      action_sequence_hash: forced_fail_
+      parameter_policy_hashes: []
+      action_sequence:
+        - parse_source
+        - flag_quarantine
+      parameter_policy:
+        q_code: Q09
+      family_id_examples: []
+      member_classes: []
+      member_class_count: 0
+      synthetic_forced_failure_for: N4
+      note: Synthetic leaf for N4=N. Not present in D3 (no scenario in the universe failed this gate after earlier ones passed),
+        but emitted so the tree always evaluates N4 for new inputs.
+    - id: leaf_QUARANTINE_Q11_459af0d7
+      terminal_state: QUARANTINE
+      q_code: Q11
+      action_label: QUARANTINE_ADDL_CONFLICT_Q11
+      action_label_set:
+        - QUARANTINE_ADDL_CONFLICT_Q11
+        - QUARANTINE_AIC_MISSING_Q11
+        - QUARANTINE_BIO_FINAL_FLAG_Q11
+        - QUARANTINE_LEGACY_FLAG_UNDOC_Q11
+      action_sequence_hash: 459af0d7d91c
+      parameter_policy_hashes:
+        - 3c62b6ab01fb
+      action_sequence:
+        - parse_source
+        - flag_quarantine
+      parameter_policy:
+        q_code: Q11
+      family_id_examples: []
+      member_classes:
+        - DC00001
+        - DC00002
+        - DC00003
+        - DC00004
+        - DC00005
+        - DC00006
+        - DC00007
+        - DC00008
+        - DC00009
+        - DC00010
+        - DC00011
+        - DC00012
+        - DC00013
+        - DC00014
+        - DC00015
+        - DC00016
+        - DC00017
+        - DC00018
+        - DC00019
+        - DC00020
+        - DC00021
+        - DC00022
+        - DC00023
+        - DC00024
+      member_class_count: 24
+    - id: leaf_QUARANTINE_Q12_459af0d7
+      terminal_state: QUARANTINE
+      q_code: Q12
+      action_label: QUARANTINE_MATERNAL_NO_ANCHOR_Q12
+      action_label_set:
+        - QUARANTINE_MATERNAL_NO_ANCHOR_Q12
+      action_sequence_hash: 459af0d7d91c
+      parameter_policy_hashes:
+        - 96405f83b90e
+      action_sequence:
+        - parse_source
+        - flag_quarantine
+      parameter_policy:
+        q_code: Q12
+      family_id_examples: []
+      member_classes:
+        - DC00331
+      member_class_count: 1
+    - id: leaf_QUARANTINE_Q15A_459af0d7
+      terminal_state: QUARANTINE
+      q_code: Q15A
+      action_label: QUARANTINE_BIO_FINAL_FLAG_Q15A
+      action_label_set:
+        - QUARANTINE_BIO_FINAL_FLAG_Q15A
+      action_sequence_hash: 459af0d7d91c
+      parameter_policy_hashes:
+        - 0ff39de5a52e
+      action_sequence:
+        - parse_source
+        - flag_quarantine
+      parameter_policy:
+        q_code: Q15A
+      family_id_examples: []
+      member_classes:
+        - DC00034
+        - DC00035
+        - DC00036
+        - DC00037
+        - DC00038
+        - DC00039
+        - DC00049
+        - DC00050
+        - DC00051
+        - DC00052
+        - DC00053
+        - DC00054
+        - DC00068
+        - DC00069
+        - DC00070
+        - DC00071
+        - DC00072
+        - DC00073
+        - DC00087
+        - DC00088
+        - DC00089
+        - DC00090
+        - DC00091
+        - DC00092
+        - DC00110
+        - DC00111
+        - DC00112
+        - DC00113
+        - DC00114
+        - DC00115
+        - DC00125
+        - DC00126
+        - DC00127
+        - DC00128
+        - DC00129
+        - DC00130
+        - DC00144
+        - DC00145
+        - DC00146
+        - DC00147
+        - DC00148
+        - DC00149
+        - DC00173
+        - DC00174
+        - DC00175
+        - DC00176
+        - DC00177
+        - DC00178
+        - DC00198
+        - DC00199
+        - DC00200
+        - DC00201
+        - DC00202
+        - DC00203
+        - DC00216
+        - DC00217
+        - DC00218
+        - DC00219
+        - DC00220
+        - DC00221
+        - DC00234
+        - DC00235
+        - DC00236
+        - DC00237
+        - DC00238
+        - DC00239
+        - DC00252
+        - DC00253
+        - DC00254
+        - DC00255
+        - DC00256
+        - DC00257
+        - DC00270
+        - DC00271
+        - DC00272
+        - DC00273
+        - DC00274
+        - DC00275
+        - DC00285
+        - DC00286
+        - DC00287
+        - DC00288
+        - DC00289
+        - DC00290
+      member_class_count: 84
+    - id: leaf_QUARANTINE_Q15A_forced_f
+      terminal_state: QUARANTINE
+      q_code: Q15A
+      action_label: FORCED_FAIL_N8_Q15A
+      action_label_set:
+        - FORCED_FAIL_N8_Q15A
+      action_sequence_hash: forced_fail_
+      parameter_policy_hashes: []
+      action_sequence:
+        - parse_source
+        - flag_quarantine
+      parameter_policy:
+        q_code: Q15A
+      family_id_examples: []
+      member_classes: []
+      member_class_count: 0
+      synthetic_forced_failure_for: N8
+      note: Synthetic leaf for N8=N. Not present in D3 (no scenario in the universe failed this gate after earlier ones passed),
+        but emitted so the tree always evaluates N8 for new inputs.
+    - id: leaf_QUARANTINE_Q15B_459af0d7
+      terminal_state: QUARANTINE
+      q_code: Q15B
+      action_label: QUARANTINE_ADDL_CONFLICT_Q15B
+      action_label_set:
+        - QUARANTINE_ADDL_CONFLICT_Q15B
+        - QUARANTINE_LEGACY_FLAG_UNDOC_Q15B
+      action_sequence_hash: 459af0d7d91c
+      parameter_policy_hashes:
+        - fc80a095c5ee
+      action_sequence:
+        - parse_source
+        - flag_quarantine
+      parameter_policy:
+        q_code: Q15B
+      family_id_examples: []
+      member_classes:
+        - DC00026
+        - DC00028
+        - DC00030
+        - DC00041
+        - DC00043
+        - DC00045
+        - DC00056
+        - DC00059
+        - DC00063
+        - DC00075
+        - DC00078
+        - DC00082
+        - DC00102
+        - DC00104
+        - DC00106
+        - DC00117
+        - DC00119
+        - DC00121
+        - DC00132
+        - DC00135
+        - DC00139
+        - DC00151
+        - DC00154
+        - DC00158
+        - DC00161
+        - DC00164
+        - DC00168
+        - DC00180
+        - DC00183
+        - DC00187
+        - DC00190
+        - DC00192
+        - DC00194
+        - DC00208
+        - DC00210
+        - DC00212
+        - DC00226
+        - DC00228
+        - DC00230
+        - DC00244
+        - DC00246
+        - DC00248
+        - DC00262
+        - DC00264
+        - DC00266
+        - DC00277
+        - DC00279
+        - DC00281
+      member_class_count: 48
+    - id: leaf_QUARANTINE_Q16_459af0d7
+      terminal_state: QUARANTINE
+      q_code: Q16
+      action_label: QUARANTINE_ADDL_CONFLICT_Q16
+      action_label_set:
+        - QUARANTINE_ADDL_CONFLICT_Q16
+        - QUARANTINE_ANALYTE_ROLE_MISSING_Q16
+      action_sequence_hash: 459af0d7d91c
+      parameter_policy_hashes:
+        - 9d9b4b667195
+      action_sequence:
+        - parse_source
+        - flag_quarantine
+      parameter_policy:
+        q_code: Q16
+      family_id_examples: []
+      member_classes:
+        - DC00058
+        - DC00060
+        - DC00062
+        - DC00064
+        - DC00077
+        - DC00079
+        - DC00081
+        - DC00083
+        - DC00134
+        - DC00136
+        - DC00138
+        - DC00140
+        - DC00153
+        - DC00155
+        - DC00157
+        - DC00159
+        - DC00163
+        - DC00165
+        - DC00167
+        - DC00169
+        - DC00182
+        - DC00184
+        - DC00186
+        - DC00188
+      member_class_count: 24
+    - id: leaf_QUARANTINE_Q18_459af0d7
+      terminal_state: QUARANTINE
+      q_code: Q18
+      action_label: QUARANTINE_MATERNAL_NO_DYAD_Q18
+      action_label_set:
+        - QUARANTINE_MATERNAL_NO_DYAD_Q18
+      action_sequence_hash: 459af0d7d91c
+      parameter_policy_hashes:
+        - 727dc3c6f86b
+      action_sequence:
+        - parse_source
+        - flag_quarantine
+      parameter_policy:
+        q_code: Q18
+      family_id_examples: []
+      member_classes:
+        - DC00330
+      member_class_count: 1
+    - id: leaf_QUARANTINE_Q19_459af0d7
+      terminal_state: QUARANTINE
+      q_code: Q19
+      action_label: QUARANTINE_IMMUNOGEN_NO_RULE_Q19
+      action_label_set:
+        - QUARANTINE_IMMUNOGEN_NO_RULE_Q19
+      action_sequence_hash: 459af0d7d91c
+      parameter_policy_hashes:
+        - 06c0effbfaa2
+      action_sequence:
+        - parse_source
+        - flag_quarantine
+      parameter_policy:
+        q_code: Q19
+      family_id_examples: []
+      member_classes:
+        - DC00328
+        - DC00329
+      member_class_count: 2
+    - id: leaf_REPAIR_NA_067eec0a
+      terminal_state: REPAIR
+      q_code: null
+      action_label: REPAIR_F01_CMTROLE
+      action_label_set:
+        - REPAIR_F01_CMTROLE
+        - REPAIR_F24_CMTROLE
+        - REPAIR_F25_CMTROLE
+      action_sequence_hash: 067eec0a7a08
+      parameter_policy_hashes:
+        - 835c27d30e59
+        - ea8fdc70131d
+        - f60410e849b7
+      action_sequence:
+        - parse_source
+        - assign_cmt_with_analyte_role
+        - assign_evid
+        - sort_records
+        - export_nonmem_ready
+      parameter_policy:
+        analyte_role_declaration: VECTOR_COPY|CAR_POSITIVE_CELL
+        cmt_analyte_policy: multi_analyte_role_tagged
+      family_id_examples: []
+      member_classes:
+        - DC00057
+        - DC00076
+        - DC00093
+        - DC00095
+        - DC00097
+        - DC00099
+      member_class_count: 6
+    - id: leaf_REPAIR_NA_15a5313d
+      terminal_state: REPAIR
+      q_code: null
+      action_label: REPAIR_F29_DYAD_TPP_CMTM
+      action_label_set:
+        - REPAIR_F29_DYAD_TPP_CMTM
+      action_sequence_hash: 15a5313d2524
+      parameter_policy_hashes:
+        - 32d2b039727e
+      action_sequence:
+        - parse_source
+        - attach_dyad_linkage
+        - derive_time_postpartum_anchor
+        - assign_cmt_multi
+        - assign_evid
+        - sort_records
+        - export_nonmem_ready
+      parameter_policy:
+        cmt_analyte_policy: multi_with_rules
+        delivery_anchor_policy: delivery_date
+        dyad_linkage_policy: mother_id_on_infant_row
+      family_id_examples: []
+      member_classes:
+        - DC00263
+        - DC00278
+      member_class_count: 2
+    - id: leaf_REPAIR_NA_15b180bb
+      terminal_state: REPAIR
+      q_code: null
+      action_label: REPAIR_F26_CBLQ_PROD
+      action_label_set:
+        - REPAIR_F26_CBLQ_PROD
+      action_sequence_hash: 15b180bb6012
+      parameter_policy_hashes:
+        - 36ff6caa1018
+      action_sequence:
+        - parse_source
+        - canonicalize_cellular_blq
+        - assign_cmt_single
+        - attach_covariate_product_level
+        - assign_evid
+        - sort_records
+        - export_nonmem_ready
+      parameter_policy:
+        cellular_LLOQ_derivation_policy: poisson_derived
+        product_level_covariate_linkage_policy: lot_to_subject_via_manufacturing_record
+      family_id_examples: []
+      member_classes:
+        - DC00150
+        - DC00179
+      member_class_count: 2
+    - id: leaf_REPAIR_NA_41fcc136
+      terminal_state: REPAIR
+      q_code: null
+      action_label: REPAIR_F01_ADA
+      action_label_set:
+        - REPAIR_F01_ADA
+        - REPAIR_F27_ADA
+      action_sequence_hash: 41fcc1363a80
+      parameter_policy_hashes:
+        - 7633c2986317
+      action_sequence:
+        - parse_source
+        - adjudicate_immunogenicity_positivity
+        - assign_cmt_single
+        - assign_evid
+        - sort_records
+        - export_nonmem_ready
+      parameter_policy:
+        positivity_adjudication_rule: screening_plus_confirmation
+      family_id_examples: []
+      member_classes:
+        - DC00204
+        - DC00222
+        - DC00240
+        - DC00258
+      member_class_count: 4
+    - id: leaf_REPAIR_NA_42baa351
+      terminal_state: REPAIR
+      q_code: null
+      action_label: REPAIR_F26_CBLQ_CMTROLE_PROD
+      action_label_set:
+        - REPAIR_F26_CBLQ_CMTROLE_PROD
+      action_sequence_hash: 42baa3516583
+      parameter_policy_hashes:
+        - 4667d2d03707
+      action_sequence:
+        - parse_source
+        - canonicalize_cellular_blq
+        - assign_cmt_with_analyte_role
+        - attach_covariate_product_level
+        - assign_evid
+        - sort_records
+        - export_nonmem_ready
+      parameter_policy:
+        analyte_role_declaration: VECTOR_COPY|CAR_POSITIVE_CELL
+        cellular_LLOQ_derivation_policy: poisson_derived
+        cmt_analyte_policy: multi_analyte_role_tagged
+        product_level_covariate_linkage_policy: lot_to_subject_via_manufacturing_record
+      family_id_examples: []
+      member_classes:
+        - DC00152
+        - DC00181
+      member_class_count: 2
+    - id: leaf_REPAIR_NA_498624fe
+      terminal_state: REPAIR
+      q_code: null
+      action_label: REPAIR_F28_TPP
+      action_label_set:
+        - REPAIR_F28_TPP
+      action_sequence_hash: 498624fec52a
+      parameter_policy_hashes:
+        - b9a22e2744c2
+      action_sequence:
+        - parse_source
+        - derive_time_postpartum_anchor
+        - assign_cmt_single
+        - assign_evid
+        - sort_records
+        - export_nonmem_ready
+      parameter_policy:
+        delivery_anchor_policy: delivery_date
+      family_id_examples: []
+      member_classes:
+        - DC00333
+      member_class_count: 1
+    - id: leaf_REPAIR_NA_4f0d18c6
+      terminal_state: REPAIR
+      q_code: null
+      action_label: REPAIR_F26_CBLQ_DDIVP_PROD
+      action_label_set:
+        - REPAIR_F26_CBLQ_DDIVP_PROD
+      action_sequence_hash: 4f0d18c6f472
+      parameter_policy_hashes:
+        - d80fd9da44a1
+      action_sequence:
+        - parse_source
+        - canonicalize_cellular_blq
+        - assign_cmt_ddi_victim_perpetrator
+        - attach_covariate_product_level
+        - assign_evid
+        - sort_records
+        - export_nonmem_ready
+      parameter_policy:
+        cellular_LLOQ_derivation_policy: poisson_derived
+        cmt_analyte_policy: ddi_dual_cmt
+        dual_cmt_policy: victim_low_perp_high
+        product_level_covariate_linkage_policy: lot_to_subject_via_manufacturing_record
+      family_id_examples: []
+      member_classes:
+        - DC00156
+        - DC00185
+      member_class_count: 2
+    - id: leaf_REPAIR_NA_531efd39
+      terminal_state: REPAIR
+      q_code: null
+      action_label: REPAIR_F28_TPP_BLQ
+      action_label_set:
+        - REPAIR_F28_TPP_BLQ
+      action_sequence_hash: 531efd39b514
+      parameter_policy_hashes:
+        - 2babdb44202b
+      action_sequence:
+        - parse_source
+        - derive_time_postpartum_anchor
+        - canonicalize_blq
+        - assign_cmt_single
+        - assign_evid
+        - sort_records
+        - export_nonmem_ready
+      parameter_policy:
+        blq_handling_policy: M3
+        delivery_anchor_policy: delivery_date
+      family_id_examples: []
+      member_classes:
+        - DC00335
+      member_class_count: 1
+    - id: leaf_REPAIR_NA_583831ec
+      terminal_state: REPAIR
+      q_code: null
+      action_label: REPAIR_F29_MILK_CMTM
+      action_label_set:
+        - REPAIR_F29_MILK_CMTM
+      action_sequence_hash: 583831ecdc20
+      parameter_policy_hashes:
+        - f2b7ee7dd571
+      action_sequence:
+        - parse_source
+        - assign_milk_matrix_lloq
+        - assign_cmt_multi
+        - assign_evid
+        - sort_records
+        - export_nonmem_ready
+      parameter_policy:
+        cmt_analyte_policy: multi_with_rules
+        milk_matrix_lloq_policy: matrix_specific_lloq
+      family_id_examples: []
+      member_classes:
+        - DC00292
+        - DC00298
+      member_class_count: 2
+    - id: leaf_REPAIR_NA_5a6233bc
+      terminal_state: REPAIR
+      q_code: null
+      action_label: REPAIR_F29_DYAD_TPP_DDIVP
+      action_label_set:
+        - REPAIR_F29_DYAD_TPP_DDIVP
+      action_sequence_hash: 5a6233bcb2e8
+      parameter_policy_hashes:
+        - f568e654a9aa
+      action_sequence:
+        - parse_source
+        - attach_dyad_linkage
+        - derive_time_postpartum_anchor
+        - assign_cmt_ddi_victim_perpetrator
+        - assign_evid
+        - sort_records
+        - export_nonmem_ready
+      parameter_policy:
+        cmt_analyte_policy: ddi_dual_cmt
+        delivery_anchor_policy: delivery_date
+        dual_cmt_policy: victim_low_perp_high
+        dyad_linkage_policy: mother_id_on_infant_row
+      family_id_examples: []
+      member_classes:
+        - DC00265
+        - DC00280
+      member_class_count: 2
+    - id: leaf_REPAIR_NA_60bd547e
+      terminal_state: REPAIR
+      q_code: null
+      action_label: REPAIR_F28_TPP_DLM
+      action_label_set:
+        - REPAIR_F28_TPP_DLM
+      action_sequence_hash: 60bd547e8af1
+      parameter_policy_hashes:
+        - 64a30e0176cf
+      action_sequence:
+        - parse_source
+        - derive_time_postpartum_anchor
+        - reconstruct_loading_maintenance
+        - assign_cmt_single
+        - assign_evid
+        - sort_records
+        - export_nonmem_ready
+      parameter_policy:
+        delivery_anchor_policy: delivery_date
+        dose_reconstruction_policy: loading_maintenance
+      family_id_examples: []
+      member_classes:
+        - DC00336
+      member_class_count: 1
+    - id: leaf_REPAIR_NA_625092f4
+      terminal_state: REPAIR
+      q_code: null
+      action_label: REPAIR_F01_CMTM
+      action_label_set:
+        - REPAIR_F01_CMTM
+        - REPAIR_F27_CMTM
+      action_sequence_hash: 625092f45d69
+      parameter_policy_hashes:
+        - 3d9b119a827c
+      action_sequence:
+        - parse_source
+        - assign_cmt_multi
+        - assign_evid
+        - sort_records
+        - export_nonmem_ready
+      parameter_policy:
+        cmt_analyte_policy: multi_with_rules
+      family_id_examples: []
+      member_classes:
+        - DC00027
+        - DC00042
+        - DC00103
+        - DC00118
+        - DC00191
+        - DC00209
+        - DC00227
+        - DC00245
+      member_class_count: 8
+    - id: leaf_REPAIR_NA_6b8ec154
+      terminal_state: REPAIR
+      q_code: null
+      action_label: REPAIR_F22_ADA_DDIVP
+      action_label_set:
+        - REPAIR_F22_ADA_DDIVP
+        - REPAIR_F27_ADA_DDIVP
+      action_sequence_hash: 6b8ec154a9fb
+      parameter_policy_hashes:
+        - 5a2c61a4b4b8
+      action_sequence:
+        - parse_source
+        - adjudicate_immunogenicity_positivity
+        - assign_cmt_ddi_victim_perpetrator
+        - assign_evid
+        - sort_records
+        - export_nonmem_ready
+      parameter_policy:
+        cmt_analyte_policy: ddi_dual_cmt
+        dual_cmt_policy: victim_low_perp_high
+        positivity_adjudication_rule: screening_plus_confirmation
+      family_id_examples: []
+      member_classes:
+        - DC00206
+        - DC00224
+        - DC00242
+        - DC00260
+      member_class_count: 4
+    - id: leaf_REPAIR_NA_7388bbe3
+      terminal_state: REPAIR
+      q_code: null
+      action_label: REPAIR_F29_BLQ_MILK
+      action_label_set:
+        - REPAIR_F29_BLQ_MILK
+      action_sequence_hash: 7388bbe32c45
+      parameter_policy_hashes:
+        - 419516298d26
+      action_sequence:
+        - parse_source
+        - canonicalize_blq
+        - assign_milk_matrix_lloq
+        - assign_cmt_single
+        - assign_evid
+        - sort_records
+        - export_nonmem_ready
+      parameter_policy:
+        blq_handling_policy: M3
+        milk_matrix_lloq_policy: matrix_specific_lloq
+      family_id_examples: []
+      member_classes:
+        - DC00294
+        - DC00300
+      member_class_count: 2
+    - id: leaf_REPAIR_NA_8291e7f5
+      terminal_state: REPAIR
+      q_code: null
+      action_label: REPAIR_F26_PROD
+      action_label_set:
+        - REPAIR_F26_PROD
+      action_sequence_hash: 8291e7f57dad
+      parameter_policy_hashes:
+        - 30fd014765af
+      action_sequence:
+        - parse_source
+        - assign_cmt_single
+        - attach_covariate_product_level
+        - assign_evid
+        - sort_records
+        - export_nonmem_ready
+      parameter_policy:
+        product_level_covariate_linkage_policy: lot_to_subject_via_manufacturing_record
+      family_id_examples: []
+      member_classes:
+        - DC00131
+        - DC00160
+      member_class_count: 2
+    - id: leaf_REPAIR_NA_8759fdd7
+      terminal_state: REPAIR
+      q_code: null
+      action_label: REPAIR_F26_DDIVP_PROD
+      action_label_set:
+        - REPAIR_F26_DDIVP_PROD
+      action_sequence_hash: 8759fdd7f15f
+      parameter_policy_hashes:
+        - 9b1cc79ec578
+      action_sequence:
+        - parse_source
+        - assign_cmt_ddi_victim_perpetrator
+        - attach_covariate_product_level
+        - assign_evid
+        - sort_records
+        - export_nonmem_ready
+      parameter_policy:
+        cmt_analyte_policy: ddi_dual_cmt
+        dual_cmt_policy: victim_low_perp_high
+        product_level_covariate_linkage_policy: lot_to_subject_via_manufacturing_record
+      family_id_examples: []
+      member_classes:
+        - DC00137
+        - DC00166
+      member_class_count: 2
+    - id: leaf_REPAIR_NA_89701750
+      terminal_state: REPAIR
+      q_code: null
+      action_label: REPAIR_F29_BLQ_MILK_DDIVP
+      action_label_set:
+        - REPAIR_F29_BLQ_MILK_DDIVP
+      action_sequence_hash: 89701750e622
+      parameter_policy_hashes:
+        - d660099bcb07
+      action_sequence:
+        - parse_source
+        - canonicalize_blq
+        - assign_milk_matrix_lloq
+        - assign_cmt_ddi_victim_perpetrator
+        - assign_evid
+        - sort_records
+        - export_nonmem_ready
+      parameter_policy:
+        blq_handling_policy: M3
+        cmt_analyte_policy: ddi_dual_cmt
+        dual_cmt_policy: victim_low_perp_high
+        milk_matrix_lloq_policy: matrix_specific_lloq
+      family_id_examples: []
+      member_classes:
+        - DC00296
+        - DC00302
+      member_class_count: 2
+    - id: leaf_REPAIR_NA_8ab607dd
+      terminal_state: REPAIR
+      q_code: null
+      action_label: REPAIR_F26_BLQ_CMTROLE_PROD
+      action_label_set:
+        - REPAIR_F26_BLQ_CMTROLE_PROD
+      action_sequence_hash: 8ab607dd9c0a
+      parameter_policy_hashes:
+        - f1aa51a059ea
+      action_sequence:
+        - parse_source
+        - canonicalize_blq
+        - assign_cmt_with_analyte_role
+        - attach_covariate_product_level
+        - assign_evid
+        - sort_records
+        - export_nonmem_ready
+      parameter_policy:
+        analyte_role_declaration: VECTOR_COPY|CAR_POSITIVE_CELL
+        blq_handling_policy: M3
+        cmt_analyte_policy: multi_analyte_role_tagged
+        product_level_covariate_linkage_policy: lot_to_subject_via_manufacturing_record
+      family_id_examples: []
+      member_classes:
+        - DC00142
+        - DC00171
+      member_class_count: 2
+    - id: leaf_REPAIR_NA_8c22237a
+      terminal_state: REPAIR
+      q_code: null
+      action_label: REPAIR_F29_DYAD_TPP_BLQ
+      action_label_set:
+        - REPAIR_F29_DYAD_TPP_BLQ
+      action_sequence_hash: 8c22237a37c4
+      parameter_policy_hashes:
+        - 3279ed33f176
+      action_sequence:
+        - parse_source
+        - attach_dyad_linkage
+        - derive_time_postpartum_anchor
+        - canonicalize_blq
+        - assign_cmt_single
+        - assign_evid
+        - sort_records
+        - export_nonmem_ready
+      parameter_policy:
+        blq_handling_policy: M3
+        delivery_anchor_policy: delivery_date
+        dyad_linkage_policy: mother_id_on_infant_row
+      family_id_examples: []
+      member_classes:
+        - DC00267
+        - DC00282
+      member_class_count: 2
+    - id: leaf_REPAIR_NA_8c7c841f
+      terminal_state: REPAIR
+      q_code: null
+      action_label: REPAIR_F28_TPP_DLM_BLQ
+      action_label_set:
+        - REPAIR_F28_TPP_DLM_BLQ
+      action_sequence_hash: 8c7c841fab98
+      parameter_policy_hashes:
+        - 98fb2c3b7ffb
+      action_sequence:
+        - parse_source
+        - derive_time_postpartum_anchor
+        - reconstruct_loading_maintenance
+        - canonicalize_blq
+        - assign_cmt_single
+        - assign_evid
+        - sort_records
+        - export_nonmem_ready
+      parameter_policy:
+        blq_handling_policy: M3
+        delivery_anchor_policy: delivery_date
+        dose_reconstruction_policy: loading_maintenance
+      family_id_examples: []
+      member_classes:
+        - DC00337
+      member_class_count: 1
+    - id: leaf_REPAIR_NA_9778a409
+      terminal_state: REPAIR
+      q_code: null
+      action_label: REPAIR_F22_DDIVP
+      action_label_set:
+        - REPAIR_F22_DDIVP
+        - REPAIR_F27_DDIVP
+      action_sequence_hash: 9778a409567c
+      parameter_policy_hashes:
+        - 3b6e37a453cb
+      action_sequence:
+        - parse_source
+        - assign_cmt_ddi_victim_perpetrator
+        - assign_evid
+        - sort_records
+        - export_nonmem_ready
+      parameter_policy:
+        cmt_analyte_policy: ddi_dual_cmt
+        dual_cmt_policy: victim_low_perp_high
+      family_id_examples: []
+      member_classes:
+        - DC00029
+        - DC00044
+        - DC00061
+        - DC00080
+        - DC00105
+        - DC00120
+        - DC00193
+        - DC00211
+        - DC00229
+        - DC00247
+      member_class_count: 10
+    - id: leaf_REPAIR_NA_97865932
+      terminal_state: REPAIR
+      q_code: null
+      action_label: REPAIR_F29_DYAD_TPP
+      action_label_set:
+        - REPAIR_F29_DYAD_TPP
+      action_sequence_hash: 97865932be64
+      parameter_policy_hashes:
+        - 45e1c27c5262
+      action_sequence:
+        - parse_source
+        - attach_dyad_linkage
+        - derive_time_postpartum_anchor
+        - assign_cmt_single
+        - assign_evid
+        - sort_records
+        - export_nonmem_ready
+      parameter_policy:
+        delivery_anchor_policy: delivery_date
+        dyad_linkage_policy: mother_id_on_infant_row
+      family_id_examples: []
+      member_classes:
+        - DC00261
+        - DC00276
+      member_class_count: 2
+    - id: leaf_REPAIR_NA_99ef783e
+      terminal_state: REPAIR
+      q_code: null
+      action_label: REPAIR_F26_CMTROLE_PROD
+      action_label_set:
+        - REPAIR_F26_CMTROLE_PROD
+      action_sequence_hash: 99ef783e9423
+      parameter_policy_hashes:
+        - 02ed3c5cb06b
+      action_sequence:
+        - parse_source
+        - assign_cmt_with_analyte_role
+        - attach_covariate_product_level
+        - assign_evid
+        - sort_records
+        - export_nonmem_ready
+      parameter_policy:
+        analyte_role_declaration: VECTOR_COPY|CAR_POSITIVE_CELL
+        cmt_analyte_policy: multi_analyte_role_tagged
+        product_level_covariate_linkage_policy: lot_to_subject_via_manufacturing_record
+      family_id_examples: []
+      member_classes:
+        - DC00133
+        - DC00162
+      member_class_count: 2
+    - id: leaf_REPAIR_NA_a6c25aa4
+      terminal_state: REPAIR
+      q_code: null
+      action_label: REPAIR_F29_DYAD_TPP_BLQ_DDIVP
+      action_label_set:
+        - REPAIR_F29_DYAD_TPP_BLQ_DDIVP
+      action_sequence_hash: a6c25aa444ee
+      parameter_policy_hashes:
+        - 9e71434ff1df
+      action_sequence:
+        - parse_source
+        - attach_dyad_linkage
+        - derive_time_postpartum_anchor
+        - canonicalize_blq
+        - assign_cmt_ddi_victim_perpetrator
+        - assign_evid
+        - sort_records
+        - export_nonmem_ready
+      parameter_policy:
+        blq_handling_policy: M3
+        cmt_analyte_policy: ddi_dual_cmt
+        delivery_anchor_policy: delivery_date
+        dual_cmt_policy: victim_low_perp_high
+        dyad_linkage_policy: mother_id_on_infant_row
+      family_id_examples: []
+      member_classes:
+        - DC00269
+        - DC00284
+      member_class_count: 2
+    - id: leaf_REPAIR_NA_ad950bea
+      terminal_state: REPAIR
+      q_code: null
+      action_label: REPAIR_F01_BLQ_CMTM
+      action_label_set:
+        - REPAIR_F01_BLQ_CMTM
+        - REPAIR_F27_BLQ_CMTM
+      action_sequence_hash: ad950bea7a00
+      parameter_policy_hashes:
+        - b0d8a8150750
+      action_sequence:
+        - parse_source
+        - canonicalize_blq
+        - assign_cmt_multi
+        - assign_evid
+        - sort_records
+        - export_nonmem_ready
+      parameter_policy:
+        blq_handling_policy: M3
+        cmt_analyte_policy: multi_with_rules
+      family_id_examples: []
+      member_classes:
+        - DC00032
+        - DC00047
+        - DC00108
+        - DC00123
+        - DC00196
+        - DC00214
+        - DC00232
+        - DC00250
+      member_class_count: 8
+    - id: leaf_REPAIR_NA_b0a07c38
+      terminal_state: REPAIR
+      q_code: null
+      action_label: REPAIR_F01_BLQ_CMTROLE
+      action_label_set:
+        - REPAIR_F01_BLQ_CMTROLE
+        - REPAIR_F24_BLQ_CMTROLE
+        - REPAIR_F25_BLQ_CMTROLE
+      action_sequence_hash: b0a07c38e805
+      parameter_policy_hashes:
+        - 0fb8c6d4335c
+        - 4bdf45aaf340
+        - edd44a84e2e5
+      action_sequence:
+        - parse_source
+        - canonicalize_blq
+        - assign_cmt_with_analyte_role
+        - assign_evid
+        - sort_records
+        - export_nonmem_ready
+      parameter_policy:
+        analyte_role_declaration: VECTOR_COPY|CAR_POSITIVE_CELL
+        blq_handling_policy: M3
+        cmt_analyte_policy: multi_analyte_role_tagged
+      family_id_examples: []
+      member_classes:
+        - DC00066
+        - DC00085
+        - DC00094
+        - DC00096
+        - DC00098
+        - DC00100
+      member_class_count: 6
+    - id: leaf_REPAIR_NA_bc3e0088
+      terminal_state: REPAIR
+      q_code: null
+      action_label: REPAIR_F01_ADA_CMTM
+      action_label_set:
+        - REPAIR_F01_ADA_CMTM
+        - REPAIR_F27_ADA_CMTM
+      action_sequence_hash: bc3e0088a4a8
+      parameter_policy_hashes:
+        - 3714214a844f
+      action_sequence:
+        - parse_source
+        - adjudicate_immunogenicity_positivity
+        - assign_cmt_multi
+        - assign_evid
+        - sort_records
+        - export_nonmem_ready
+      parameter_policy:
+        cmt_analyte_policy: multi_with_rules
+        positivity_adjudication_rule: screening_plus_confirmation
+      family_id_examples: []
+      member_classes:
+        - DC00205
+        - DC00223
+        - DC00241
+        - DC00259
+      member_class_count: 4
+    - id: leaf_REPAIR_NA_be4ff92f
+      terminal_state: REPAIR
+      q_code: null
+      action_label: REPAIR_F29_MILK_DDIVP
+      action_label_set:
+        - REPAIR_F29_MILK_DDIVP
+      action_sequence_hash: be4ff92f7ae4
+      parameter_policy_hashes:
+        - 1a95278bf94f
+      action_sequence:
+        - parse_source
+        - assign_milk_matrix_lloq
+        - assign_cmt_ddi_victim_perpetrator
+        - assign_evid
+        - sort_records
+        - export_nonmem_ready
+      parameter_policy:
+        cmt_analyte_policy: ddi_dual_cmt
+        dual_cmt_policy: victim_low_perp_high
+        milk_matrix_lloq_policy: matrix_specific_lloq
+      family_id_examples: []
+      member_classes:
+        - DC00293
+        - DC00299
+      member_class_count: 2
+    - id: leaf_REPAIR_NA_c3394219
+      terminal_state: REPAIR
+      q_code: null
+      action_label: REPAIR_F26_BLQ_PROD
+      action_label_set:
+        - REPAIR_F26_BLQ_PROD
+      action_sequence_hash: c3394219d171
+      parameter_policy_hashes:
+        - b0a5d30f5dff
+      action_sequence:
+        - parse_source
+        - canonicalize_blq
+        - assign_cmt_single
+        - attach_covariate_product_level
+        - assign_evid
+        - sort_records
+        - export_nonmem_ready
+      parameter_policy:
+        blq_handling_policy: M3
+        product_level_covariate_linkage_policy: lot_to_subject_via_manufacturing_record
+      family_id_examples: []
+      member_classes:
+        - DC00141
+        - DC00170
+      member_class_count: 2
+    - id: leaf_REPAIR_NA_d33ddf52
+      terminal_state: REPAIR
+      q_code: null
+      action_label: REPAIR_F29_BLQ_MILK_CMTM
+      action_label_set:
+        - REPAIR_F29_BLQ_MILK_CMTM
+      action_sequence_hash: d33ddf52e7c6
+      parameter_policy_hashes:
+        - 904a631ff246
+      action_sequence:
+        - parse_source
+        - canonicalize_blq
+        - assign_milk_matrix_lloq
+        - assign_cmt_multi
+        - assign_evid
+        - sort_records
+        - export_nonmem_ready
+      parameter_policy:
+        blq_handling_policy: M3
+        cmt_analyte_policy: multi_with_rules
+        milk_matrix_lloq_policy: matrix_specific_lloq
+      family_id_examples: []
+      member_classes:
+        - DC00295
+        - DC00301
+      member_class_count: 2
+    - id: leaf_REPAIR_NA_d3e4e18d
+      terminal_state: REPAIR
+      q_code: null
+      action_label: REPAIR_F26_BLQ_DDIVP_PROD
+      action_label_set:
+        - REPAIR_F26_BLQ_DDIVP_PROD
+      action_sequence_hash: d3e4e18d7567
+      parameter_policy_hashes:
+        - 8ca02bd67622
+      action_sequence:
+        - parse_source
+        - canonicalize_blq
+        - assign_cmt_ddi_victim_perpetrator
+        - attach_covariate_product_level
+        - assign_evid
+        - sort_records
+        - export_nonmem_ready
+      parameter_policy:
+        blq_handling_policy: M3
+        cmt_analyte_policy: ddi_dual_cmt
+        dual_cmt_policy: victim_low_perp_high
+        product_level_covariate_linkage_policy: lot_to_subject_via_manufacturing_record
+      family_id_examples: []
+      member_classes:
+        - DC00143
+        - DC00172
+      member_class_count: 2
+    - id: leaf_REPAIR_NA_e410254a
+      terminal_state: REPAIR
+      q_code: null
+      action_label: REPAIR_F29_DYAD_TPP_BLQ_CMTM
+      action_label_set:
+        - REPAIR_F29_DYAD_TPP_BLQ_CMTM
+      action_sequence_hash: e410254a7055
+      parameter_policy_hashes:
+        - 6beee30b3569
+      action_sequence:
+        - parse_source
+        - attach_dyad_linkage
+        - derive_time_postpartum_anchor
+        - canonicalize_blq
+        - assign_cmt_multi
+        - assign_evid
+        - sort_records
+        - export_nonmem_ready
+      parameter_policy:
+        blq_handling_policy: M3
+        cmt_analyte_policy: multi_with_rules
+        delivery_anchor_policy: delivery_date
+        dyad_linkage_policy: mother_id_on_infant_row
+      family_id_examples: []
+      member_classes:
+        - DC00268
+        - DC00283
+      member_class_count: 2
+    - id: leaf_REPAIR_NA_f452000c
+      terminal_state: REPAIR
+      q_code: null
+      action_label: REPAIR_F22_BLQ_DDIVP
+      action_label_set:
+        - REPAIR_F22_BLQ_DDIVP
+        - REPAIR_F27_BLQ_DDIVP
+      action_sequence_hash: f452000cd78c
+      parameter_policy_hashes:
+        - 1a93afeda678
+      action_sequence:
+        - parse_source
+        - canonicalize_blq
+        - assign_cmt_ddi_victim_perpetrator
+        - assign_evid
+        - sort_records
+        - export_nonmem_ready
+      parameter_policy:
+        blq_handling_policy: M3
+        cmt_analyte_policy: ddi_dual_cmt
+        dual_cmt_policy: victim_low_perp_high
+      family_id_examples: []
+      member_classes:
+        - DC00033
+        - DC00048
+        - DC00067
+        - DC00086
+        - DC00109
+        - DC00124
+        - DC00197
+        - DC00215
+        - DC00233
+        - DC00251
+      member_class_count: 10
+    - id: leaf_REPAIR_NA_f67c49c7
+      terminal_state: REPAIR
+      q_code: null
+      action_label: REPAIR_F01_BLQ
+      action_label_set:
+        - REPAIR_F01_BLQ
+        - REPAIR_F27_BLQ
+      action_sequence_hash: f67c49c740b6
+      parameter_policy_hashes:
+        - 5598114a142c
+      action_sequence:
+        - parse_source
+        - canonicalize_blq
+        - assign_cmt_single
+        - assign_evid
+        - sort_records
+        - export_nonmem_ready
+      parameter_policy:
+        blq_handling_policy: M3
+      family_id_examples: []
+      member_classes:
+        - DC00031
+        - DC00046
+        - DC00065
+        - DC00084
+        - DC00107
+        - DC00122
+        - DC00195
+        - DC00213
+        - DC00231
+        - DC00249
+      member_class_count: 10
+  audit_log_template:
+    fields:
+      - decision_path
+      - terminal_state
+      - q_code
+      - action_sequence_executed
+      - parameter_policies
+      - timestamp_iso
+      - input_data_summary
+      - row_counts_before_after
+      - operator
+      - aic_hash
+    decision_path_format: list of (node_id, answer) tuples in evaluation order
+    input_data_summary_keys:
+      - row_count
+      - columns_used
+      - fingerprint_sha256
+    emit_one_per: AUTO/REPAIR invocation; written next to NONMEM-ready CSV
+  statistics:
+    internal_node_count: 126
+    leaf_count: 51
+    terminal_state_counts:
+      AUTO: 1
+      INVALID: 1
+      QUARANTINE: 15
+      REPAIR: 34
+    covered_d3_classes: 337
+    source_d3_class_count: 337

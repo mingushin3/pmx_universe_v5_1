@@ -1,0 +1,5 @@
+golden_id,project_id,family_id,expected_terminal_state,expected_q_code,representative_dc_class,representative_action_label,tree_walked,terminal_match,q_code_match,leaf_reached,decision_path,row_count_match,id_set_match,dv_match,audit_log_complete,nonmem_qc_pass,overall_status,mismatch_detail
+G001,PROJ_ADC_014,F24,REPAIR,,DC00057,REPAIR_F24_CMTROLE,Y,Y,Y,leaf_REPAIR_NA_067eec0a,N0=Y->N1=Y->N8=Y->N2=Y->N3=Y->N4=Y->N5=Y->N14=N->N13=N->N19=N->N21=Y->N22=N->N24=N->N25=Y,Y,Y,Y,synthetic,n/a,PASS,
+G002,PROJ_CART_016,F26,REPAIR,,DC00131,REPAIR_F26_PROD,Y,Y,Y,leaf_REPAIR_NA_8291e7f5,N0=Y->N1=Y->N8=Y->N2=Y->N3=Y->N4=Y->N5=Y->N14=N->N13=N->N19=Y->N21=N->N24=N->N25=Y,Y,Y,Y,synthetic,n/a,PASS,
+G004,PROJ_LAC_020,F29,REPAIR,,DC00261,REPAIR_F29_DYAD_TPP,Y,Y,Y,leaf_REPAIR_NA_97865932,N0=Y->N1=Y->N8=Y->N2=Y->N3=Y->N4=Y->N5=Y->N14=N->N13=N->N19=Y->N21=N->N24=N->N25=N,Y,Y,Y,synthetic,n/a,PASS,
+G006,PROJ_S01_001,F01,AUTO,,DC00025,AUTO_F01_SMALL_MOLECULE,Y,Y,Y,leaf_AUTO_NA_375dc3d8,N0=Y->N1=Y->N8=Y->N2=Y->N3=Y->N4=Y->N5=Y->N14=N->N13=N->N19=N->N21=N->N24=N->N25=N->N11=N->N17=N->N29=N,Y,Y,Y,synthetic,n/a,PASS,

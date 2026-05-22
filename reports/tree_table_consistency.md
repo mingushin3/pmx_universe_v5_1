@@ -1,0 +1,89 @@
+# Tree ↔ Decision Table Consistency Report
+
+**Generated:** 2026-05-22T12:51:29.481085+00:00
+
+**Tree:** `config/operational_decision_tree.yaml`
+**Decision table:** `data/decision_table/reduced_decision_table_v1.0.csv`
+**Selected nodes (D5):** ['N0', 'N1', 'N11', 'N13', 'N14', 'N17', 'N19', 'N2', 'N20', 'N21', 'N22', 'N24', 'N25', 'N27', 'N29', 'N3', 'N4', 'N5', 'N8']
+
+## Summary
+
+- **total**: 337
+- **pass**: 337
+- **fail**: 0
+- **match_rate_pct**: 100.0
+- **t01_failures**: 0
+- **t02_failures**: 0
+- **t03_failures**: 0
+- **t04_failures**: 0
+- **t06_failures**: 0
+- **t05_notes**: 0
+
+**RESULT: 100% PASS — every D3 class routes to a leaf consistent with its outcome.**
+
+## Per-leaf reverse mapping (classes → leaf)
+
+| leaf_id | terminal_state | q_code | action_label_set | member_classes |
+|---|---|---|---|---|
+| `leaf_AUTO_NA_375dc3d8` | AUTO | — | AUTO_F01_ADC,AUTO_F01_MAB,AUTO_F01_SMALL_MOLECULE,AUTO_F27_MRNA,AUTO_F29_SMALL_MOLECULE | 12 |
+| `leaf_INVALID_NA_8fb0fdbc` | INVALID | — | INVALID_F34 | 24 |
+| `leaf_QUARANTINE_Q01_459af0d7` | QUARANTINE | Q01 | QUARANTINE_CELLULAR_NO_LLOQ_Q01,QUARANTINE_LLOQ_MISSING_Q01 | 2 |
+| `leaf_QUARANTINE_Q02_459af0d7` | QUARANTINE | Q02 | QUARANTINE_GENERIC_Q02 | 1 |
+| `leaf_QUARANTINE_Q11_459af0d7` | QUARANTINE | Q11 | QUARANTINE_ADDL_CONFLICT_Q11,QUARANTINE_AIC_MISSING_Q11,QUARANTINE_BIO_FINAL_FLAG_Q11,QUARANTINE_LEGACY_FLAG_UNDOC_Q11 | 24 |
+| `leaf_QUARANTINE_Q12_459af0d7` | QUARANTINE | Q12 | QUARANTINE_MATERNAL_NO_ANCHOR_Q12 | 1 |
+| `leaf_QUARANTINE_Q15A_459af0d7` | QUARANTINE | Q15A | QUARANTINE_BIO_FINAL_FLAG_Q15A | 84 |
+| `leaf_QUARANTINE_Q15B_459af0d7` | QUARANTINE | Q15B | QUARANTINE_ADDL_CONFLICT_Q15B,QUARANTINE_LEGACY_FLAG_UNDOC_Q15B | 48 |
+| `leaf_QUARANTINE_Q16_459af0d7` | QUARANTINE | Q16 | QUARANTINE_ADDL_CONFLICT_Q16,QUARANTINE_ANALYTE_ROLE_MISSING_Q16 | 24 |
+| `leaf_QUARANTINE_Q18_459af0d7` | QUARANTINE | Q18 | QUARANTINE_MATERNAL_NO_DYAD_Q18 | 1 |
+| `leaf_QUARANTINE_Q19_459af0d7` | QUARANTINE | Q19 | QUARANTINE_IMMUNOGEN_NO_RULE_Q19 | 2 |
+| `leaf_REPAIR_NA_067eec0a` | REPAIR | — | REPAIR_F01_CMTROLE,REPAIR_F24_CMTROLE,REPAIR_F25_CMTROLE | 6 |
+| `leaf_REPAIR_NA_15a5313d` | REPAIR | — | REPAIR_F29_DYAD_TPP_CMTM | 2 |
+| `leaf_REPAIR_NA_15b180bb` | REPAIR | — | REPAIR_F26_CBLQ_PROD | 2 |
+| `leaf_REPAIR_NA_41fcc136` | REPAIR | — | REPAIR_F01_ADA,REPAIR_F27_ADA | 4 |
+| `leaf_REPAIR_NA_42baa351` | REPAIR | — | REPAIR_F26_CBLQ_CMTROLE_PROD | 2 |
+| `leaf_REPAIR_NA_498624fe` | REPAIR | — | REPAIR_F28_TPP | 1 |
+| `leaf_REPAIR_NA_4f0d18c6` | REPAIR | — | REPAIR_F26_CBLQ_DDIVP_PROD | 2 |
+| `leaf_REPAIR_NA_531efd39` | REPAIR | — | REPAIR_F28_TPP_BLQ | 1 |
+| `leaf_REPAIR_NA_583831ec` | REPAIR | — | REPAIR_F29_MILK_CMTM | 2 |
+| `leaf_REPAIR_NA_5a6233bc` | REPAIR | — | REPAIR_F29_DYAD_TPP_DDIVP | 2 |
+| `leaf_REPAIR_NA_60bd547e` | REPAIR | — | REPAIR_F28_TPP_DLM | 1 |
+| `leaf_REPAIR_NA_625092f4` | REPAIR | — | REPAIR_F01_CMTM,REPAIR_F27_CMTM | 8 |
+| `leaf_REPAIR_NA_6b8ec154` | REPAIR | — | REPAIR_F22_ADA_DDIVP,REPAIR_F27_ADA_DDIVP | 4 |
+| `leaf_REPAIR_NA_7388bbe3` | REPAIR | — | REPAIR_F29_BLQ_MILK | 2 |
+| `leaf_REPAIR_NA_8291e7f5` | REPAIR | — | REPAIR_F26_PROD | 2 |
+| `leaf_REPAIR_NA_8759fdd7` | REPAIR | — | REPAIR_F26_DDIVP_PROD | 2 |
+| `leaf_REPAIR_NA_89701750` | REPAIR | — | REPAIR_F29_BLQ_MILK_DDIVP | 2 |
+| `leaf_REPAIR_NA_8ab607dd` | REPAIR | — | REPAIR_F26_BLQ_CMTROLE_PROD | 2 |
+| `leaf_REPAIR_NA_8c22237a` | REPAIR | — | REPAIR_F29_DYAD_TPP_BLQ | 2 |
+| `leaf_REPAIR_NA_8c7c841f` | REPAIR | — | REPAIR_F28_TPP_DLM_BLQ | 1 |
+| `leaf_REPAIR_NA_9778a409` | REPAIR | — | REPAIR_F22_DDIVP,REPAIR_F27_DDIVP | 10 |
+| `leaf_REPAIR_NA_97865932` | REPAIR | — | REPAIR_F29_DYAD_TPP | 2 |
+| `leaf_REPAIR_NA_99ef783e` | REPAIR | — | REPAIR_F26_CMTROLE_PROD | 2 |
+| `leaf_REPAIR_NA_a6c25aa4` | REPAIR | — | REPAIR_F29_DYAD_TPP_BLQ_DDIVP | 2 |
+| `leaf_REPAIR_NA_ad950bea` | REPAIR | — | REPAIR_F01_BLQ_CMTM,REPAIR_F27_BLQ_CMTM | 8 |
+| `leaf_REPAIR_NA_b0a07c38` | REPAIR | — | REPAIR_F01_BLQ_CMTROLE,REPAIR_F24_BLQ_CMTROLE,REPAIR_F25_BLQ_CMTROLE | 6 |
+| `leaf_REPAIR_NA_bc3e0088` | REPAIR | — | REPAIR_F01_ADA_CMTM,REPAIR_F27_ADA_CMTM | 4 |
+| `leaf_REPAIR_NA_be4ff92f` | REPAIR | — | REPAIR_F29_MILK_DDIVP | 2 |
+| `leaf_REPAIR_NA_c3394219` | REPAIR | — | REPAIR_F26_BLQ_PROD | 2 |
+| `leaf_REPAIR_NA_d33ddf52` | REPAIR | — | REPAIR_F29_BLQ_MILK_CMTM | 2 |
+| `leaf_REPAIR_NA_d3e4e18d` | REPAIR | — | REPAIR_F26_BLQ_DDIVP_PROD | 2 |
+| `leaf_REPAIR_NA_e410254a` | REPAIR | — | REPAIR_F29_DYAD_TPP_BLQ_CMTM | 2 |
+| `leaf_REPAIR_NA_f452000c` | REPAIR | — | REPAIR_F22_BLQ_DDIVP,REPAIR_F27_BLQ_DDIVP | 10 |
+| `leaf_REPAIR_NA_f67c49c7` | REPAIR | — | REPAIR_F01_BLQ,REPAIR_F27_BLQ | 10 |
+
+## Per-class results
+
+All 337 classes PASS.  First 10 walks shown for spot-check:
+
+| dc_class_id | result | leaf | path |
+|---|---|---|---|
+| DC00001 | PASS | `leaf_QUARANTINE_Q11_459af0d7` | `N0=N->N1=Y->N8=Y->N2=Y->N3=Y->N4=Y->N5=Y` |
+| DC00002 | PASS | `leaf_QUARANTINE_Q11_459af0d7` | `N0=N->N1=Y->N8=Y->N2=Y->N3=Y->N4=Y->N5=Y` |
+| DC00003 | PASS | `leaf_QUARANTINE_Q11_459af0d7` | `N0=N->N1=Y->N8=Y->N2=Y->N3=Y->N4=Y->N5=Y` |
+| DC00004 | PASS | `leaf_QUARANTINE_Q11_459af0d7` | `N0=N->N1=Y->N8=Y->N2=Y->N3=Y->N4=Y->N5=Y` |
+| DC00005 | PASS | `leaf_QUARANTINE_Q11_459af0d7` | `N0=N->N1=Y->N8=Y->N2=Y->N3=Y->N4=Y->N5=Y` |
+| DC00006 | PASS | `leaf_QUARANTINE_Q11_459af0d7` | `N0=N->N1=Y->N8=Y->N2=Y->N3=Y->N4=Y->N5=Y` |
+| DC00007 | PASS | `leaf_QUARANTINE_Q11_459af0d7` | `N0=N->N1=Y->N8=Y->N2=Y->N3=Y->N4=N->N5=Y` |
+| DC00008 | PASS | `leaf_QUARANTINE_Q11_459af0d7` | `N0=N->N1=Y->N8=Y->N2=Y->N3=Y->N4=N->N5=Y` |
+| DC00009 | PASS | `leaf_QUARANTINE_Q11_459af0d7` | `N0=N->N1=Y->N8=Y->N2=Y->N3=Y->N4=N->N5=Y` |
+| DC00010 | PASS | `leaf_QUARANTINE_Q11_459af0d7` | `N0=N->N1=Y->N8=Y->N2=Y->N3=Y->N4=N->N5=Y` |

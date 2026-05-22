@@ -1,0 +1,5 @@
+golden_id,project_id,family_id,seed_category_id,raw_input_path,reference_output_path,expected_terminal_state,expected_q_code,modality_class,endpoint_data_type,nonmem_required_cols_present,validation_status,priority
+G001,PROJ_ADC_014,F24,14,data/raw_examples/F24/PROJ_ADC_014/raw_files/dataset_deidentified.csv,data/golden_datasets/PROJ_ADC_014/reference_output/nonmem_ready.csv,REPAIR,N/A,ADC,PK_CONCENTRATION,TRUE,h3_approved,HIGH
+G002,PROJ_CART_016,F26,16,data/raw_examples/F26/PROJ_CART_016/raw_files/dataset_deidentified.csv,data/golden_datasets/PROJ_CART_016/reference_output/nonmem_ready.csv,REPAIR,N/A,CELL_THERAPY,CELLULAR_KINETICS,TRUE,h3_approved,HIGH
+G004,PROJ_LAC_020,F29,20,data/raw_examples/F29/PROJ_LAC_020/raw_files/dataset_deidentified.csv,data/golden_datasets/PROJ_LAC_020/reference_output/nonmem_ready.csv,REPAIR,N/A,MAB,MATERNAL_INFANT_PK,TRUE,h3_approved,HIGH
+G006,PROJ_S01_001,F01,1,data/raw_examples/F01/PROJ_S01_001/raw_files/dataset_deidentified.csv,data/golden_datasets/PROJ_S01_001/reference_output/nonmem_ready.csv,AUTO,N/A,MAB,PK_CONCENTRATION,TRUE,h3_approved,MEDIUM

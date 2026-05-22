@@ -1,1 +1,7 @@
 candidate_id,source_p_number,issue_type,affected_axis,affected_label,affected_executor,required_patch,required_rerun_prompts,status,registered_date
+V1_1_001,H4,AUDIT_REPLAY_NEEDED,all,n/a,n/a,Re-run H4 with real PMX reviewer (simulated_human_signer=TRUE in v5.1),P109+H4,open,2026-05-22
+V1_1_002,H3,UNIVERSE_GAP,A0,n/a,n/a,Add F09 (DDI) and F12 (Pediatric) to synthetic seed-pack and re-run generator,P29+P36+P107,open,2026-05-22
+V1_1_003,CP7,GOLDEN_GAP,n/a,F25+F27,n/a,Register golden datasets for F25 (Bispecific) and F27 (mRNA),P107,open,2026-05-22
+V1_1_004,CP7,RELEASE_HASH,n/a,n/a,n/a,Add D3 (reduced_decision_table) and D4 (pairwise matrix) hash files under release/v1.0/,P115,open,2026-05-22
+V1_1_005,CP1,DOC_NIT,n/a,n/a,n/a,Document N8 Q15A normalization in candidate_node_dictionary and F30 reservation comment in family_assignment_rules.yaml,(none),open,2026-05-22
+V1_1_006,P120,UNIVERSE_GAP,n/a,n/a,n/a,Add Q08 (DOSE-UNRECOVERABLE) and Q12 (MATERNAL_NO_ANCHOR) generator paths so 100-case run exercises N3=N and Q12 leaf,P29+P36+P119,open,2026-05-22
