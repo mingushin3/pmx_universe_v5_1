@@ -1,0 +1,3 @@
+fixture_name: fixture_cellular_kinetics_lloq_present
+input_aic: { cellular_LLOQ_derivation_policy: { cellular_lloq: 0.1, method: M3 } }
+expected_terminal: REPAIR

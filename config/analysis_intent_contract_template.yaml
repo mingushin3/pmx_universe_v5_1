@@ -1,0 +1,226 @@
+# config/analysis_intent_contract_template.yaml — v5.1 (Frozen Universe v4.2)
+# The Analysis Intent Contract (AIC) every PMX project must satisfy before
+# routing through the decision tree.
+
+analysis_intent_contract_template:
+  version: "v5.1"
+
+  fields:
+
+    # =========== Core ===========
+
+    - field_name: model_family
+      allowed_values: [popPK, popPKPD, popER, popTTE, individual_PK, individual_PKPD, NCA]
+      required_when: "always"
+      missing_q_code: Q11
+      example: "popPK"
+
+    - field_name: analysis_objective
+      allowed_values: [hypothesis_generation, hypothesis_confirmation, dose_recommendation, label_support, regulatory_submission, internal_decision_support]
+      required_when: "always"
+      missing_q_code: Q11
+      example: "dose_recommendation"
+
+    - field_name: modality_class
+      allowed_values:
+        - SMALL_MOLECULE
+        - PEPTIDE
+        - MAB
+        - ADC
+        - BISPECIFIC
+        - CELL_THERAPY
+        - GENE_THERAPY
+        - MRNA
+        - VACCINE
+        - OLIGO_ASO_SIRNA
+        - RADIOPHARMACEUTICAL
+        - OTHER_CUSTOM
+      required_when: "always (recommended for full routing)"
+      missing_q_code: null
+      example: "ADC"
+      notes: "v4.2 (C16). Required for HR10 (analyte_role) gating."
+
+    - field_name: endpoint_data_type
+      allowed_values:
+        - PK_CONCENTRATION
+        - EXPOSURE_METRIC
+        - CONTINUOUS_PD
+        - CATEGORICAL_PD
+        - COUNT_PD
+        - TTE_EVENT
+        - CELLULAR_KINETICS
+        - IMMUNOGENICITY
+        - MILK_PK
+        - MATERNAL_INFANT_PK
+      required_when: "A0 in [AIC-PKPD, AIC-ER, AIC-TTE, AIC-BIOMARKER, AIC-CELL_THERAPY, AIC-IMMUNOGEN, AIC-LACTATION]"
+      missing_q_code: Q11
+      example: "CELLULAR_KINETICS"
+      notes: "v4.2 (C17). HR6/HR7/HR8/HR9 all key off this field."
+
+    - field_name: analyte_role
+      allowed_values:
+        - PARENT
+        - TOTAL_ANTIBODY
+        - CONJUGATED_ADC
+        - UNCONJUGATED_PAYLOAD
+        - ACTIVE_METABOLITE
+        - SOLUBLE_TARGET
+        - DRUG_TARGET_COMPLEX
+        - ADA
+        - NAB
+        - VECTOR_COPY
+        - TRANSGENE_EXPRESSION
+        - CAR_POSITIVE_CELL
+        - OTHER_CUSTOM
+      required_when: "A8 in [MULTI-CMT-DEFINED, DDI-VICTIM-PERPETRATOR, METABOLITE-DEFINED] AND modality_class in [ADC, BISPECIFIC, CELL_THERAPY, GENE_THERAPY]"
+      missing_q_code: Q16
+      example: "[TOTAL_ANTIBODY, CONJUGATED_ADC, UNCONJUGATED_PAYLOAD]"
+      notes: "v4.2 (C18). HR10."
+
+    # =========== Policies ===========
+
+    - field_name: blq_handling_policy
+      allowed_values: [M1, M3, M4, exclude, project_specific]
+      required_when: "endpoint_data_type in [PK_CONCENTRATION, EXPOSURE_METRIC] AND A5 in [BLQ-DEFINED-POLICY, BLQ-NO-POLICY]"
+      missing_q_code: Q01
+      example: "M3"
+
+    - field_name: cellular_LLOQ_derivation_policy
+      allowed_values: [poisson_derived, project_specific]
+      required_when: "endpoint_data_type = CELLULAR_KINETICS"
+      missing_q_code: Q01
+      example: "poisson_derived"
+      notes: "v4.2 (C23). HR7."
+
+    - field_name: positivity_adjudication_rule
+      allowed_values: [tier_based, screening_only, screening_plus_confirmation, screening_plus_confirmation_plus_titer, project_specific]
+      required_when: "endpoint_data_type = IMMUNOGENICITY"
+      missing_q_code: Q19
+      example: "screening_plus_confirmation"
+      notes: "v4.2 (C22, HR8)."
+
+    - field_name: time_policy
+      allowed_values: [actual, nominal, actual_preferred, nominal_preferred, elapsed, interval]
+      required_when: "always"
+      missing_q_code: Q02
+      example: "actual_preferred"
+
+    - field_name: elapsed_anchor_policy
+      allowed_values: [first_dose, last_dose, delivery_date, postpartum_day, project_specific]
+      required_when: "time_policy = elapsed"
+      missing_q_code: Q02
+      example: "first_dose"
+      notes: "v4.2 (C20): adds delivery_date and postpartum_day."
+
+    - field_name: occasion_policy
+      allowed_values: [dose, period, cycle, visit, model_defined, not_applicable]
+      required_when: "design uses occasion stratification (e.g., crossover)"
+      missing_q_code: Q10
+      example: "dose"
+
+    - field_name: dose_reconstruction_policy
+      allowed_values: [actual, planned_fallback, addl_ii, weight_based, bsa_based, titration_adaptive, loading_maintenance]
+      required_when: "A3 in [DOSE-WEIGHT-BASED, DOSE-BSA-BASED, DOSE-TITRATION, DOSE-LOADING-MAINTENANCE]"
+      missing_q_code: Q08
+      example: "weight_based"
+
+    - field_name: addl_actual_conflict_policy
+      allowed_values: [actual_priority, addl_priority, merge_policy_doc, not_applicable]
+      required_when: "A4 = ADDL-ACTUAL-CONFLICT"
+      missing_q_code: Q14
+      example: "actual_priority"
+
+    - field_name: infusion_reconstruction_policy
+      allowed_values: [rate_from_records, stop_restart_from_events, not_applicable]
+      required_when: "A4 = INFUSION-STOP-RESTART"
+      missing_q_code: Q04
+      example: "stop_restart_from_events"
+
+    - field_name: covariate_policy
+      allowed_values: [LOCF, mean_imputation, model_based, exclude_missing, project_specific]
+      required_when: "A6 = COVARIATE-PARTIAL-POLICY"
+      missing_q_code: Q06
+      example: "LOCF"
+
+    - field_name: cmt_analyte_policy
+      allowed_values: [single, multi_with_rules, ddi_victim_only, ddi_dual_cmt, multi_analyte_role_tagged]
+      required_when: "A8 != SINGLE-ANALYTE"
+      missing_q_code: Q09
+      example: "multi_analyte_role_tagged"
+
+    - field_name: external_linkage_policy
+      allowed_values: [by_subject, by_visit, by_lot, project_specific, not_applicable]
+      required_when: "A7 in [EXTERNAL-LINKABLE, PRODUCT-LEVEL-COVARIATE]"
+      missing_q_code: Q07
+      example: "by_subject"
+
+    - field_name: product_level_covariate_linkage_policy
+      allowed_values: [lot_to_subject_via_manufacturing_record, lot_to_subject_via_pharmacy_record, project_specific, not_applicable]
+      required_when: "A7 = PRODUCT-LEVEL-COVARIATE"
+      missing_q_code: Q13
+      example: "lot_to_subject_via_manufacturing_record"
+      notes: "v4.2 (C19). Absorbs former Q17."
+
+    - field_name: bioanalytical_final_selection_policy
+      allowed_values: [first_result, last_result, declared_priority_table, project_specific]
+      required_when: "A5 = BIOANALYTICAL-FINAL-FLAG-MISSING (corrective)"
+      missing_q_code: Q15A
+      example: "declared_priority_table"
+
+    - field_name: reanalysis_final_selection_policy
+      allowed_values: [original_priority, reanalysis_priority, declared_priority_table, project_specific]
+      required_when: "A9 in [REANALYSIS-FINAL-RESOLVABLE, REANALYSIS-FINAL-MISSING]"
+      missing_q_code: Q15D
+      example: "reanalysis_priority"
+
+    - field_name: dyad_linkage_policy
+      allowed_values: [mother_id_on_infant_row, separate_dyad_table, project_specific]
+      required_when: "endpoint_data_type = MATERNAL_INFANT_PK"
+      missing_q_code: Q18
+      example: "mother_id_on_infant_row"
+      notes: "v4.2 (C21). HR9."
+
+    - field_name: delivery_anchor_policy
+      allowed_values: [delivery_date, postpartum_day, project_specific]
+      required_when: "endpoint_data_type in [MATERNAL_INFANT_PK, MILK_PK] OR context = pregnancy"
+      missing_q_code: Q12
+      example: "delivery_date"
+      notes: "v4.2 (C20). HR9."
+
+    - field_name: milk_matrix_lloq_policy
+      allowed_values: [matrix_specific_lloq, plasma_lloq_with_matrix_factor, project_specific]
+      required_when: "endpoint_data_type = MILK_PK"
+      missing_q_code: Q01
+      example: "matrix_specific_lloq"
+
+    - field_name: id_disambiguation_policy
+      allowed_values: [site_prefix, study_prefix, hash_based, project_specific, not_applicable]
+      required_when: "A1 = ID-DUPLICATE-RESOLVABLE"
+      missing_q_code: Q03
+      example: "site_prefix"
+
+    - field_name: adherence_imputation_policy
+      allowed_values: [pharmacy_dispensing_full_adherence, partial_adherence_per_concentration, project_specific, not_applicable]
+      required_when: "A10 = RWD-ADHERENCE-UNRESOLVED (corrective)"
+      missing_q_code: Q15C
+      example: "pharmacy_dispensing_full_adherence"
+
+  output_requirements:
+    nonmem_required_columns:
+      - ID
+      - TIME
+      - AMT
+      - DV
+      - EVID
+      - CMT
+      - MDV
+    exclusion_policy: [keep_blq, drop_blq, project_specific]
+    audit_trail_requirement: [full, minimal]
+
+  validation:
+    - "All 4 v4.2-new endpoint_data_types must have associated required policy fields"
+    - "Q11 mapped to: model_family/analysis_objective/endpoint_data_type missing"
+    - "Q19 mapped to: positivity_adjudication_rule missing for IMMUNOGENICITY"
+    - "Q18 mapped to: dyad_linkage_policy missing for MATERNAL_INFANT_PK"
+    - "Q16 mapped to: analyte_role missing for required modalities"
+    - "Q13 mapped to: product_level_covariate_linkage_policy missing for PRODUCT-LEVEL-COVARIATE (absorbs former Q17)"

@@ -1,0 +1,3 @@
+fixture_name: fixture_immunogenicity_with_positivity_rule
+input_aic: { positivity_adjudication_rule: { screening_cutpoint: 1.0 } }
+expected_terminal: REPAIR

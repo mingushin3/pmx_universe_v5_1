@@ -1,0 +1,3 @@
+fixture_name: fixture_maternal_infant_dyad
+input_aic: { dyad_linkage_policy: { linkage_key: MOTHER_SUBJID } }
+expected_terminal: REPAIR

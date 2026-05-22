@@ -1,0 +1,21 @@
+# config/action_sequence_standard_v1_final.yaml — v5.1 FINAL (Phase 6 review)
+# Verified consistent with candidate_node_dictionary_v5_1.csv.
+# Content identical to config/action_sequence_standard.yaml from P13 (version bump only).
+# Node linkage notes added below.
+
+action_sequence_standard:
+  version: "v5.1-final"
+
+  ref: "config/action_sequence_standard.yaml"
+
+  node_linkage_verified:
+    - "titration / loading / infusion / addl-actual-conflict → N3 (dose)"
+    - "cellular_blq, immunogenicity, dyad_linkage → N4 (observation/cmt)"
+    - "assign_cmt_with_analyte_role → N4 (analyte_role check)"
+    - "attach_covariate_product_level → N6 (covariate)"
+    - "N8 (policy_availability) gates entire REPAIR pipeline"
+
+  immutability_note: |
+    Action vocabulary and AIC template were LOCKED in P26
+    (release/v1.0/action_sequence_lock_v1_0.md). This Phase 6 file
+    is a version-bumped re-declaration; no content changes.

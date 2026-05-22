@@ -1,0 +1,378 @@
+# config/repair_rule_dictionary.yaml — v5.1 (Frozen Universe v4.2)
+# 26 repair rules: RR001-RR019 (v4.1 + earlier), RR020-RR026 (v4.2 NEW).
+# Hard rules enforced: HR3 (no Q17), HR4 (REPAIR = policy + unique algorithm).
+
+repair_rule_dictionary:
+  version: "v5.1"
+
+  rules:
+
+    # ============ v4.1 + earlier (RR001-RR019) ============
+
+    - repair_rule_id: RR001
+      function_name: standardize_column_names
+      v4_2_new: false
+      input_condition: "raw column names contain known synonyms"
+      required_columns: []
+      required_policy: null
+      algorithm: "rename source columns to canonical NONMEM names per synonym_map"
+      output_columns: [ID, TIME, AMT, DV, EVID, CMT, MDV]
+      audit_log_fields: [rule_id, synonym_map_version, renames_applied]
+      failure_mode: "synonym_map missing"
+      fallback_terminal: QUARANTINE
+      fallback_q_code: Q15A
+
+    - repair_rule_id: RR002
+      function_name: convert_units
+      v4_2_new: false
+      input_condition: "observation units inconsistent or non-canonical"
+      required_columns: [DV]
+      required_policy: null
+      algorithm: "apply unit_map factors to DV column"
+      output_columns: [DV]
+      audit_log_fields: [rule_id, unit_map_version, conversions]
+      failure_mode: "unit unspecified"
+      fallback_terminal: QUARANTINE
+      fallback_q_code: Q05
+
+    - repair_rule_id: RR003
+      function_name: map_subject_id
+      v4_2_new: false
+      input_condition: "A1=ID-DUPLICATE-RESOLVABLE"
+      required_columns: [SUBJID]
+      required_policy: id_disambiguation_policy
+      algorithm: "apply site_prefix or study_prefix policy"
+      output_columns: [ID]
+      audit_log_fields: [rule_id, policy_used, n_unique]
+      failure_mode: "policy missing or unresolvable"
+      fallback_terminal: QUARANTINE
+      fallback_q_code: Q03
+
+    - repair_rule_id: RR004
+      function_name: derive_time_actual
+      v4_2_new: false
+      input_condition: "TIME column missing but actual datetime fields present"
+      required_columns: []
+      required_policy: null
+      algorithm: "compute TIME from actual datetime relative to anchor"
+      output_columns: [TIME]
+      audit_log_fields: [rule_id, anchor]
+      failure_mode: "anchor undefined"
+      fallback_terminal: QUARANTINE
+      fallback_q_code: Q02
+
+    - repair_rule_id: RR005
+      function_name: derive_time_nominal
+      v4_2_new: false
+      input_condition: "TIME column missing, only nominal schedule available"
+      required_columns: []
+      required_policy: time_policy
+      algorithm: "compute TIME from nominal schedule per declared time_policy"
+      output_columns: [TIME]
+      audit_log_fields: [rule_id, time_policy]
+      failure_mode: "time_policy missing"
+      fallback_terminal: QUARANTINE
+      fallback_q_code: Q02
+
+    - repair_rule_id: RR006
+      function_name: derive_time_elapsed
+      v4_2_new: false
+      input_condition: "TIME elapsed from anchor required"
+      required_columns: []
+      required_policy: elapsed_anchor_policy
+      algorithm: "compute TIME = (event_datetime - anchor_datetime) in hours"
+      output_columns: [TIME]
+      audit_log_fields: [rule_id, anchor_policy]
+      failure_mode: "anchor policy missing"
+      fallback_terminal: QUARANTINE
+      fallback_q_code: Q02
+
+    - repair_rule_id: RR007
+      function_name: derive_time_interval
+      v4_2_new: false
+      input_condition: "interval-collection data (urine, etc.)"
+      required_columns: [INTERVAL_START, INTERVAL_END]
+      required_policy: null
+      algorithm: "set TIME = mid-interval, INTERVAL = end - start"
+      output_columns: [TIME, INTERVAL]
+      audit_log_fields: [rule_id, interval_count]
+      failure_mode: "interval columns missing"
+      fallback_terminal: QUARANTINE
+      fallback_q_code: Q02
+
+    - repair_rule_id: RR008
+      function_name: reconstruct_dose_weight
+      v4_2_new: false
+      input_condition: "A3=DOSE-WEIGHT-BASED"
+      required_columns: [WT]
+      required_policy: dose_reconstruction_policy
+      algorithm: "AMT = WT * dose_per_kg"
+      output_columns: [AMT]
+      audit_log_fields: [rule_id, dose_per_kg, n_reconstructed]
+      failure_mode: "policy missing or WT absent"
+      fallback_terminal: QUARANTINE
+      fallback_q_code: Q08
+
+    - repair_rule_id: RR009
+      function_name: reconstruct_dose_bsa
+      v4_2_new: false
+      input_condition: "A3=DOSE-BSA-BASED"
+      required_columns: [BSA]
+      required_policy: dose_reconstruction_policy
+      algorithm: "AMT = BSA * dose_per_m2"
+      output_columns: [AMT]
+      audit_log_fields: [rule_id, dose_per_m2, n_reconstructed]
+      failure_mode: "policy missing or BSA absent"
+      fallback_terminal: QUARANTINE
+      fallback_q_code: Q08
+
+    - repair_rule_id: RR010
+      function_name: reconstruct_dose_titration
+      v4_2_new: false
+      input_condition: "A4=TITRATION-ADAPTIVE"
+      required_columns: []
+      required_policy: dose_adaptation_policy
+      algorithm: "apply titration_table to derive AMT per subject visit"
+      output_columns: [AMT]
+      audit_log_fields: [rule_id, titration_rule_id]
+      failure_mode: "policy missing"
+      fallback_terminal: QUARANTINE
+      fallback_q_code: Q08
+
+    - repair_rule_id: RR011
+      function_name: reconstruct_loading_maintenance
+      v4_2_new: false
+      input_condition: "A4=LOADING-MAINTENANCE"
+      required_columns: []
+      required_policy: dose_reconstruction_policy
+      algorithm: "split AMT at transition_point per policy"
+      output_columns: [AMT, RATE]
+      audit_log_fields: [rule_id, transition_point]
+      failure_mode: "policy or transition_point missing"
+      fallback_terminal: QUARANTINE
+      fallback_q_code: Q08
+
+    - repair_rule_id: RR012
+      function_name: reconstruct_infusion_stop_restart
+      v4_2_new: false
+      input_condition: "A4=INFUSION-STOP-RESTART"
+      required_columns: []
+      required_policy: infusion_reconstruction_policy
+      algorithm: "expand stop/restart events into RATE/DUR segments"
+      output_columns: [AMT, RATE, DUR]
+      audit_log_fields: [rule_id, n_segments]
+      failure_mode: "policy missing"
+      fallback_terminal: QUARANTINE
+      fallback_q_code: Q04
+
+    - repair_rule_id: RR013
+      function_name: expand_addl_ii
+      v4_2_new: false
+      input_condition: "ADDL/II columns present"
+      required_columns: [ADDL, II]
+      required_policy: dose_reconstruction_policy
+      algorithm: "expand each row with ADDL/II into explicit dose rows"
+      output_columns: [TIME, AMT]
+      audit_log_fields: [rule_id, n_expanded]
+      failure_mode: "ADDL/II columns missing"
+      fallback_terminal: QUARANTINE
+      fallback_q_code: Q08
+
+    - repair_rule_id: RR014
+      function_name: resolve_addl_actual_conflict
+      v4_2_new: false
+      input_condition: "A4=ADDL-ACTUAL-CONFLICT"
+      required_columns: [AMT]
+      required_policy: addl_actual_conflict_policy
+      algorithm: "apply actual_priority / addl_priority / merge per policy"
+      output_columns: [AMT]
+      audit_log_fields: [rule_id, policy, n_resolved]
+      failure_mode: "policy missing"
+      fallback_terminal: QUARANTINE
+      fallback_q_code: Q14
+
+    - repair_rule_id: RR015
+      function_name: canonicalize_blq
+      v4_2_new: false
+      input_condition: "BLQ rows present for concentration"
+      required_columns: [DV]
+      required_policy: blq_handling_policy
+      algorithm: "M1 (drop), M3 (LLOQ/2), M4 (likelihood), exclude per policy"
+      output_columns: [DV, BLQ_FLAG, MDV]
+      audit_log_fields: [rule_id, blq_method, n_blq]
+      failure_mode: "policy missing"
+      fallback_terminal: QUARANTINE
+      fallback_q_code: Q01
+
+    - repair_rule_id: RR016
+      function_name: resolve_reanalysis_final
+      v4_2_new: false
+      input_condition: "A9=REANALYSIS-FINAL-RESOLVABLE"
+      required_columns: [DV]
+      required_policy: reanalysis_final_selection_policy
+      algorithm: "select final per policy: original_priority / reanalysis_priority / declared_priority_table"
+      output_columns: [DV]
+      audit_log_fields: [rule_id, policy, n_resolved]
+      failure_mode: "policy missing"
+      fallback_terminal: QUARANTINE
+      fallback_q_code: Q15D
+
+    - repair_rule_id: RR017
+      function_name: assign_cmt_ddi_victim_only
+      v4_2_new: false
+      input_condition: "A8=DDI-VICTIM-ONLY"
+      required_columns: []
+      required_policy: cmt_analyte_policy
+      algorithm: "CMT = victim_cmt for all observation rows"
+      output_columns: [CMT]
+      audit_log_fields: [rule_id, victim_cmt]
+      failure_mode: "policy missing"
+      fallback_terminal: QUARANTINE
+      fallback_q_code: Q09
+
+    - repair_rule_id: RR018
+      function_name: assign_cmt_ddi_victim_perpetrator
+      v4_2_new: false
+      input_condition: "A8=DDI-VICTIM-PERPETRATOR"
+      required_columns: [ANALYTE_NAME]
+      required_policy: dual_cmt_policy
+      algorithm: "CMT = victim_cmt or perpetrator_cmt per ANALYTE_NAME mapping"
+      output_columns: [CMT]
+      audit_log_fields: [rule_id, victim_cmt, perp_cmt]
+      failure_mode: "policy missing"
+      fallback_terminal: QUARANTINE
+      fallback_q_code: Q09
+
+    - repair_rule_id: RR019
+      function_name: attach_covariate_external
+      v4_2_new: false
+      input_condition: "A7=EXTERNAL-LINKABLE"
+      required_columns: [ID]
+      required_policy: external_linkage_policy
+      algorithm: "merge external table on declared key"
+      output_columns: ["<external_cov_names>"]
+      audit_log_fields: [rule_id, external_table_hash, n_joined]
+      failure_mode: "policy or key missing"
+      fallback_terminal: QUARANTINE
+      fallback_q_code: Q07
+
+    # ============ v4.2 NEW (RR020-RR026) ============
+
+    - repair_rule_id: RR020
+      function_name: canonicalize_cellular_blq
+      v4_2_new: true
+      input_condition: "endpoint_data_type=CELLULAR_KINETICS, BLQ events present"
+      required_columns: [ID, TIME, DV, MDV, CMT]
+      required_policy: cellular_LLOQ_derivation_policy
+      algorithm: |
+        1. Read cellular_LLOQ from policy (Poisson-derived value)
+        2. For each row with DV < cellular_LLOQ AND EVID=0:
+           - Set MDV=1 if method=M1 (exclude)
+           - Set DV=cellular_LLOQ/2 if method=M3 (cellular subtype)
+        3. Append audit_log entry per cellular subtype rule
+      output_columns: [DV, MDV, CELLULAR_BLQ_FLAG]
+      audit_log_fields: [rule_id, cellular_lloq_value, method, n_blq]
+      failure_mode: "cellular_LLOQ policy missing or LLOQ value unparseable"
+      fallback_terminal: QUARANTINE
+      fallback_q_code: Q01  # cellular subtype noted in audit_log
+
+    - repair_rule_id: RR021
+      function_name: adjudicate_immunogenicity_positivity
+      v4_2_new: true
+      input_condition: "endpoint_data_type=IMMUNOGENICITY"
+      required_columns: [DV, SCREENING_RESULT]
+      required_policy: positivity_adjudication_rule
+      algorithm: |
+        1. Read rule (screening_only / screening+confirmation / tier_based)
+        2. Apply screening cutpoint; samples >= cutpoint go to confirmation tier
+        3. Confirmation tier: re-test, declare positive only if confirmed
+        4. Tag DV with ADA_POSITIVE_FLAG
+      output_columns: [DV, ADA_POSITIVE_FLAG]
+      audit_log_fields: [rule_id, rule_used, n_positive, n_negative]
+      failure_mode: "positivity_adjudication_rule missing"
+      fallback_terminal: QUARANTINE
+      fallback_q_code: Q19
+
+    - repair_rule_id: RR022
+      function_name: attach_dyad_linkage
+      v4_2_new: true
+      input_condition: "endpoint_data_type=MATERNAL_INFANT_PK"
+      required_columns: [SUBJID]
+      required_policy: dyad_linkage_policy
+      algorithm: |
+        1. Read linkage policy (mother_id_on_infant_row / separate_dyad_table)
+        2. Merge mother+infant rows by declared key
+        3. Add MOTHER_SUBJID, INFANT_SUBJID, DYAD_ID columns
+      output_columns: [MOTHER_SUBJID, INFANT_SUBJID, DYAD_ID]
+      audit_log_fields: [rule_id, dyads_linked, dyads_unlinked]
+      failure_mode: "dyad_linkage_policy missing or linkage key absent"
+      fallback_terminal: QUARANTINE
+      fallback_q_code: Q18
+
+    - repair_rule_id: RR023
+      function_name: derive_time_postpartum_anchor
+      v4_2_new: true
+      input_condition: "delivery_date or postpartum_day required as anchor"
+      required_columns: []
+      required_policy: delivery_anchor_policy
+      algorithm: |
+        1. Read anchor (delivery_date / postpartum_day)
+        2. TIME = event_datetime - anchor_datetime (in hours)
+        3. POSTPARTUM_DAY = ceil(TIME / 24)
+      output_columns: [TIME, POSTPARTUM_DAY]
+      audit_log_fields: [rule_id, anchor_used]
+      failure_mode: "delivery_anchor_policy missing"
+      fallback_terminal: QUARANTINE
+      fallback_q_code: Q12
+
+    - repair_rule_id: RR024
+      function_name: assign_milk_matrix_lloq
+      v4_2_new: true
+      input_condition: "endpoint_data_type=MILK_PK"
+      required_columns: [DV, MATRIX]
+      required_policy: milk_matrix_lloq_policy
+      algorithm: |
+        1. Read milk-specific LLOQ value (or matrix factor)
+        2. Apply BLQ flag using milk LLOQ when MATRIX=milk
+      output_columns: [DV, MATRIX_BLQ_FLAG]
+      audit_log_fields: [rule_id, milk_lloq]
+      failure_mode: "milk_matrix_lloq_policy missing"
+      fallback_terminal: QUARANTINE
+      fallback_q_code: Q01
+
+    - repair_rule_id: RR025
+      function_name: assign_cmt_with_analyte_role
+      v4_2_new: true
+      input_condition: "A8 in {MULTI-CMT-DEFINED, DDI-VICTIM-PERPETRATOR, METABOLITE-DEFINED} AND modality_class in {ADC, BISPECIFIC, CELL_THERAPY, GENE_THERAPY}"
+      required_columns: [ANALYTE_NAME]
+      required_policy: analyte_role_declaration
+      algorithm: |
+        1. Read analyte_role declaration per ANALYTE_NAME
+        2. Map analyte_role -> CMT per analyte_role_map
+      output_columns: [CMT, ANALYTE_ROLE]
+      audit_log_fields: [rule_id, role_map_version]
+      failure_mode: "analyte_role missing"
+      fallback_terminal: QUARANTINE
+      fallback_q_code: Q16
+
+    - repair_rule_id: RR026
+      function_name: attach_covariate_product_level
+      v4_2_new: true
+      input_condition: "A7=PRODUCT-LEVEL-COVARIATE"
+      required_columns: [LOT_ID]
+      required_policy: product_level_covariate_linkage_policy
+      algorithm: |
+        1. Read lot->subject mapping
+        2. Read product attribute table
+        3. Merge product attributes onto each subject via lot mapping
+      output_columns: ["<product_cov_names>"]
+      audit_log_fields: [rule_id, lots_mapped, subjects_with_product_cov]
+      failure_mode: "policy or lot_subject_linkage_key missing"
+      fallback_terminal: QUARANTINE
+      fallback_q_code: Q13
+
+  validation:
+    total_rules: 26
+    v4_2_new_rules: 7
+    v4_1_rules: 19
+    forbidden_qcodes_used: []  # Q15 standalone, Q17 must NOT appear above

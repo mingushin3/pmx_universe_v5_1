@@ -1,0 +1,3 @@
+fixture_name: fixture_time_actual
+expected_terminal: REPAIR
+expected_q_code: null

@@ -1,0 +1,2 @@
+checkpoint_name,final_decision,confidence,fatal_resolved,escalate_to_human,unresolved_fatal_count,required_patch,affected_artifacts,required_rerun_steps,lp_b_simulated
+CP3_repair_semantic_review,accept,HIGH,YES,NO,0,,,,TRUE

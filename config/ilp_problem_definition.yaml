@@ -1,0 +1,53 @@
+# config/ilp_problem_definition.yaml — v1.0 (PATCH-2 + PATCH-3)
+ilp_problem:
+  version: "v1.0"
+  objective: minimize_cost
+
+  variables:
+    - { name: x_N0,  cost: 4.20, forced: true }
+    - { name: x_N1,  cost: 3.90, forced: true }
+    - { name: x_N2,  cost: 4.10, forced: true }
+    - { name: x_N3,  cost: 4.50, forced: true }
+    - { name: x_N4,  cost: 4.10, forced: true }
+    - { name: x_N5,  cost: 3.10, forced: true }
+    - { name: x_N6,  cost: 2.00, forced: false }
+    - { name: x_N7,  cost: 2.10, forced: false }
+    - { name: x_N8,  cost: 4.40, forced: true }
+    - { name: x_N9,  cost: 2.00, forced: false }
+    - { name: x_N10, cost: 2.00, forced: false }
+    - { name: x_N11, cost: 2.00, forced: false }
+    - { name: x_N12, cost: 2.00, forced: false }
+    - { name: x_N13, cost: 1.50, forced: false }
+    - { name: x_N14, cost: 1.50, forced: false }
+    - { name: x_N15, cost: 1.20, forced: false }
+    - { name: x_N16, cost: 1.20, forced: false }
+    - { name: x_N17, cost: 1.20, forced: false }
+    - { name: x_N18, cost: 1.30, forced: false }
+    - { name: x_N19, cost: 1.30, forced: false }
+    - { name: x_N20, cost: 1.10, forced: false }
+    - { name: x_N21, cost: 1.10, forced: false }
+    - { name: x_N22, cost: 1.10, forced: false }
+    - { name: x_N23, cost: 1.10, forced: false }
+    - { name: x_N24, cost: 1.10, forced: false }
+    - { name: x_N25, cost: 1.10, forced: false }
+    - { name: x_N26, cost: 1.10, forced: false }
+    - { name: x_N27, cost: 1.00, forced: false }
+    - { name: x_N28, cost: 1.00, forced: false }
+    - { name: x_N29, cost: 1.00, forced: false }
+
+  constraints:
+    - id: forced_inclusion
+      description: "PATCH-3: forced nodes must equal 1"
+      formulation: |
+        x_N0 = 1; x_N1 = 1; x_N2 = 1; x_N3 = 1;
+        x_N4 = 1; x_N5 = 1; x_N8 = 1
+    - id: distinguishability
+      description: "PATCH-2: every required pair must be distinguished"
+      formulation: |
+        For each (i, j) with R[i,j] = 1:
+          Σ_{n where D[i,j,n] = 1} x_n ≥ 1
+
+  cost_immutability:
+    locked_at: "2026-05-22T08:30:00+00:00"
+    locked_by: "automated (Step 2 P68 + Step 3 P93)"
+    modification_policy: "Costs frozen until v1.1 release. Any change requires full ILP re-run + LP Panel CP6 re-approval."

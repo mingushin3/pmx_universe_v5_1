@@ -1,0 +1,6 @@
+fixture_name: fixture_blq_policy_present
+input_csv: fixture_blq_policy_present.csv
+input_aic: { blq_handling_policy: M3 }
+expected_terminal: REPAIR
+expected_q_code: null
+expected_action_sequence: [parse_source, repair_blq_canonicalization, export_nonmem_ready]

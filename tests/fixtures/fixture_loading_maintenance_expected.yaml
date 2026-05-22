@@ -1,0 +1,3 @@
+fixture_name: fixture_loading_maintenance
+input_aic: { dose_reconstruction_policy: loading_maintenance }
+expected_terminal: REPAIR

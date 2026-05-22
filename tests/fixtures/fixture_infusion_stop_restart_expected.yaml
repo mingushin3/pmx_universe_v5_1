@@ -1,0 +1,3 @@
+fixture_name: fixture_infusion_stop_restart
+input_aic: { infusion_reconstruction_policy: stop_restart_from_events }
+expected_terminal: REPAIR

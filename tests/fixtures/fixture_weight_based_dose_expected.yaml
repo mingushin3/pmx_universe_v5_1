@@ -1,0 +1,3 @@
+fixture_name: fixture_weight_based_dose
+input_aic: { dose_reconstruction_policy: { dose_per_kg: 0.5 } }
+expected_terminal: REPAIR

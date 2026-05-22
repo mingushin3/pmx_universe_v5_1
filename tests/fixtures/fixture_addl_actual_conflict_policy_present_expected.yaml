@@ -1,0 +1,3 @@
+fixture_name: fixture_addl_actual_conflict_policy_present
+input_aic: { addl_actual_conflict_policy: actual_priority }
+expected_terminal: REPAIR

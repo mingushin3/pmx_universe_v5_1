@@ -1,0 +1,3 @@
+fixture_name: fixture_titration_adaptive
+input_aic: { dose_adaptation_policy: project_specific }
+expected_terminal: REPAIR

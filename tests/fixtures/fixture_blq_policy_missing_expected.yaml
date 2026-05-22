@@ -1,0 +1,5 @@
+fixture_name: fixture_blq_policy_missing
+input_csv: fixture_blq_policy_missing.csv
+input_aic: {}
+expected_terminal: QUARANTINE
+expected_q_code: Q01

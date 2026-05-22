@@ -1,0 +1,145 @@
+# config/lp_panel_template.yaml — v5.1 LP Panel canonical definition
+# Used by scripts/lp_panel_runner.py to evaluate whether a checkpoint
+# can auto-proceed or must escalate to a human (H1–H5).
+
+lp_panel_template:
+  version: "v5.1"
+
+  # 7 critical decision points (P numbers reflect Step2/3 finalized values per [PATCH M-5]).
+  # If prompt renumbering occurs during execution, update these inline.
+  checkpoints:
+    - id: CP1
+      name: config_semantic_review
+      phase: 1
+      trigger_after: "P15-P17"
+      panel_prompts: "P18-P20"
+    - id: CP2
+      name: universe_attack_and_freeze
+      phase: 2
+      trigger_after: "P57"
+      panel_prompts: "P58-P60"
+    - id: CP3
+      name: repair_semantic_review
+      phase: 4
+      trigger_after: "P47"
+      panel_prompts: "P48-P50"
+      conditional: true
+      conditional_rule: "skip if repair_executor unit tests + property-based tests all PASS AND no new modality REPAIR added since last freeze"
+    - id: CP4
+      name: action_label_adjudication
+      phase: 5
+      trigger_after: "P73"
+      panel_prompts: "P74-P76"
+    - id: CP5
+      name: action_label_lock
+      phase: 5
+      trigger_after: "P80"
+      panel_prompts: "P81-P83"
+    - id: CP6
+      name: minimal_node_approval
+      phase: 9
+      trigger_after: "P95"
+      panel_prompts: "P96-P98"
+    - id: CP7
+      name: release_coverage_approval
+      phase: 12
+      trigger_after: "P111"
+      panel_prompts: "P112-P114"
+
+  stages:
+
+    - stage: LP_A
+      role: "PMX Grandmaster (30 yrs PMX/NONMEM dataset wrangling)"
+      llm_routing: "고성능 추론 모델 (실행 시점 기준 최신 Claude Opus 계열 또는 동급)"
+      session_constraint: "Same chat as preceding R-LLM work permitted."
+      output_fields:
+        - recommended_decision   # one of: accept / reject / revise / split
+        - rationale_pmx_evidence
+        - confidence             # HIGH / MEDIUM / LOW
+        - fatal_issues           # list of strings; [] if none
+        - residual_risk
+        - must_escalate_to_human # YES / NO
+        - escalation_reason
+      file_pattern: "reports/llm_proxy/{checkpoint_name}_grandmaster.md"
+
+    - stage: LP_B
+      role: "Adversarial reviewer specialized in false-AUTO / false-REPAIR detection"
+      llm_routing: "반드시 LP_A와 다른 계열·회사 모델 (예: Google Gemini 또는 OpenAI GPT 최신)"
+      session_constraint: "MUST be in a fresh chat with no LP_A context except the LP_A output file."
+      attack_axes:
+        - "REPAIR claim with absent policy"
+        - "AUTO claim with hidden analytical judgment"
+        - "QUARANTINE q_code mismatched with root cause"
+        - "Q15 used standalone (must be Q15A/B/C/D)"
+        - "Q17 used (forbidden, absorbed into Q13)"
+        - "v4.2 endpoint_data_type omission (CELLULAR_KINETICS / IMMUNOGENICITY / MILK_PK / MATERNAL_INFANT_PK)"
+        - "analyte_role missing for ADC/BISPECIFIC/CELL_THERAPY/GENE_THERAPY"
+        - "PHI / legal / IRB risk overlooked"
+        - "LP_A overconfidence"
+        - "Forced node (N0,N1,N2,N3,N4,N5,N8) silently dropped"
+        - "Distinguishability defined on terminal_state only (must use terminal+action_seq+q_code+policy per HR14)"
+      output_fields:
+        - attack_list             # list of {issue, severity, evidence, correction}
+                                  # severity ∈ {fatal, major, minor}
+        - unresolved_fatal_count  # integer
+        - escalate_to_human_override  # YES / NO
+      file_pattern: "reports/llm_proxy/{checkpoint_name}_adversarial.md"
+
+    - stage: LP_C
+      role: "Judge integrating LP_A and LP_B outputs"
+      llm_routing: "고성능 추론 모델 — LP_A, LP_B 결과 모두 첨부한 새 세션"
+      session_constraint: "Fresh chat with LP_A + LP_B output files attached as input."
+      hard_rules:
+        - "confidence == LOW → escalate_to_human = YES (forced)"
+        - "unresolved_fatal_count >= 1 → escalate_to_human = YES (forced)"
+        - "Accept QUARANTINE with no q_code = FORBIDDEN"
+        - "Accept REPAIR with no policy = FORBIDDEN"
+        - "Accept Q15 standalone = FORBIDDEN"
+        - "Accept Q17 = FORBIDDEN"
+        - "Drop a forced node (N0,N1,N2,N3,N4,N5,N8) = FORBIDDEN — must escalate"
+      output_fields:
+        - final_decision          # accept / accept_with_patch / reject / revise / split / escalate_to_human
+        - accepted_arguments_from_A
+        - accepted_attacks_from_B
+        - rejected_arguments_with_rationale
+        - required_patch
+        - affected_artifacts      # list of file paths
+        - required_rerun_steps    # list of P numbers
+        - confidence              # HIGH / MEDIUM / LOW
+        - fatal_resolved          # YES / NO
+        - escalate_to_human       # YES / NO
+        - escalation_reason
+      file_pattern_md: "reports/llm_proxy/{checkpoint_name}_judge.md"
+      file_pattern_csv: "reports/llm_proxy/{checkpoint_name}_decision.csv"
+
+  auto_proceed_condition:
+    description: "All four conditions must be true to auto-apply LP_C decision without human review."
+    all_must_be_true:
+      - "lp_c.confidence == HIGH"
+      - "lp_c.fatal_resolved == YES"
+      - "lp_c.escalate_to_human == NO"
+      - "lp_b.unresolved_fatal_count == 0"
+
+  escalation_routing:
+    - condition: "PHI / legal / IRB content involved"
+      route_to: "H1 if pre-pilot; H4 if post-validation; H5 if release-stage"
+    - condition: "false AUTO or false REPAIR detected"
+      route_to: "H4"
+    - condition: "release-stage decision (CP7)"
+      route_to: "H5"
+    - condition: "fingerprint factual ambiguity (Phase 3)"
+      route_to: "H2"
+    - condition: "golden dataset reference uncertainty (Phase 11)"
+      route_to: "H3"
+    - condition: "forced node integrity issue (HR13 violation)"
+      route_to: "H5"
+
+  forbidden_patches:
+    description: "These patches are never auto-applied; LP_C must reject or escalate."
+    items:
+      - "Replace Q15A/B/C/D with bare Q15"
+      - "Introduce Q17 anywhere"
+      - "Remove a forced node from candidate_node_dictionary"
+      - "Loosen HR14 distinguishability (terminal_state only)"
+      - "Claim AUTO+REPAIR alone achieves 95% coverage (HR11 violation)"
+      - "Use wording: 'exhaustive', 'all practical scenarios', 'all modalities' (HR12 violation)"

@@ -1,0 +1,3 @@
+fixture_name: fixture_cellular_kinetics_lloq_missing
+expected_terminal: QUARANTINE
+expected_q_code: Q01

@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pmx_universe_v5_1"
+version = "0.1.0"
+description = "PMX-to-NONMEM Scenario Universe v5.1 (Frozen Universe v4.2 working basis)"
+requires-python = ">=3.11"
+
+[tool.pytest.ini_options]
+minversion = "7.4"
+addopts = "-v -ra --strict-markers"
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+markers = [
+    "slow: tests that take more than a few seconds",
+    "property: hypothesis-based property tests",
+    "integration: end-to-end integration tests",
+]

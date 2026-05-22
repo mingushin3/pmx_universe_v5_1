@@ -1,0 +1,473 @@
+# config/family_assignment_rules.yaml — v5.1 (Frozen Universe v4.2)
+# Operational families F01..F29 + out-of-scope families F31..F34.
+# NOTE: F30 intentionally unassigned (numbering buffer between op and out-of-scope).
+
+family_assignment_rules:
+  version: "v5.1"
+  resolution_policy: "lower priority value wins; ties resolved by family_id ascending"
+  notes:
+    - "F30 is intentionally NOT assigned — reserved as a structural buffer between F29 (op) and F31 (out-of-scope)."
+    - "v4.2 renumbering: previous F24/F25/F26/F27 (raw FCS / omics / unstructured / INVALID) → F31/F32/F33/F34."
+
+  families:
+
+    # ============== Operational (F01..F29) ==============
+
+    - family_id: F01
+      family_name: Standard_SDTM_ADaM_popPK
+      operational_scope: true
+      expected_terminal: AUTO
+      frequency_hint: HIGH
+      v4_2_new: false
+      priority: 10
+      matching_axis_patterns:
+        A0: { state_in: [AIC-PK, AIC-PKPD] }
+        A10: { state_in: [STRUCTURED] }
+        A1: { state_in: [ID-DEFINED] }
+      required_policies: []
+      examples: ["Standard CDISC ADPC + ADaM EX/DM/VS dataset bundle."]
+
+    - family_id: F02
+      family_name: Multi_study_pooled_popPK
+      operational_scope: true
+      expected_terminal: REPAIR
+      frequency_hint: HIGH
+      v4_2_new: false
+      priority: 10
+      matching_axis_patterns:
+        A0: { state_in: [AIC-PK, AIC-PKPD] }
+        A1: { state_in: [ID-DUPLICATE-RESOLVABLE, ID-DEFINED] }
+      required_policies: [id_disambiguation_policy]
+      examples: ["Pool of 3 Phase I studies; same drug, different SUBJID prefixes."]
+
+    - family_id: F03
+      family_name: EDC_multitable_clinical_PK
+      operational_scope: true
+      expected_terminal: REPAIR
+      frequency_hint: HIGH
+      v4_2_new: false
+      priority: 10
+      matching_axis_patterns:
+        A0: { state_in: [AIC-PK, AIC-PKPD] }
+        A10: { state_in: [SEMI-STRUCTURED, STRUCTURED] }
+      required_policies: [external_linkage_policy]
+      examples: ["EDC export with separate DM/PC/EX tables joined by SUBJID."]
+
+    - family_id: F04
+      family_name: CRO_PK_concentration_dosing
+      operational_scope: true
+      expected_terminal: AUTO
+      frequency_hint: HIGH
+      v4_2_new: false
+      priority: 10
+      matching_axis_patterns:
+        A10: { state_in: [STRUCTURED] }
+      required_policies: []
+      examples: ["CRO-delivered PK + dosing CSV with full headers."]
+
+    - family_id: F05
+      family_name: Flat_excel_csv_PMX
+      operational_scope: true
+      expected_terminal: REPAIR
+      frequency_hint: HIGH
+      v4_2_new: false
+      priority: 10
+      matching_axis_patterns:
+        A10: { state_in: [SEMI-STRUCTURED] }
+      required_policies: []
+      examples: ["Single-sheet Excel with PK + dose mixed; needs canonicalization."]
+
+    - family_id: F06
+      family_name: Legacy_NONMEM_like
+      operational_scope: true
+      expected_terminal: REPAIR
+      frequency_hint: MEDIUM
+      v4_2_new: false
+      priority: 10
+      matching_axis_patterns:
+        A10: { state_in: [SEMI-STRUCTURED] }
+      required_policies: []
+      examples: ["Historical NONMEM dataset with proprietary flags."]
+
+    - family_id: F07
+      family_name: SAD_MAD_dose_escalation
+      operational_scope: true
+      expected_terminal: AUTO
+      frequency_hint: MEDIUM
+      v4_2_new: false
+      priority: 10
+      matching_axis_patterns:
+        A0: { state_in: [AIC-PK, AIC-PKPD] }
+        A4: { state_in: [REGIMEN-FIXED] }
+      required_policies: []
+      examples: ["First-in-human single + multiple ascending dose."]
+
+    - family_id: F08
+      family_name: Crossover_BA_BE
+      operational_scope: true
+      expected_terminal: REPAIR
+      frequency_hint: MEDIUM
+      v4_2_new: false
+      priority: 10
+      matching_axis_patterns:
+        A0: { state_in: [AIC-PK] }
+      required_policies: [occasion_policy]
+      examples: ["2x2 crossover BA/BE study."]
+
+    - family_id: F09
+      family_name: DDI_victim_only
+      operational_scope: true
+      expected_terminal: REPAIR
+      frequency_hint: MEDIUM
+      v4_2_new: false
+      priority: 8
+      matching_axis_patterns:
+        A8: { state_in: [DDI-VICTIM-ONLY] }
+      required_policies: [cmt_analyte_policy]
+      examples: ["DDI study measuring victim drug only with perpetrator co-administered."]
+
+    - family_id: F10
+      family_name: Food_effect
+      operational_scope: true
+      expected_terminal: AUTO
+      frequency_hint: LOW
+      v4_2_new: false
+      priority: 10
+      matching_axis_patterns:
+        A0: { state_in: [AIC-PK] }
+      required_policies: []
+      examples: ["Fed vs fasted single-dose."]
+
+    - family_id: F11
+      family_name: Special_population
+      operational_scope: true
+      expected_terminal: AUTO
+      frequency_hint: MEDIUM
+      v4_2_new: false
+      priority: 10
+      matching_axis_patterns:
+        A0: { state_in: [AIC-PK, AIC-PKPD] }
+      required_policies: []
+      examples: ["Renal-impaired / hepatic-impaired PK study."]
+
+    - family_id: F12
+      family_name: Pediatric_PK
+      operational_scope: true
+      expected_terminal: AUTO
+      frequency_hint: MEDIUM
+      v4_2_new: false
+      priority: 10
+      matching_axis_patterns:
+        A0: { state_in: [AIC-PK, AIC-PKPD] }
+      required_policies: []
+      examples: ["Pediatric extrapolation PK study."]
+
+    - family_id: F13
+      family_name: PKPD_continuous_biomarker
+      operational_scope: true
+      expected_terminal: REPAIR
+      frequency_hint: HIGH
+      v4_2_new: false
+      priority: 10
+      matching_axis_patterns:
+        A0:
+          state_in: [AIC-PKPD, AIC-BIOMARKER]
+          endpoint_data_type: [CONTINUOUS_PD, EXPOSURE_METRIC]
+      required_policies: []
+      examples: ["PKPD with continuous biomarker (e.g., glucose, IL-6)."]
+
+    - family_id: F14
+      family_name: Exposure_response
+      operational_scope: true
+      expected_terminal: AUTO
+      frequency_hint: MEDIUM
+      v4_2_new: false
+      priority: 10
+      matching_axis_patterns:
+        A0:
+          state_in: [AIC-ER]
+          endpoint_data_type: [EXPOSURE_METRIC]
+      required_policies: []
+      examples: ["E-R analysis using AUC/Cmax derived exposures."]
+
+    - family_id: F15
+      family_name: TTE_count_categorical
+      operational_scope: true
+      expected_terminal: REPAIR
+      frequency_hint: MEDIUM
+      v4_2_new: false
+      priority: 10
+      matching_axis_patterns:
+        A0:
+          state_in: [AIC-TTE]
+          endpoint_data_type: [TTE_EVENT, COUNT_PD, CATEGORICAL_PD]
+      required_policies: []
+      examples: ["Time-to-event safety endpoint."]
+
+    - family_id: F16
+      family_name: External_covariate_linkage
+      operational_scope: true
+      expected_terminal: REPAIR
+      frequency_hint: MEDIUM
+      v4_2_new: false
+      priority: 9
+      matching_axis_patterns:
+        A7: { state_in: [EXTERNAL-LINKABLE] }
+      required_policies: [external_linkage_policy]
+      examples: ["PK study joined with external genotype table."]
+
+    - family_id: F17
+      family_name: FACS_derived_endpoint
+      operational_scope: true
+      expected_terminal: REPAIR
+      frequency_hint: LOW
+      v4_2_new: false
+      priority: 10
+      matching_axis_patterns:
+        A0:
+          state_in: [AIC-PKPD, AIC-BIOMARKER]
+      required_policies: []
+      examples: ["FACS-derived %CD4+ as endpoint; derivation already done."]
+
+    - family_id: F18
+      family_name: qPCR_derived_endpoint
+      operational_scope: true
+      expected_terminal: REPAIR
+      frequency_hint: LOW
+      v4_2_new: false
+      priority: 10
+      matching_axis_patterns:
+        A0:
+          state_in: [AIC-PKPD, AIC-BIOMARKER]
+      required_policies: []
+      examples: ["qPCR-derived viral load."]
+
+    - family_id: F19
+      family_name: Simple_preclinical_PK
+      operational_scope: true
+      expected_terminal: AUTO
+      frequency_hint: MEDIUM
+      v4_2_new: false
+      priority: 10
+      matching_axis_patterns:
+        A0: { state_in: [AIC-PRECLINICAL] }
+      required_policies: []
+      examples: ["Rat/mouse PK with sparse sampling."]
+
+    - family_id: F20
+      family_name: TDM_RWD
+      operational_scope: true
+      expected_terminal: REPAIR
+      frequency_hint: MEDIUM
+      v4_2_new: false
+      priority: 10
+      matching_axis_patterns:
+        A10: { state_in: [SEMI-STRUCTURED] }
+      required_policies: [adherence_imputation_policy]
+      examples: ["TDM dataset with pharmacy dispensing + sparse samples."]
+
+    - family_id: F21
+      family_name: Urine_interval_PK
+      operational_scope: true
+      expected_terminal: REPAIR
+      frequency_hint: LOW
+      v4_2_new: false
+      priority: 10
+      matching_axis_patterns:
+        A2: { state_in: [TIME-INTERVAL-RESOLVABLE] }
+      required_policies: []
+      examples: ["Urine collection over 0-24h intervals."]
+
+    - family_id: F22
+      family_name: DDI_victim_perpetrator
+      operational_scope: true
+      expected_terminal: REPAIR
+      frequency_hint: MEDIUM
+      v4_2_new: false
+      priority: 8
+      matching_axis_patterns:
+        A8: { state_in: [DDI-VICTIM-PERPETRATOR] }
+      required_policies: [cmt_analyte_policy, dual_cmt_policy]
+      examples: ["DDI study measuring both victim and perpetrator concentrations."]
+
+    - family_id: F23
+      family_name: Combination_therapy
+      operational_scope: true
+      expected_terminal: REPAIR
+      frequency_hint: MEDIUM
+      v4_2_new: false
+      priority: 10
+      matching_axis_patterns:
+        A8: { state_in: [MULTI-CMT-DEFINED] }
+      required_policies: [cmt_analyte_policy]
+      examples: ["Two co-administered drugs both measured."]
+
+    # ---- v4.2 NEW operational families ----
+
+    - family_id: F24
+      family_name: ADC_PK_PKPD
+      operational_scope: true
+      expected_terminal: REPAIR
+      frequency_hint: MEDIUM
+      v4_2_new: true
+      priority: 4
+      matching_axis_patterns:
+        A0:
+          modality_class: [ADC]
+        A8:
+          state_in: [MULTI-CMT-DEFINED, METABOLITE-DEFINED]
+          analyte_role: [TOTAL_ANTIBODY, CONJUGATED_ADC, UNCONJUGATED_PAYLOAD, ACTIVE_METABOLITE]
+      required_policies: [cmt_analyte_policy, analyte_role_declaration]
+      exclusion_conditions:
+        - "analyte_role missing"  # → Q16, not F24
+      examples: ["ADC trial measuring total Ab + conjugated ADC + free payload."]
+      notes: "v4.2 (C18, C22): requires analyte_role to avoid Q16."
+
+    - family_id: F25
+      family_name: Bispecific_TCellEngager_PKPD
+      operational_scope: true
+      expected_terminal: REPAIR
+      frequency_hint: LOW_TO_MEDIUM
+      v4_2_new: true
+      priority: 4
+      matching_axis_patterns:
+        A0:
+          modality_class: [BISPECIFIC]
+        A8:
+          state_in: [MULTI-CMT-DEFINED, METABOLITE-DEFINED]
+          analyte_role: [PARENT, SOLUBLE_TARGET, DRUG_TARGET_COMPLEX]
+      required_policies: [cmt_analyte_policy, analyte_role_declaration]
+      examples: ["Bispecific T-cell engager with parent + soluble target + complex."]
+
+    - family_id: F26
+      family_name: CAR_T_Cellular_Kinetics
+      operational_scope: true
+      expected_terminal: REPAIR
+      frequency_hint: LOW_TO_MEDIUM
+      v4_2_new: true
+      priority: 4
+      matching_axis_patterns:
+        A0:
+          modality_class: [CELL_THERAPY]
+          endpoint_data_type: [CELLULAR_KINETICS]
+        A8:
+          analyte_role: [VECTOR_COPY, CAR_POSITIVE_CELL, TRANSGENE_EXPRESSION]
+        A7:
+          state_in: [PRODUCT-LEVEL-COVARIATE, BASELINE-CLEAN, TIME-VARYING]
+      required_policies:
+        - cellular_LLOQ_derivation_policy
+        - lot_subject_linkage_key
+      exclusion_conditions:
+        - "A8=CMT-POLICY-MISSING"
+        - "endpoint_data_type=CELLULAR_KINETICS AND cellular_LLOQ_derivation_policy absent"
+      examples: ["CAR-T cellular kinetics with vector copy + CAR+ cell count, lot-level transduction efficiency joined."]
+      notes: "v4.2 (C23): replaces silent CONTINUOUS_PD path that caused false REPAIR in v4.1."
+
+    - family_id: F27
+      family_name: mRNA_vaccine_like
+      operational_scope: true
+      expected_terminal: REPAIR
+      frequency_hint: LOW
+      v4_2_new: true
+      priority: 5
+      matching_axis_patterns:
+        A0:
+          modality_class: [MRNA, VACCINE]
+          endpoint_data_type: [IMMUNOGENICITY, CONTINUOUS_PD]
+      required_policies:
+        - positivity_adjudication_rule
+        - dose_reconstruction_policy
+      examples: ["mRNA vaccine prime/boost; immunogenicity + dose form."]
+
+    - family_id: F28
+      family_name: Pregnancy_PK
+      operational_scope: true
+      expected_terminal: REPAIR
+      frequency_hint: LOW
+      v4_2_new: true
+      priority: 4
+      matching_axis_patterns:
+        A0:
+          endpoint_data_type: [PK_CONCENTRATION, MATERNAL_INFANT_PK]
+        A3:
+          state_in: [DOSE-DEFINED, DOSE-WEIGHT-BASED]
+      required_policies:
+        - delivery_anchor_policy
+      examples: ["Pregnant subjects with delivery date used as elapsed-time anchor."]
+
+    - family_id: F29
+      family_name: Lactation_motherInfant_PK
+      operational_scope: true
+      expected_terminal: REPAIR
+      frequency_hint: LOW
+      v4_2_new: true
+      priority: 3
+      matching_axis_patterns:
+        A0:
+          endpoint_data_type: [MATERNAL_INFANT_PK, MILK_PK]
+        A1:
+          state_in: [ID-DYAD-LINKABLE]
+      required_policies:
+        - dyad_linkage_policy
+        - delivery_anchor_policy
+        - milk_matrix_lloq_policy   # only when MILK_PK
+      exclusion_conditions:
+        - "A1=ID-DYAD-UNLINKED-POLICY-MISSING"  # → Q18
+      examples: ["Lactation study; mother + infant PK linked via MOTHER_SUBJID column on infant rows; milk LLOQ declared."]
+      notes: "v4.2 (C21): F29 supports dyad linkage; absence of policy goes to Q18, never INVALID."
+
+    # ============== Out-of-scope (F31..F34) ==============
+
+    - family_id: F31
+      family_name: Raw_FCS_qPCR_no_derivation
+      operational_scope: false
+      expected_terminal: UNSUPPORTED
+      frequency_hint: LOW
+      renumbered_from: F24
+      priority: 10
+      matching_axis_patterns:
+        A10: { state_in: [NON-TABULAR] }
+      examples: ["Raw .fcs flow files with no upstream derivation."]
+      notes: "v4.2 (C24): renumbered from old F24."
+
+    - family_id: F32
+      family_name: Omics_imaging_waveform_raw
+      operational_scope: false
+      expected_terminal: UNSUPPORTED
+      frequency_hint: LOW
+      renumbered_from: F25
+      priority: 10
+      matching_axis_patterns:
+        A10: { state_in: [NON-TABULAR] }
+      examples: ["Raw RNA-seq fastq, raw DICOM, ECG waveform."]
+      notes: "v4.2 (C24): renumbered from old F25."
+
+    - family_id: F33
+      family_name: Unstructured_notes_only
+      operational_scope: false
+      expected_terminal: UNSUPPORTED
+      frequency_hint: LOW
+      renumbered_from: F26
+      priority: 10
+      matching_axis_patterns:
+        A10: { state_in: [NON-TABULAR] }
+      examples: ["Free-text clinical notes without structured extraction."]
+      notes: "v4.2 (C24): renumbered from old F26."
+
+    - family_id: F34
+      family_name: Unrecoverable_core_missing
+      operational_scope: false
+      expected_terminal: INVALID
+      frequency_hint: LOW
+      renumbered_from: F27
+      priority: 10
+      matching_axis_patterns: {}
+      examples: ["Source corrupted; core axis (ID, time, dose, or obs) unrecoverable."]
+      notes: "v4.2 (C24): renumbered from old F27. Matched when any axis = *-UNRECOVERABLE."
+
+  validation:
+    operational_count: 29
+    out_of_scope_count: 4
+    f30_assigned: false
+    v4_2_new_operational: [F24, F25, F26, F27, F28, F29]
+    renumbered_out_of_scope: [F31, F32, F33, F34]

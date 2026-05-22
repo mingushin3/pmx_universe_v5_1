@@ -1,0 +1,3 @@
+fixture_name: fixture_ddi_victim_perpetrator
+input_aic: { cmt_analyte_policy: ddi_dual_cmt, dual_cmt_policy: { victim_label: victim } }
+expected_terminal: REPAIR

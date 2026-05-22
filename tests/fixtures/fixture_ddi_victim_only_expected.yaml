@@ -1,0 +1,3 @@
+fixture_name: fixture_ddi_victim_only
+input_aic: { cmt_analyte_policy: ddi_victim_only }
+expected_terminal: REPAIR

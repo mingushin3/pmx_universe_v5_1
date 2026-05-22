@@ -1,0 +1,3 @@
+fixture_name: fixture_milk_pk_matrix_lloq
+input_aic: { milk_matrix_lloq_policy: { milk_lloq: 0.1 } }
+expected_terminal: REPAIR
