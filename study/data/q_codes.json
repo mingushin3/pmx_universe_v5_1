@@ -1,0 +1,375 @@
+{
+  "version": "v5.1",
+  "codes": [
+    {
+      "code": "Q01",
+      "short_name": "BLQ_OR_LLOQ_POLICY_MISSING",
+      "definition": "BLQ handling rule or LLOQ value is absent for the observation domain that requires it (concentration / cellular / matrix-specific).",
+      "detection_rule": "A5 in [BLQ-NO-POLICY, LLOQ-MISSING, CELLULAR-LLOQ-POLICY-MISSING] OR (endpoint_data_type=CELLULAR_KINETICS AND cellular_LLOQ_derivation_policy absent) OR (endpoint_data_type=MILK_PK AND milk_matrix_lloq_policy absent)",
+      "linked_axis": [
+        "A5"
+      ],
+      "linked_node": [
+        "N5"
+      ],
+      "required_human_decision": "Pharmacometrician declares BLQ method (M1/M3/M4/exclude/project-specific) and LLOQ value.",
+      "required_input_to_clear": "blq_handling_policy + LLOQ value (or cellular_LLOQ_derivation_policy / milk_matrix_lloq_policy).",
+      "example": "PC dataset has values flagged BLQ but the AIC does not specify how to handle them.",
+      "post_clear_action": "Re-run A5 routing; expect BLQ-DEFINED-POLICY → REPAIR via canonicalize_blq (or canonicalize_cellular_blq / assign_milk_matrix_lloq)."
+    },
+    {
+      "code": "Q02",
+      "short_name": "TIME_ANCHOR_AMBIGUOUS",
+      "definition": "Time or dose anchor for elapsed/interval/dose timing is ambiguous.",
+      "detection_rule": "A2=TIME-ANCHOR-AMBIGUOUS OR A3=DOSE-AMBIGUOUS",
+      "linked_axis": [
+        "A2",
+        "A3"
+      ],
+      "linked_node": [
+        "N2"
+      ],
+      "required_human_decision": "Clinical lead designates anchor (first dose / delivery date / postpartum day).",
+      "required_input_to_clear": "elapsed_anchor_policy or dose_time anchor.",
+      "example": "First-dose date present but multiple candidate anchors (treatment start vs randomization).",
+      "post_clear_action": "A2 → TIME-ELAPSED-RESOLVABLE; derive_time_elapsed."
+    },
+    {
+      "code": "Q03",
+      "short_name": "ID_AMBIGUOUS",
+      "definition": "Subject identifier ambiguous or duplicated and no resolution rule.",
+      "detection_rule": "A1=ID-AMBIGUOUS",
+      "linked_axis": [
+        "A1"
+      ],
+      "linked_node": [
+        "N1"
+      ],
+      "required_human_decision": "Data manager declares ID disambiguation rule.",
+      "required_input_to_clear": "ID disambiguation policy.",
+      "example": "Two subjects share an SUBJID but differ in site code; rule not declared.",
+      "post_clear_action": "A1 → ID-DUPLICATE-RESOLVABLE → REPAIR (map_subject_id)."
+    },
+    {
+      "code": "Q04",
+      "short_name": "INFUSION_RECONSTRUCTION_MISSING",
+      "definition": "Infusion start/stop/restart events present but no reconstruction policy.",
+      "detection_rule": "A4=INFUSION-STOP-RESTART AND infusion_reconstruction_policy absent",
+      "linked_axis": [
+        "A3",
+        "A4"
+      ],
+      "linked_node": [
+        "N3"
+      ],
+      "required_human_decision": "PK lead declares infusion_reconstruction_policy.",
+      "required_input_to_clear": "infusion_reconstruction_policy ∈ {rate_from_records, stop_restart_from_events, not_applicable}.",
+      "example": "Continuous infusion with multiple interruptions; reconstruction approach undefined.",
+      "post_clear_action": "Re-run A4 with policy; REPAIR via reconstruct_infusion_stop_restart."
+    },
+    {
+      "code": "Q05",
+      "short_name": "OBSERVATION_UNIT_AMBIGUOUS",
+      "definition": "Observation unit ambiguous (concentration scale, copy number unit, etc.).",
+      "detection_rule": "A5 observation unit absent or conflicting",
+      "linked_axis": [
+        "A5"
+      ],
+      "linked_node": [
+        "N4"
+      ],
+      "required_human_decision": "Bioanalyst declares unit.",
+      "required_input_to_clear": "observation_unit declaration.",
+      "example": "PCSTRESN missing; PCORRESU shows mixed ng/mL and μg/mL.",
+      "post_clear_action": "convert_units rerun; A5 → BIOANALYTICAL-FINAL or BLQ-DEFINED-POLICY."
+    },
+    {
+      "code": "Q06",
+      "short_name": "COVARIATE_OR_DEVIATION_POLICY_MISSING",
+      "definition": "Covariate imputation or protocol deviation policy absent.",
+      "detection_rule": "A6=COVARIATE-IMPUTATION-POLICY-MISSING OR A9=PROTOCOL-DEVIATION-NO-POLICY",
+      "linked_axis": [
+        "A6",
+        "A9"
+      ],
+      "linked_node": [
+        "N7"
+      ],
+      "required_human_decision": "Pharmacometrician declares imputation/deviation policy.",
+      "required_input_to_clear": "covariate_policy or protocol_deviation_policy.",
+      "example": "Some subjects missing baseline weight; no LOCF / mean imputation declared.",
+      "post_clear_action": "REPAIR via attach_covariate_* with policy."
+    },
+    {
+      "code": "Q07",
+      "short_name": "EXTERNAL_POLICY_MISSING",
+      "definition": "External linkage policy absent (rule for how to attach external table).",
+      "detection_rule": "A7=POLICY-MISSING",
+      "linked_axis": [
+        "A7"
+      ],
+      "linked_node": [],
+      "required_human_decision": "Data architect declares external_linkage_policy.",
+      "required_input_to_clear": "external_linkage_policy.",
+      "example": "External lab table available but join policy (by subject vs by visit) undeclared.",
+      "post_clear_action": "REPAIR via attach_covariate_external."
+    },
+    {
+      "code": "Q08",
+      "short_name": "REGIMEN_POLICY_MISSING",
+      "definition": "Regimen incompletely declared and no fallback policy.",
+      "detection_rule": "A4=MISSING-NO-POLICY OR (A4=TITRATION-ADAPTIVE AND dose_adaptation_policy absent) OR (A4=LOADING-MAINTENANCE AND transition_point_undefined)",
+      "linked_axis": [
+        "A4"
+      ],
+      "linked_node": [
+        "N3"
+      ],
+      "required_human_decision": "Protocol lead declares regimen policy.",
+      "required_input_to_clear": "dose_reconstruction_policy / transition_point.",
+      "example": "Titration regimen with per-subject adaptation; no rule for reconstruction.",
+      "post_clear_action": "REPAIR via reconstruct_dose_titration or reconstruct_loading_maintenance."
+    },
+    {
+      "code": "Q09",
+      "short_name": "CMT_POLICY_MISSING",
+      "definition": "Multi-analyte data but CMT assignment policy absent.",
+      "detection_rule": "A8=CMT-POLICY-MISSING OR (A8=DDI-VICTIM-PERPETRATOR AND dual_cmt_policy absent)",
+      "linked_axis": [
+        "A8"
+      ],
+      "linked_node": [
+        "N4"
+      ],
+      "required_human_decision": "Modeling lead declares CMT assignment.",
+      "required_input_to_clear": "cmt_analyte_policy.",
+      "example": "DDI study with both victim and perpetrator concentrations; no rule for which CMT number to use.",
+      "post_clear_action": "REPAIR via assign_cmt_multi / assign_cmt_ddi_*."
+    },
+    {
+      "code": "Q10",
+      "short_name": "OCCASION_POLICY_MISSING",
+      "definition": "Occasion definition undeclared when needed for IOV/within-subject random effects.",
+      "detection_rule": "occasion_policy absent and analysis design requires occasion stratification",
+      "linked_axis": [
+        "A4"
+      ],
+      "linked_node": [
+        "N3"
+      ],
+      "required_human_decision": "Modeling lead defines occasion grouping.",
+      "required_input_to_clear": "occasion_policy ∈ {dose, period, cycle, visit, model_defined, not_applicable}.",
+      "example": "Crossover study; OCC column not present and policy not declared.",
+      "post_clear_action": "Add OCC via dose/period/cycle policy."
+    },
+    {
+      "code": "Q11",
+      "short_name": "AIC_OR_ENDPOINT_TYPE_MISSING",
+      "definition": "AIC missing entirely OR endpoint_data_type absent for AIC type that requires it.",
+      "detection_rule": "A0=AIC-MISSING OR (A0 in [AIC-PKPD, AIC-ER, AIC-TTE, AIC-BIOMARKER, AIC-CELL_THERAPY, AIC-IMMUNOGEN, AIC-LACTATION]\n AND endpoint_data_type absent)",
+      "linked_axis": [
+        "A0"
+      ],
+      "linked_node": [
+        "N0"
+      ],
+      "required_human_decision": "Modeling lead provides AIC and endpoint_data_type.",
+      "required_input_to_clear": "Analysis Intent Contract + endpoint_data_type.",
+      "example": "PMX project initiated without an AIC document.",
+      "post_clear_action": "Re-route through N0; if AIC complete, proceed."
+    },
+    {
+      "code": "Q12",
+      "short_name": "ANCHOR_MISSING",
+      "definition": "A required anchor (e.g., delivery_anchor for MATERNAL_INFANT_PK) is not provided.",
+      "detection_rule": "(endpoint_data_type=MATERNAL_INFANT_PK AND delivery_anchor_policy absent) OR elapsed_anchor undefined when ELAPSED time required",
+      "linked_axis": [
+        "A3"
+      ],
+      "linked_node": [
+        "N2"
+      ],
+      "required_human_decision": "Clinical lead provides anchor.",
+      "required_input_to_clear": "delivery_anchor_policy or elapsed_anchor_policy.",
+      "example": "Maternal-infant PK study without delivery date declared as anchor.",
+      "post_clear_action": "derive_time_postpartum_anchor / derive_time_elapsed."
+    },
+    {
+      "code": "Q13",
+      "short_name": "EXTERNAL_LINKAGE_KEY_MISSING",
+      "definition": "External or product-level linkage key absent. Note: this code absorbs the former Q17 (product-level linkage key missing).",
+      "detection_rule": "A7=KEY-MISSING OR (A7=PRODUCT-LEVEL-COVARIATE AND lot_subject_linkage_key absent)",
+      "linked_axis": [
+        "A7"
+      ],
+      "linked_node": [],
+      "required_human_decision": "CMC/data team provides lot→subject mapping or external join key.",
+      "required_input_to_clear": "lot_subject_linkage_key or external join key.",
+      "example": "CAR-T lot-level transduction efficiency available but no lot→subject map.",
+      "post_clear_action": "REPAIR via attach_covariate_external / attach_covariate_product_level. Log note: 'absorbed Q17 — product-level, lot-to-subject mapping absent'."
+    },
+    {
+      "code": "Q14",
+      "short_name": "ADDL_ACTUAL_CONFLICT_POLICY_MISSING",
+      "definition": "ADDL-expanded and actual dosing records conflict; resolution policy absent.",
+      "detection_rule": "A4=ADDL-ACTUAL-CONFLICT AND addl_actual_conflict_policy absent",
+      "linked_axis": [
+        "A4"
+      ],
+      "linked_node": [
+        "N3"
+      ],
+      "required_human_decision": "Protocol lead declares policy.",
+      "required_input_to_clear": "addl_actual_conflict_policy ∈ {actual_priority, addl_priority, merge_policy_doc, not_applicable}.",
+      "example": "ADDL schedule fills in missing doses; actual records contradict 2 of them.",
+      "post_clear_action": "REPAIR via resolve_addl_actual_conflict."
+    },
+    {
+      "code": "Q15A",
+      "short_name": "DATA_PACKAGE_INCOMPLETE_UPSTREAM_ADJUDICATION",
+      "definition": "Data package incomplete — upstream adjudication decision 미제출. Bioanalytical / clinical final adjudication has not yet been delivered to the wrangler. The raw data exist but the authoritative decision about which values to use is absent.",
+      "detection_rule": "A5=BIOANALYTICAL-FINAL-FLAG-MISSING OR (A7=PRODUCT-LEVEL-COVARIATE AND product_attribute_absent_from_data_package) OR (A10=SEMI-STRUCTURED AND source_parser_subtype=unknown)",
+      "linked_axis": [
+        "A5",
+        "A7",
+        "A10"
+      ],
+      "linked_node": [],
+      "required_human_decision": "Bioanalytical / data team delivers upstream adjudication.",
+      "required_input_to_clear": "Adjudicated values or attribute table.",
+      "example": "Bioanalytical report shows 2 reanalysis values for the same sample; final adjudicated value not yet designated by the bioanalytical scientist.",
+      "what_it_is_NOT": "NOT 'a column or file is missing from the data package'. It is specifically an upstream decision that has not been communicated.",
+      "post_clear_action": "Re-run A5/A7/A10; proceed to REPAIR or AUTO depending on adjudicated value."
+    },
+    {
+      "code": "Q15B",
+      "short_name": "LEGACY_FLAG_UNDOCUMENTED",
+      "definition": "Legacy flag undocumented — 레거시 데이터의 플래그/필드 정의가 없어 해석 불가. A flag, code, or field present in the historical dataset has no documented meaning in any data specification, CRF, or DM document.",
+      "detection_rule": "A10=SEMI-STRUCTURED-LEGACY-FLAG",
+      "linked_axis": [
+        "A10"
+      ],
+      "linked_node": [],
+      "required_human_decision": "Data manager / legacy SME provides field-meaning documentation.",
+      "required_input_to_clear": "Legacy flag dictionary.",
+      "example": "Legacy NONMEM-like dataset has column 'EVID2' with values 0/1/2/9; meaning of value 9 is not in any available dictionary or SAS format library.",
+      "what_it_is_NOT": "NOT 'file not found'. The data is present but the interpretation key is absent.",
+      "post_clear_action": "Re-run A10 routing with documented flag semantics."
+    },
+    {
+      "code": "Q15C",
+      "short_name": "REALWORLD_ADHERENCE_HISTORY_UNRESOLVED",
+      "definition": "Real-world adherence/administration history unresolved — RWD/TDM 투여 기록의 실제 복용 이력 불명확. In real-world or TDM datasets, the patient-reported or pharmacy-dispensed dose history cannot be reliably reconciled with the observed concentration-time profile without additional source data or SAP guidance.",
+      "detection_rule": "A10=RWD-ADHERENCE-UNRESOLVED",
+      "linked_axis": [
+        "A10"
+      ],
+      "linked_node": [],
+      "required_human_decision": "Clinical pharmacologist / SAP author declares adherence imputation policy.",
+      "required_input_to_clear": "SAP-level adherence imputation policy.",
+      "example": "TDM dataset has pharmacy dispensing records but no adherence info; concentrations suggest partial adherence. Without an SAP-level adherence imputation policy, EVID=1 rows cannot be reliably placed.",
+      "what_it_is_NOT": "NOT 'dose data is missing'. The records exist but reconciliation is impossible.",
+      "post_clear_action": "Apply declared adherence policy; A10 → SEMI-STRUCTURED; REPAIR."
+    },
+    {
+      "code": "Q15D",
+      "short_name": "ASSAY_REANALYSIS_FINAL_ADJUDICATION_MISSING",
+      "definition": "Assay reanalysis/final-result adjudication missing — 재분석 결과 중 최종 선택 기준 미제시. Multiple assay results exist for the same sample (reanalysis, repeat, inter-laboratory) and the rule for selecting the final DV has not been provided.",
+      "detection_rule": "A9=REANALYSIS-FINAL-MISSING",
+      "linked_axis": [
+        "A9"
+      ],
+      "linked_node": [],
+      "required_human_decision": "Bioanalytical lead declares final-selection rule.",
+      "required_input_to_clear": "reanalysis_final_selection_policy.",
+      "example": "PC dataset contains both original and reanalysis DV values; SOP / bioanalytical report does not specify priority.",
+      "what_it_is_NOT": "NOT 'bioanalytical final flag column is missing' (that is Q15A). Q15D = rule for choosing among multiple available values is absent.",
+      "post_clear_action": "REPAIR via resolve_reanalysis_final using declared policy."
+    },
+    {
+      "code": "Q16",
+      "short_name": "ANALYTE_ROLE_POLICY_MISSING",
+      "definition": "Modality-specific analyte role policy missing for ADC / CAR-T / bispecific / gene-therapy multi-analyte data.",
+      "detection_rule": "A8 in [MULTI-CMT-DEFINED, DDI-VICTIM-PERPETRATOR, METABOLITE-DEFINED] AND modality_class in [ADC, BISPECIFIC, CELL_THERAPY, GENE_THERAPY] AND analyte_role NOT declared",
+      "linked_axis": [
+        "A8"
+      ],
+      "linked_node": [
+        "N4"
+      ],
+      "required_human_decision": "Bioanalyst declares analyte role per CMT.",
+      "required_input_to_clear": "analyte_role declaration in AIC for each measured analyte.",
+      "example": "ADC trial measures total Ab, conjugated ADC, free payload — analyte_role not declared per CMT.",
+      "post_clear_action": "A8 → MULTI-CMT-DEFINED with analyte_role tags; assign_cmt_with_analyte_role.",
+      "difference_from_Q09": "Q09 = no CMT number assigned; Q16 = CMT exists but analyte role classification is missing."
+    },
+    {
+      "code": "Q17",
+      "status": "REJECTED",
+      "reason": "Absorbed into Q13 (external covariate linkage). Use Q13 with log message \"product-level, lot-to-subject mapping absent\". Any appearance of Q17 in downstream artifacts is a system failure."
+    },
+    {
+      "code": "Q18",
+      "short_name": "MATERNAL_INFANT_DYAD_LINKAGE_MISSING",
+      "definition": "Maternal-infant PK study has separate mother and infant data but no dyad linkage key or policy declared.",
+      "detection_rule": "endpoint_data_type=MATERNAL_INFANT_PK AND (dyad_linkage_key absent OR dyad_linkage_policy absent)",
+      "linked_axis": [
+        "A1"
+      ],
+      "linked_node": [
+        "N1"
+      ],
+      "required_human_decision": "Clinical / data lead provides dyad linkage key (e.g., MOTHER_SUBJID column on infant rows).",
+      "required_input_to_clear": "dyad_linkage_key + dyad_linkage_policy.",
+      "example": "Lactation study has mother and infant concentrations in separate tables; no linkage column.",
+      "post_clear_action": "A1 → ID-DYAD-LINKABLE; REPAIR via attach_dyad_linkage."
+    },
+    {
+      "code": "Q19",
+      "short_name": "IMMUNOGENICITY_POSITIVITY_RULE_MISSING",
+      "definition": "Immunogenicity (ADA/NAB) data present but positivity adjudication rule absent in AIC.",
+      "detection_rule": "endpoint_data_type=IMMUNOGENICITY AND positivity_adjudication_rule absent",
+      "linked_axis": [
+        "A5"
+      ],
+      "linked_node": [
+        "N5"
+      ],
+      "required_human_decision": "Bioanalytical / immunogenicity lead declares positivity rule.",
+      "required_input_to_clear": "positivity_adjudication_rule (e.g., screening cutpoint + confirmation tier).",
+      "example": "ADA assay produces screening + confirmation + titer; rule for which samples are 'positive' not provided.",
+      "post_clear_action": "A5 → IMMUNOGEN-POSITIVITY-DEFINED; REPAIR via adjudicate_immunogenicity_positivity."
+    }
+  ],
+  "validation": {
+    "active_count": 21,
+    "rejected_count": 1,
+    "active_codes": [
+      "Q01",
+      "Q02",
+      "Q03",
+      "Q04",
+      "Q05",
+      "Q06",
+      "Q07",
+      "Q08",
+      "Q09",
+      "Q10",
+      "Q11",
+      "Q12",
+      "Q13",
+      "Q14",
+      "Q15A",
+      "Q15B",
+      "Q15C",
+      "Q15D",
+      "Q16",
+      "Q18",
+      "Q19"
+    ],
+    "forbidden_codes": [
+      "Q15",
+      "Q17"
+    ]
+  }
+}

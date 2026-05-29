@@ -1,0 +1,626 @@
+{
+  "dependency_constraints": {
+    "version": "v5.1",
+    "resolution_policy": "lower priority value wins; ties resolved by rule_id ascending",
+    "rules": [
+      {
+        "rule_id": "DC001",
+        "priority": 1,
+        "if_conditions": [
+          {
+            "axis": "A0",
+            "state": "AIC-MISSING"
+          }
+        ],
+        "then_terminal": "QUARANTINE",
+        "then_q_code": "Q11",
+        "then_action_hint": "flag_quarantine(q_code=Q11)",
+        "rationale": "AIC entirely missing — cannot route any data."
+      },
+      {
+        "rule_id": "DC002",
+        "priority": 2,
+        "if_conditions": [
+          {
+            "axis": "A0",
+            "state_in": [
+              "AIC-PKPD",
+              "AIC-ER",
+              "AIC-TTE",
+              "AIC-BIOMARKER",
+              "AIC-CELL_THERAPY",
+              "AIC-IMMUNOGEN",
+              "AIC-LACTATION"
+            ]
+          },
+          {
+            "aic_field": "endpoint_data_type",
+            "status": "missing"
+          }
+        ],
+        "then_terminal": "QUARANTINE",
+        "then_q_code": "Q11",
+        "then_action_hint": "flag_quarantine(q_code=Q11)",
+        "rationale": "HR6: endpoint_data_type required for these AIC types."
+      },
+      {
+        "rule_id": "DC003",
+        "priority": 3,
+        "if_conditions": [
+          {
+            "aic_field": "endpoint_data_type",
+            "value": "CELLULAR_KINETICS"
+          },
+          {
+            "aic_field": "cellular_LLOQ_derivation_policy",
+            "status": "absent"
+          }
+        ],
+        "then_terminal": "QUARANTINE",
+        "then_q_code": "Q01",
+        "then_action_hint": "flag_quarantine(q_code=Q01, subtype=cellular)",
+        "rationale": "HR7: CELLULAR_KINETICS without cellular LLOQ policy."
+      },
+      {
+        "rule_id": "DC004",
+        "priority": 3,
+        "if_conditions": [
+          {
+            "aic_field": "endpoint_data_type",
+            "value": "IMMUNOGENICITY"
+          },
+          {
+            "aic_field": "positivity_adjudication_rule",
+            "status": "absent"
+          }
+        ],
+        "then_terminal": "QUARANTINE",
+        "then_q_code": "Q19",
+        "then_action_hint": "flag_quarantine(q_code=Q19)",
+        "rationale": "HR8: IMMUNOGENICITY without positivity rule."
+      },
+      {
+        "rule_id": "DC005",
+        "priority": 3,
+        "if_conditions": [
+          {
+            "aic_field": "endpoint_data_type",
+            "value": "MATERNAL_INFANT_PK"
+          },
+          {
+            "aic_field": "dyad_linkage_key",
+            "status": "absent"
+          }
+        ],
+        "then_terminal": "QUARANTINE",
+        "then_q_code": "Q18",
+        "then_action_hint": "flag_quarantine(q_code=Q18)",
+        "rationale": "HR9: maternal-infant dyad linkage key missing."
+      },
+      {
+        "rule_id": "DC006",
+        "priority": 3,
+        "if_conditions": [
+          {
+            "aic_field": "endpoint_data_type",
+            "value": "MATERNAL_INFANT_PK"
+          },
+          {
+            "aic_field": "delivery_anchor_policy",
+            "status": "absent"
+          }
+        ],
+        "then_terminal": "QUARANTINE",
+        "then_q_code": "Q12",
+        "then_action_hint": "flag_quarantine(q_code=Q12)",
+        "rationale": "HR9: maternal-infant delivery anchor missing."
+      },
+      {
+        "rule_id": "DC007",
+        "priority": 3,
+        "if_conditions": [
+          {
+            "aic_field": "endpoint_data_type",
+            "value": "MILK_PK"
+          },
+          {
+            "aic_field": "milk_matrix_lloq_policy",
+            "status": "absent"
+          }
+        ],
+        "then_terminal": "QUARANTINE",
+        "then_q_code": "Q01",
+        "then_action_hint": "flag_quarantine(q_code=Q01, subtype=milk)",
+        "rationale": "MILK_PK without matrix-specific LLOQ policy."
+      },
+      {
+        "rule_id": "DC008",
+        "priority": 5,
+        "if_conditions": [
+          {
+            "axis": "A3",
+            "state": "DOSE-AMBIGUOUS"
+          }
+        ],
+        "then_terminal": "QUARANTINE",
+        "then_q_code": "Q02",
+        "then_action_hint": "flag_quarantine(q_code=Q02)",
+        "rationale": "Dose ambiguous and no resolution rule."
+      },
+      {
+        "rule_id": "DC009",
+        "priority": 5,
+        "if_conditions": [
+          {
+            "axis": "A3",
+            "state": "DOSE-UNRECOVERABLE"
+          }
+        ],
+        "then_terminal": "INVALID",
+        "then_action_hint": "flag_invalid(reason='dose unrecoverable')",
+        "rationale": "Dose unrecoverable."
+      },
+      {
+        "rule_id": "DC010",
+        "priority": 5,
+        "if_conditions": [
+          {
+            "axis": "A3",
+            "state": "DOSE-AMBIGUOUS"
+          },
+          {
+            "context": "pregnancy_or_lactation"
+          },
+          {
+            "aic_field": "delivery_anchor_policy",
+            "status": "absent"
+          }
+        ],
+        "then_terminal": "QUARANTINE",
+        "then_q_code": "Q02",
+        "then_action_hint": "flag_quarantine(q_code=Q02)",
+        "rationale": "Pregnancy/lactation studies require delivery anchor for dose timing."
+      },
+      {
+        "rule_id": "DC011",
+        "priority": 5,
+        "if_conditions": [
+          {
+            "axis": "A4",
+            "state": "ADDL-ACTUAL-CONFLICT"
+          },
+          {
+            "aic_field": "addl_actual_conflict_policy",
+            "status": "absent"
+          }
+        ],
+        "then_terminal": "QUARANTINE",
+        "then_q_code": "Q14",
+        "then_action_hint": "flag_quarantine(q_code=Q14)",
+        "rationale": "ADDL/actual conflict without resolution policy."
+      },
+      {
+        "rule_id": "DC012",
+        "priority": 5,
+        "if_conditions": [
+          {
+            "axis": "A4",
+            "state": "MISSING-NO-POLICY"
+          }
+        ],
+        "then_terminal": "QUARANTINE",
+        "then_q_code": "Q08",
+        "then_action_hint": "flag_quarantine(q_code=Q08)",
+        "rationale": "Regimen incomplete and no fallback policy."
+      },
+      {
+        "rule_id": "DC013",
+        "priority": 5,
+        "if_conditions": [
+          {
+            "axis": "A4",
+            "state": "UNRECOVERABLE"
+          }
+        ],
+        "then_terminal": "INVALID",
+        "then_action_hint": "flag_invalid(reason='regimen unrecoverable')",
+        "rationale": "Regimen unrecoverable."
+      },
+      {
+        "rule_id": "DC014",
+        "priority": 5,
+        "if_conditions": [
+          {
+            "axis": "A4",
+            "state": "TITRATION-ADAPTIVE"
+          },
+          {
+            "aic_field": "dose_adaptation_policy",
+            "status": "absent"
+          }
+        ],
+        "then_terminal": "QUARANTINE",
+        "then_q_code": "Q08",
+        "then_action_hint": "flag_quarantine(q_code=Q08)",
+        "rationale": "Adaptive titration without policy."
+      },
+      {
+        "rule_id": "DC015",
+        "priority": 5,
+        "if_conditions": [
+          {
+            "axis": "A4",
+            "state": "LOADING-MAINTENANCE"
+          },
+          {
+            "aic_field": "transition_point",
+            "status": "undefined"
+          }
+        ],
+        "then_terminal": "QUARANTINE",
+        "then_q_code": "Q08",
+        "then_action_hint": "flag_quarantine(q_code=Q08)",
+        "rationale": "Loading-maintenance regimen with undefined transition point."
+      },
+      {
+        "rule_id": "DC016",
+        "priority": 5,
+        "if_conditions": [
+          {
+            "axis": "A4",
+            "state": "INFUSION-STOP-RESTART"
+          },
+          {
+            "aic_field": "infusion_reconstruction_policy",
+            "status": "absent"
+          }
+        ],
+        "then_terminal": "QUARANTINE",
+        "then_q_code": "Q04",
+        "then_action_hint": "flag_quarantine(q_code=Q04)",
+        "rationale": "Infusion stop-restart without reconstruction policy."
+      },
+      {
+        "rule_id": "DC017",
+        "priority": 5,
+        "if_conditions": [
+          {
+            "axis": "A5",
+            "state": "BIOANALYTICAL-FINAL-FLAG-MISSING"
+          }
+        ],
+        "then_terminal": "QUARANTINE",
+        "then_q_code": "Q15A",
+        "then_action_hint": "flag_quarantine(q_code=Q15A)",
+        "rationale": "PATCH m-4: upstream bioanalytical adjudication not delivered → Q15A (data package incomplete), NOT Q15D."
+      },
+      {
+        "rule_id": "DC018",
+        "priority": 5,
+        "if_conditions": [
+          {
+            "axis": "A5",
+            "state": "BLQ-NO-POLICY"
+          }
+        ],
+        "then_terminal": "QUARANTINE",
+        "then_q_code": "Q01",
+        "then_action_hint": "flag_quarantine(q_code=Q01)",
+        "rationale": "BLQ values without handling policy."
+      },
+      {
+        "rule_id": "DC019",
+        "priority": 5,
+        "if_conditions": [
+          {
+            "axis": "A5",
+            "state": "LLOQ-MISSING"
+          }
+        ],
+        "then_terminal": "QUARANTINE",
+        "then_q_code": "Q01",
+        "then_action_hint": "flag_quarantine(q_code=Q01)",
+        "rationale": "LLOQ value not provided."
+      },
+      {
+        "rule_id": "DC020",
+        "priority": 5,
+        "if_conditions": [
+          {
+            "axis": "A5",
+            "state": "ABSENT"
+          }
+        ],
+        "then_terminal": "INVALID",
+        "then_action_hint": "flag_invalid(reason='observations absent')",
+        "rationale": "No observation values."
+      },
+      {
+        "rule_id": "DC021",
+        "priority": 5,
+        "if_conditions": [
+          {
+            "axis": "A7",
+            "state": "PRODUCT-LEVEL-COVARIATE"
+          },
+          {
+            "aic_field": "lot_subject_linkage_key",
+            "status": "absent"
+          }
+        ],
+        "then_terminal": "QUARANTINE",
+        "then_q_code": "Q13",
+        "then_action_hint": "flag_quarantine(q_code=Q13, note='absorbed Q17 — product-level, lot-to-subject mapping absent')",
+        "rationale": "Product-level covariate without lot→subject linkage key (absorbs former Q17)."
+      },
+      {
+        "rule_id": "DC022",
+        "priority": 5,
+        "if_conditions": [
+          {
+            "axis": "A7",
+            "state": "PRODUCT-LEVEL-COVARIATE"
+          },
+          {
+            "condition": "product_attribute_absent_from_data_package"
+          }
+        ],
+        "then_terminal": "QUARANTINE",
+        "then_q_code": "Q15A",
+        "then_action_hint": "flag_quarantine(q_code=Q15A)",
+        "rationale": "Product-level attribute table absent from data package."
+      },
+      {
+        "rule_id": "DC023",
+        "priority": 5,
+        "if_conditions": [
+          {
+            "axis": "A7",
+            "state": "KEY-MISSING"
+          }
+        ],
+        "then_terminal": "QUARANTINE",
+        "then_q_code": "Q13",
+        "then_action_hint": "flag_quarantine(q_code=Q13)",
+        "rationale": "External linkage key missing."
+      },
+      {
+        "rule_id": "DC024",
+        "priority": 5,
+        "if_conditions": [
+          {
+            "axis": "A7",
+            "state": "POLICY-MISSING"
+          }
+        ],
+        "then_terminal": "QUARANTINE",
+        "then_q_code": "Q07",
+        "then_action_hint": "flag_quarantine(q_code=Q07)",
+        "rationale": "External linkage policy absent."
+      },
+      {
+        "rule_id": "DC025",
+        "priority": 5,
+        "if_conditions": [
+          {
+            "axis": "A8",
+            "state": "CMT-POLICY-MISSING"
+          }
+        ],
+        "then_terminal": "QUARANTINE",
+        "then_q_code": "Q09",
+        "then_action_hint": "flag_quarantine(q_code=Q09)",
+        "rationale": "Multi-analyte data with no CMT policy."
+      },
+      {
+        "rule_id": "DC026",
+        "priority": 5,
+        "if_conditions": [
+          {
+            "axis": "A8",
+            "state": "DDI-VICTIM-PERPETRATOR"
+          },
+          {
+            "aic_field": "dual_cmt_policy",
+            "status": "absent"
+          }
+        ],
+        "then_terminal": "QUARANTINE",
+        "then_q_code": "Q09",
+        "then_action_hint": "flag_quarantine(q_code=Q09)",
+        "rationale": "DDI dual-CMT policy absent."
+      },
+      {
+        "rule_id": "DC027",
+        "priority": 4,
+        "if_conditions": [
+          {
+            "axis": "A8",
+            "state_in": [
+              "MULTI-CMT-DEFINED",
+              "DDI-VICTIM-PERPETRATOR",
+              "METABOLITE-DEFINED"
+            ]
+          },
+          {
+            "aic_field": "modality_class",
+            "value_in": [
+              "ADC",
+              "BISPECIFIC",
+              "CELL_THERAPY",
+              "GENE_THERAPY"
+            ]
+          },
+          {
+            "aic_field": "analyte_role",
+            "status": "missing"
+          }
+        ],
+        "then_terminal": "QUARANTINE",
+        "then_q_code": "Q16",
+        "then_action_hint": "flag_quarantine(q_code=Q16)",
+        "rationale": "HR10: analyte_role required for these modalities + A8 states."
+      },
+      {
+        "rule_id": "DC028",
+        "priority": 5,
+        "if_conditions": [
+          {
+            "axis": "A9",
+            "state": "REANALYSIS-FINAL-MISSING"
+          }
+        ],
+        "then_terminal": "QUARANTINE",
+        "then_q_code": "Q15D",
+        "then_action_hint": "flag_quarantine(q_code=Q15D)",
+        "rationale": "Multiple assay results without selection rule (Q15D, per PATCH m-4)."
+      },
+      {
+        "rule_id": "DC029",
+        "priority": 5,
+        "if_conditions": [
+          {
+            "axis": "A9",
+            "state": "IRRECONCILABLE"
+          }
+        ],
+        "then_terminal": "INVALID",
+        "then_action_hint": "flag_invalid(reason='reanalysis irreconcilable')",
+        "rationale": "Reanalysis irreconcilable."
+      },
+      {
+        "rule_id": "DC030",
+        "priority": 5,
+        "if_conditions": [
+          {
+            "axis": "A9",
+            "state": "PROTOCOL-DEVIATION-NO-POLICY"
+          }
+        ],
+        "then_terminal": "QUARANTINE",
+        "then_q_code": "Q06",
+        "then_action_hint": "flag_quarantine(q_code=Q06)",
+        "rationale": "Protocol deviation without policy."
+      },
+      {
+        "rule_id": "DC031",
+        "priority": 5,
+        "if_conditions": [
+          {
+            "axis": "A10",
+            "state": "NON-TABULAR"
+          }
+        ],
+        "then_terminal": "UNSUPPORTED",
+        "then_action_hint": "flag_unsupported(reason='non-tabular source')",
+        "rationale": "Non-tabular source out of scope."
+      },
+      {
+        "rule_id": "DC032",
+        "priority": 5,
+        "if_conditions": [
+          {
+            "axis": "A10",
+            "state": "CORRUPTED"
+          }
+        ],
+        "then_terminal": "INVALID",
+        "then_action_hint": "flag_invalid(reason='source corrupted')",
+        "rationale": "Source file corrupted."
+      },
+      {
+        "rule_id": "DC033",
+        "priority": 5,
+        "if_conditions": [
+          {
+            "axis": "A10",
+            "state": "SEMI-STRUCTURED"
+          },
+          {
+            "aic_field": "source_parser_subtype",
+            "value": "unknown"
+          }
+        ],
+        "then_terminal": "QUARANTINE",
+        "then_q_code": "Q15A",
+        "then_action_hint": "flag_quarantine(q_code=Q15A)",
+        "rationale": "Semi-structured with unknown parser subtype."
+      },
+      {
+        "rule_id": "DC033b",
+        "priority": 5,
+        "if_conditions": [
+          {
+            "axis": "A10",
+            "state": "SEMI-STRUCTURED-LEGACY-FLAG"
+          }
+        ],
+        "then_terminal": "QUARANTINE",
+        "then_q_code": "Q15B",
+        "then_action_hint": "flag_quarantine(q_code=Q15B)",
+        "rationale": "Legacy flag undocumented."
+      },
+      {
+        "rule_id": "DC033c",
+        "priority": 5,
+        "if_conditions": [
+          {
+            "axis": "A10",
+            "state": "RWD-ADHERENCE-UNRESOLVED"
+          }
+        ],
+        "then_terminal": "QUARANTINE",
+        "then_q_code": "Q15C",
+        "then_action_hint": "flag_quarantine(q_code=Q15C)",
+        "rationale": "Real-world adherence history unresolved."
+      },
+      {
+        "rule_id": "DC033d",
+        "priority": 4,
+        "if_conditions": [
+          {
+            "axis": "A1",
+            "state": "ID-DYAD-UNLINKED-POLICY-MISSING"
+          }
+        ],
+        "then_terminal": "QUARANTINE",
+        "then_q_code": "Q18",
+        "then_action_hint": "flag_quarantine(q_code=Q18)",
+        "rationale": "Maternal-infant dyad linkage policy absent (HR9)."
+      },
+      {
+        "rule_id": "DC034",
+        "priority": 0,
+        "meta_rule": true,
+        "description": "Q-code-less QUARANTINE forbidden (HR2 validation rule).",
+        "enforced_by": "validate_config.py V06 + label workbench post-check"
+      },
+      {
+        "rule_id": "DC035",
+        "priority": 0,
+        "meta_rule": true,
+        "description": "Q15 standalone forbidden (HR1 validation rule).",
+        "enforced_by": "validate_config.py V06"
+      },
+      {
+        "rule_id": "DC036",
+        "priority": 0,
+        "meta_rule": true,
+        "description": "Q17 forbidden (HR3 validation rule). Notation only as REJECTED entry.",
+        "enforced_by": "validate_config.py V07"
+      },
+      {
+        "rule_id": "DC037",
+        "priority": 0,
+        "meta_rule": true,
+        "description": "Forced node drop forbidden (HR13 validation rule).",
+        "enforced_by": "validate_config.py V22-equivalent + ILP forced-set check (Phase 9)"
+      }
+    ],
+    "validation": {
+      "total_rules": 38,
+      "operational_rules": 34,
+      "meta_rules": 4
+    }
+  }
+}

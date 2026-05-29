@@ -1,0 +1,604 @@
+{
+  "version": "v4.2",
+  "notes": [
+    "Auxiliary fields (modality_class, endpoint_data_type, analyte_role) are declared under axes A0 and A8.",
+    "Q15 standalone is forbidden anywhere. Use Q15A/Q15B/Q15C/Q15D only.",
+    "Q17 is forbidden — absorbed into Q13."
+  ],
+  "axes": [
+    {
+      "axis_id": "A0",
+      "axis_name": "Analysis_Intent_Contract",
+      "definition": "The AIC declaring model family, analysis objective, modality_class, endpoint_data_type, and the policy bundle required to route data through downstream nodes.",
+      "auxiliary_fields": [
+        {
+          "field": "modality_class",
+          "allowed_values": [
+            "SMALL_MOLECULE",
+            "PEPTIDE",
+            "MAB",
+            "ADC",
+            "BISPECIFIC",
+            "CELL_THERAPY",
+            "GENE_THERAPY",
+            "MRNA",
+            "VACCINE",
+            "OLIGO_ASO_SIRNA",
+            "RADIOPHARMACEUTICAL",
+            "OTHER_CUSTOM"
+          ],
+          "required_when": "always (auxiliary, but recommended)",
+          "missing_q_code": null
+        },
+        {
+          "field": "endpoint_data_type",
+          "allowed_values": [
+            "PK_CONCENTRATION",
+            "EXPOSURE_METRIC",
+            "CONTINUOUS_PD",
+            "CATEGORICAL_PD",
+            "COUNT_PD",
+            "TTE_EVENT",
+            "CELLULAR_KINETICS",
+            "IMMUNOGENICITY",
+            "MILK_PK",
+            "MATERNAL_INFANT_PK"
+          ],
+          "required_when": "A0 in [AIC-PKPD, AIC-ER, AIC-TTE, AIC-BIOMARKER, AIC-CELL_THERAPY, AIC-IMMUNOGEN, AIC-LACTATION]",
+          "missing_q_code": "Q11"
+        }
+      ],
+      "states": [
+        {
+          "state_code": "AIC-MISSING",
+          "definition": "No Analysis Intent Contract delivered with the data package.",
+          "terminal_hint": "QUARANTINE",
+          "q_code": "Q11"
+        },
+        {
+          "state_code": "AIC-PK",
+          "definition": "PK-only AIC.",
+          "terminal_hint": "AUTO"
+        },
+        {
+          "state_code": "AIC-PKPD",
+          "definition": "PK+PD AIC; endpoint_data_type required.",
+          "terminal_hint": "AUTO"
+        },
+        {
+          "state_code": "AIC-ER",
+          "definition": "Exposure-response AIC; endpoint_data_type required.",
+          "terminal_hint": "AUTO"
+        },
+        {
+          "state_code": "AIC-TTE",
+          "definition": "Time-to-event AIC; endpoint_data_type required.",
+          "terminal_hint": "AUTO"
+        },
+        {
+          "state_code": "AIC-BIOMARKER",
+          "definition": "Biomarker AIC; endpoint_data_type required.",
+          "terminal_hint": "AUTO"
+        },
+        {
+          "state_code": "AIC-CELL_THERAPY",
+          "definition": "Cell therapy AIC (v4.2). Often paired with CELLULAR_KINETICS endpoint.",
+          "terminal_hint": "AUTO"
+        },
+        {
+          "state_code": "AIC-IMMUNOGEN",
+          "definition": "Immunogenicity AIC (v4.2). Requires positivity_adjudication_rule.",
+          "terminal_hint": "AUTO"
+        },
+        {
+          "state_code": "AIC-LACTATION",
+          "definition": "Lactation / dyad AIC (v4.2). Requires dyad_linkage_policy + delivery_anchor_policy.",
+          "terminal_hint": "AUTO"
+        },
+        {
+          "state_code": "AIC-PRECLINICAL",
+          "definition": "Preclinical PK AIC.",
+          "terminal_hint": "AUTO"
+        },
+        {
+          "state_code": "AIC-UNRECOVERABLE",
+          "definition": "AIC declared but content irreconcilable with data.",
+          "terminal_hint": "INVALID"
+        }
+      ]
+    },
+    {
+      "axis_id": "A1",
+      "axis_name": "Subject_Identifier",
+      "definition": "Subject identifier structure and uniqueness, including maternal-infant dyad path.",
+      "notes": [
+        "v4.2 (C21): mother and infant may have separate IDs if dyad_linkage_key is declared; absence of policy → Q18."
+      ],
+      "states": [
+        {
+          "state_code": "ID-DEFINED",
+          "definition": "Single subject identifier per record, unique and consistent.",
+          "terminal_hint": "AUTO"
+        },
+        {
+          "state_code": "ID-DUPLICATE-RESOLVABLE",
+          "definition": "Duplicates exist but can be resolved by declared policy.",
+          "terminal_hint": "REPAIR"
+        },
+        {
+          "state_code": "ID-AMBIGUOUS",
+          "definition": "Subject identifier ambiguous and no resolution rule.",
+          "terminal_hint": "QUARANTINE",
+          "q_code": "Q03"
+        },
+        {
+          "state_code": "ID-DYAD-LINKABLE",
+          "definition": "Mother and infant IDs separate but linkable via dyad_linkage_key (v4.2).",
+          "terminal_hint": "REPAIR"
+        },
+        {
+          "state_code": "ID-DYAD-UNLINKED-POLICY-MISSING",
+          "definition": "Maternal/infant data present but no dyad linkage policy declared (v4.2).",
+          "terminal_hint": "QUARANTINE",
+          "q_code": "Q18"
+        },
+        {
+          "state_code": "ID-UNRECOVERABLE",
+          "definition": "ID structure unrecoverable.",
+          "terminal_hint": "INVALID"
+        }
+      ]
+    },
+    {
+      "axis_id": "A2",
+      "axis_name": "Time",
+      "definition": "Time axis structure (actual, nominal, elapsed, interval).",
+      "states": [
+        {
+          "state_code": "TIME-DEFINED",
+          "definition": "Time fully declared in the AIC and consistent with data.",
+          "terminal_hint": "AUTO"
+        },
+        {
+          "state_code": "TIME-ACTUAL-VS-NOMINAL-RESOLVABLE",
+          "definition": "Actual and nominal time present; resolution policy applies.",
+          "terminal_hint": "REPAIR"
+        },
+        {
+          "state_code": "TIME-INTERVAL-RESOLVABLE",
+          "definition": "Interval-collection time (urine, etc.) resolvable via policy.",
+          "terminal_hint": "REPAIR"
+        },
+        {
+          "state_code": "TIME-ELAPSED-RESOLVABLE",
+          "definition": "Elapsed time derivable from anchor (first dose, delivery, postpartum day).",
+          "terminal_hint": "REPAIR"
+        },
+        {
+          "state_code": "TIME-ANCHOR-AMBIGUOUS",
+          "definition": "Time anchor not specified or ambiguous.",
+          "terminal_hint": "QUARANTINE",
+          "q_code": "Q02"
+        },
+        {
+          "state_code": "TIME-UNRECOVERABLE",
+          "definition": "Time axis unrecoverable.",
+          "terminal_hint": "INVALID"
+        }
+      ]
+    },
+    {
+      "axis_id": "A3",
+      "axis_name": "Dose",
+      "definition": "Dose record completeness and reconstruction feasibility.",
+      "notes": [
+        "v4.2 (C20): delivery / postpartum date may serve as ELAPSED anchor (elapsed_anchor_policy: delivery_date | postpartum_day)."
+      ],
+      "states": [
+        {
+          "state_code": "DOSE-DEFINED",
+          "definition": "Dose amount, route, and time fully declared.",
+          "terminal_hint": "AUTO"
+        },
+        {
+          "state_code": "DOSE-WEIGHT-BASED",
+          "definition": "Dose to be reconstructed from per-kg policy.",
+          "terminal_hint": "REPAIR"
+        },
+        {
+          "state_code": "DOSE-BSA-BASED",
+          "definition": "Dose to be reconstructed from BSA policy.",
+          "terminal_hint": "REPAIR"
+        },
+        {
+          "state_code": "DOSE-TITRATION",
+          "definition": "Adaptive titration; reconstruction per declared policy.",
+          "terminal_hint": "REPAIR"
+        },
+        {
+          "state_code": "DOSE-LOADING-MAINTENANCE",
+          "definition": "Loading-maintenance schedule; transition point per AIC.",
+          "terminal_hint": "REPAIR"
+        },
+        {
+          "state_code": "DOSE-INFUSION-STOP-RESTART",
+          "definition": "Infusion with stop-restart events; reconstruction via infusion_reconstruction_policy.",
+          "terminal_hint": "REPAIR"
+        },
+        {
+          "state_code": "DOSE-ADDL-ACTUAL-CONFLICT",
+          "definition": "ADDL and actual dosing records conflict; resolution per policy.",
+          "terminal_hint": "REPAIR",
+          "q_code_if_policy_missing": "Q14"
+        },
+        {
+          "state_code": "DOSE-AMBIGUOUS",
+          "definition": "Dose ambiguous (e.g., unit unclear, route ambiguous) with no resolution rule.",
+          "terminal_hint": "QUARANTINE",
+          "q_code": "Q02"
+        },
+        {
+          "state_code": "DOSE-UNRECOVERABLE",
+          "definition": "Dose unrecoverable.",
+          "terminal_hint": "INVALID"
+        }
+      ]
+    },
+    {
+      "axis_id": "A4",
+      "axis_name": "Regimen",
+      "definition": "Dosing regimen reconstruction and policy gating.",
+      "states": [
+        {
+          "state_code": "REGIMEN-FIXED",
+          "definition": "Fixed regimen, fully declared.",
+          "terminal_hint": "AUTO"
+        },
+        {
+          "state_code": "REGIMEN-EXPANDABLE-ADDL",
+          "definition": "Regimen expandable via ADDL/II.",
+          "terminal_hint": "REPAIR"
+        },
+        {
+          "state_code": "TITRATION-ADAPTIVE",
+          "definition": "Adaptive titration regimen.",
+          "terminal_hint": "REPAIR",
+          "q_code_if_policy_missing": "Q08"
+        },
+        {
+          "state_code": "LOADING-MAINTENANCE",
+          "definition": "Loading then maintenance regimen.",
+          "terminal_hint": "REPAIR",
+          "q_code_if_policy_missing": "Q08"
+        },
+        {
+          "state_code": "INFUSION-STOP-RESTART",
+          "definition": "Infusion with stop/restart events.",
+          "terminal_hint": "REPAIR",
+          "q_code_if_policy_missing": "Q04"
+        },
+        {
+          "state_code": "ADDL-ACTUAL-CONFLICT",
+          "definition": "Conflict between ADDL-expanded and actual dosing records.",
+          "terminal_hint": "REPAIR",
+          "q_code_if_policy_missing": "Q14"
+        },
+        {
+          "state_code": "MISSING-NO-POLICY",
+          "definition": "Regimen incompletely declared and no fallback policy.",
+          "terminal_hint": "QUARANTINE",
+          "q_code": "Q08"
+        },
+        {
+          "state_code": "UNRECOVERABLE",
+          "definition": "Regimen unrecoverable.",
+          "terminal_hint": "INVALID"
+        }
+      ]
+    },
+    {
+      "axis_id": "A5",
+      "axis_name": "Observation",
+      "definition": "Observation/DV value source and adjudication; includes concentration, cellular and immunogenicity domains.",
+      "notes": [
+        "v4.2 (C17): cellular kinetics and immunogenicity become first-class observation domains.",
+        "v5.1 (PATCH m-4): BIOANALYTICAL-FINAL-FLAG-MISSING maps to Q15A (data package incomplete upstream adjudication), not Q15D."
+      ],
+      "states": [
+        {
+          "state_code": "BIOANALYTICAL-FINAL",
+          "definition": "Bioanalytical final values delivered and flagged.",
+          "terminal_hint": "AUTO"
+        },
+        {
+          "state_code": "BIOANALYTICAL-FINAL-FLAG-MISSING",
+          "definition": "Bioanalytical results delivered but final-flag adjudication absent (upstream decision not received).",
+          "terminal_hint": "QUARANTINE",
+          "q_code": "Q15A"
+        },
+        {
+          "state_code": "BLQ-DEFINED-POLICY",
+          "definition": "Concentration BLQ rule explicitly declared (M1/M3/M4/exclude/project-specific).",
+          "terminal_hint": "REPAIR"
+        },
+        {
+          "state_code": "BLQ-NO-POLICY",
+          "definition": "BLQ rows present but no handling policy.",
+          "terminal_hint": "QUARANTINE",
+          "q_code": "Q01"
+        },
+        {
+          "state_code": "LLOQ-MISSING",
+          "definition": "LLOQ value not provided.",
+          "terminal_hint": "QUARANTINE",
+          "q_code": "Q01"
+        },
+        {
+          "state_code": "CELLULAR-BLQ-DEFINED",
+          "definition": "Cellular kinetics BLQ derivation policy declared (Poisson-LLOQ) (v4.2).",
+          "terminal_hint": "REPAIR"
+        },
+        {
+          "state_code": "CELLULAR-LLOQ-POLICY-MISSING",
+          "definition": "endpoint_data_type=CELLULAR_KINETICS but cellular_LLOQ_derivation_policy absent (v4.2).",
+          "terminal_hint": "QUARANTINE",
+          "q_code": "Q01"
+        },
+        {
+          "state_code": "IMMUNOGEN-POSITIVITY-DEFINED",
+          "definition": "Immunogenicity positivity adjudication rule declared (v4.2).",
+          "terminal_hint": "REPAIR"
+        },
+        {
+          "state_code": "IMMUNOGEN-POSITIVITY-MISSING",
+          "definition": "endpoint_data_type=IMMUNOGENICITY but positivity_adjudication_rule absent (v4.2).",
+          "terminal_hint": "QUARANTINE",
+          "q_code": "Q19"
+        },
+        {
+          "state_code": "ABSENT",
+          "definition": "Observation values absent.",
+          "terminal_hint": "INVALID"
+        }
+      ]
+    },
+    {
+      "axis_id": "A6",
+      "axis_name": "Covariate",
+      "definition": "Baseline / time-varying covariate availability and imputation policy.",
+      "states": [
+        {
+          "state_code": "COVARIATE-COMPLETE",
+          "definition": "All required covariates complete.",
+          "terminal_hint": "AUTO"
+        },
+        {
+          "state_code": "COVARIATE-BASELINE-ONLY",
+          "definition": "Only baseline covariates; sufficient for analysis.",
+          "terminal_hint": "AUTO"
+        },
+        {
+          "state_code": "COVARIATE-TIME-VARYING-RESOLVABLE",
+          "definition": "Time-varying covariates present and reconcilable.",
+          "terminal_hint": "REPAIR"
+        },
+        {
+          "state_code": "COVARIATE-PARTIAL-POLICY",
+          "definition": "Partial covariates with imputation policy declared.",
+          "terminal_hint": "REPAIR"
+        },
+        {
+          "state_code": "COVARIATE-IMPUTATION-POLICY-MISSING",
+          "definition": "Partial covariates without policy.",
+          "terminal_hint": "QUARANTINE",
+          "q_code": "Q06"
+        },
+        {
+          "state_code": "COVARIATE-ABSENT",
+          "definition": "Required covariates absent.",
+          "terminal_hint": "INVALID"
+        }
+      ]
+    },
+    {
+      "axis_id": "A7",
+      "axis_name": "External_Linkage",
+      "definition": "External covariate or product-level linkage (v4.2 adds product-level).",
+      "notes": [
+        "v4.2 (C19): PRODUCT-LEVEL-COVARIATE is a NEW state for CAR-T / cell-therapy lot or batch attributes (lot→subject reverse-key join)."
+      ],
+      "states": [
+        {
+          "state_code": "SUBJECT-LEVEL-COVARIATE",
+          "definition": "Subject-level covariate; routine attachment.",
+          "terminal_hint": "AUTO"
+        },
+        {
+          "state_code": "BASELINE-CLEAN",
+          "definition": "Baseline external covariate clean.",
+          "terminal_hint": "AUTO"
+        },
+        {
+          "state_code": "TIME-VARYING",
+          "definition": "Time-varying external covariate.",
+          "terminal_hint": "REPAIR"
+        },
+        {
+          "state_code": "EXTERNAL-LINKABLE",
+          "definition": "External table linkable via declared key.",
+          "terminal_hint": "REPAIR"
+        },
+        {
+          "state_code": "PRODUCT-LEVEL-COVARIATE",
+          "definition": "v4.2 NEW: CAR-T/cell-therapy lot/batch/manufacturing attributes; lot→subject reverse-key join.",
+          "terminal_hint": "REPAIR",
+          "q_code_if_linkage_missing": "Q13",
+          "q_code_if_attribute_absent_from_data_package": "Q15A"
+        },
+        {
+          "state_code": "KEY-MISSING",
+          "definition": "External linkage key missing.",
+          "terminal_hint": "QUARANTINE",
+          "q_code": "Q13"
+        },
+        {
+          "state_code": "POLICY-MISSING",
+          "definition": "External linkage policy absent.",
+          "terminal_hint": "QUARANTINE",
+          "q_code": "Q07"
+        },
+        {
+          "state_code": "UNRECOVERABLE",
+          "definition": "External linkage unrecoverable.",
+          "terminal_hint": "INVALID"
+        }
+      ]
+    },
+    {
+      "axis_id": "A8",
+      "axis_name": "Compartment_Analyte",
+      "definition": "Compartment (CMT) assignment for analytes; v4.2 introduces analyte_role auxiliary.",
+      "auxiliary_fields": [
+        {
+          "field": "analyte_role",
+          "allowed_values": [
+            "PARENT",
+            "TOTAL_ANTIBODY",
+            "CONJUGATED_ADC",
+            "UNCONJUGATED_PAYLOAD",
+            "ACTIVE_METABOLITE",
+            "SOLUBLE_TARGET",
+            "DRUG_TARGET_COMPLEX",
+            "ADA",
+            "NAB",
+            "VECTOR_COPY",
+            "TRANSGENE_EXPRESSION",
+            "CAR_POSITIVE_CELL",
+            "OTHER_CUSTOM"
+          ],
+          "required_when": "A8 in [MULTI-CMT-DEFINED, DDI-VICTIM-PERPETRATOR, METABOLITE-DEFINED] AND modality_class in [ADC, BISPECIFIC, CELL_THERAPY, GENE_THERAPY]",
+          "missing_q_code": "Q16"
+        }
+      ],
+      "states": [
+        {
+          "state_code": "SINGLE-ANALYTE",
+          "definition": "Single analyte/CMT.",
+          "terminal_hint": "AUTO"
+        },
+        {
+          "state_code": "MULTI-CMT-DEFINED",
+          "definition": "Multiple CMTs with declared policy.",
+          "terminal_hint": "REPAIR",
+          "q_code_if_analyte_role_missing": "Q16"
+        },
+        {
+          "state_code": "DDI-VICTIM-ONLY",
+          "definition": "DDI study, victim drug only.",
+          "terminal_hint": "REPAIR"
+        },
+        {
+          "state_code": "DDI-VICTIM-PERPETRATOR",
+          "definition": "DDI study with both victim and perpetrator analytes.",
+          "terminal_hint": "REPAIR",
+          "q_code_if_policy_missing": "Q09",
+          "q_code_if_analyte_role_missing": "Q16"
+        },
+        {
+          "state_code": "METABOLITE-DEFINED",
+          "definition": "Parent + metabolite analytes.",
+          "terminal_hint": "REPAIR",
+          "q_code_if_analyte_role_missing": "Q16"
+        },
+        {
+          "state_code": "CMT-POLICY-MISSING",
+          "definition": "Multi-analyte data but no CMT policy.",
+          "terminal_hint": "QUARANTINE",
+          "q_code": "Q09"
+        }
+      ]
+    },
+    {
+      "axis_id": "A9",
+      "axis_name": "Reanalysis",
+      "definition": "Repeat / reanalysis result handling.",
+      "states": [
+        {
+          "state_code": "REANALYSIS-NONE",
+          "definition": "No reanalysis.",
+          "terminal_hint": "AUTO"
+        },
+        {
+          "state_code": "REANALYSIS-FINAL-RESOLVABLE",
+          "definition": "Reanalysis present, final selection rule declared.",
+          "terminal_hint": "REPAIR"
+        },
+        {
+          "state_code": "REANALYSIS-FINAL-MISSING",
+          "definition": "Reanalysis present but final selection rule absent.",
+          "terminal_hint": "QUARANTINE",
+          "q_code": "Q15D"
+        },
+        {
+          "state_code": "PROTOCOL-DEVIATION-RESOLVABLE",
+          "definition": "Protocol deviation handled by declared rule.",
+          "terminal_hint": "REPAIR"
+        },
+        {
+          "state_code": "PROTOCOL-DEVIATION-NO-POLICY",
+          "definition": "Protocol deviation without handling policy.",
+          "terminal_hint": "QUARANTINE",
+          "q_code": "Q06"
+        },
+        {
+          "state_code": "IRRECONCILABLE",
+          "definition": "Reanalysis irreconcilable.",
+          "terminal_hint": "INVALID"
+        }
+      ]
+    },
+    {
+      "axis_id": "A10",
+      "axis_name": "Source_Structure",
+      "definition": "Source file/parser structure.",
+      "notes": [
+        "Semi-structured sources require source_parser_subtype declaration."
+      ],
+      "states": [
+        {
+          "state_code": "STRUCTURED",
+          "definition": "Well-formed tabular source.",
+          "terminal_hint": "AUTO"
+        },
+        {
+          "state_code": "SEMI-STRUCTURED",
+          "definition": "Semi-structured source with declared parser subtype.",
+          "terminal_hint": "REPAIR",
+          "q_code_if_subtype_unknown": "Q15A"
+        },
+        {
+          "state_code": "NON-TABULAR",
+          "definition": "Non-tabular source (e.g., raw FCS, omics).",
+          "terminal_hint": "UNSUPPORTED"
+        },
+        {
+          "state_code": "CORRUPTED",
+          "definition": "Source file corrupted.",
+          "terminal_hint": "INVALID"
+        },
+        {
+          "state_code": "SEMI-STRUCTURED-LEGACY-FLAG",
+          "definition": "Semi-structured + legacy flag without documentation.",
+          "terminal_hint": "QUARANTINE",
+          "q_code": "Q15B"
+        },
+        {
+          "state_code": "RWD-ADHERENCE-UNRESOLVED",
+          "definition": "Real-world adherence/administration history unresolved.",
+          "terminal_hint": "QUARANTINE",
+          "q_code": "Q15C"
+        }
+      ]
+    }
+  ]
+}

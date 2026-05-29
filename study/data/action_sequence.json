@@ -1,0 +1,127 @@
+{
+  "action_sequence_standard": {
+    "version": "v5.1",
+    "definition": "action_sequence is an ordered list of (function_name, parameter_policy) tuples. Two scenarios are EP-equivalent iff function_name order, parameter_policy values, and terminal_state all match.",
+    "controlled_vocabulary": {
+      "parsing_preparation": [
+        "parse_source",
+        "standardize_column_names",
+        "convert_units"
+      ],
+      "id_linking": [
+        "map_subject_id",
+        "attach_dyad_linkage"
+      ],
+      "time": [
+        "derive_time_actual",
+        "derive_time_nominal",
+        "derive_time_elapsed",
+        "derive_time_interval",
+        "derive_time_postpartum_anchor"
+      ],
+      "dose_reconstruction": [
+        "reconstruct_dose_weight",
+        "reconstruct_dose_bsa",
+        "reconstruct_dose_titration",
+        "reconstruct_loading_maintenance",
+        "reconstruct_infusion_stop_restart",
+        "expand_addl_ii",
+        "resolve_addl_actual_conflict"
+      ],
+      "observation": [
+        "canonicalize_blq",
+        "canonicalize_cellular_blq",
+        "adjudicate_immunogenicity_positivity",
+        "resolve_reanalysis_final",
+        "assign_milk_matrix_lloq"
+      ],
+      "event": [
+        "assign_evid"
+      ],
+      "cmt": [
+        "assign_cmt_single",
+        "assign_cmt_multi",
+        "assign_cmt_ddi_victim_only",
+        "assign_cmt_ddi_victim_perpetrator",
+        "assign_cmt_with_analyte_role"
+      ],
+      "covariate": [
+        "attach_covariate_baseline",
+        "attach_covariate_time_varying",
+        "attach_covariate_external",
+        "attach_covariate_product_level"
+      ],
+      "cleanup": [
+        "remove_exact_duplicates",
+        "sort_records"
+      ],
+      "terminal_flags": [
+        "flag_quarantine",
+        "flag_invalid",
+        "flag_unsupported",
+        "export_nonmem_ready"
+      ]
+    },
+    "terminal_patterns": {
+      "AUTO": {
+        "pattern": "parse_source ... assign_* ... export_nonmem_ready",
+        "constraint": "No function from {reconstruct_*, resolve_*, canonicalize_*, adjudicate_*, attach_dyad_linkage, attach_covariate_product_level, expand_addl_ii, derive_time_postpartum_anchor, assign_milk_matrix_lloq, assign_cmt_with_analyte_role, attach_covariate_time_varying, attach_covariate_external} may appear (those are REPAIR functions).",
+        "allow_listed_functions": [
+          "parse_source",
+          "standardize_column_names",
+          "convert_units",
+          "map_subject_id",
+          "derive_time_actual",
+          "derive_time_nominal",
+          "derive_time_elapsed",
+          "derive_time_interval",
+          "assign_evid",
+          "assign_cmt_single",
+          "attach_covariate_baseline",
+          "remove_exact_duplicates",
+          "sort_records",
+          "export_nonmem_ready"
+        ]
+      },
+      "REPAIR": {
+        "pattern": "AUTO base pattern + ≥1 repair function ending with export_nonmem_ready",
+        "constraint": "At least one function from the REPAIR set; every repair function must declare a required_policy listed in AIC.",
+        "repair_function_set": [
+          "reconstruct_dose_weight",
+          "reconstruct_dose_bsa",
+          "reconstruct_dose_titration",
+          "reconstruct_loading_maintenance",
+          "reconstruct_infusion_stop_restart",
+          "expand_addl_ii",
+          "resolve_addl_actual_conflict",
+          "canonicalize_blq",
+          "canonicalize_cellular_blq",
+          "adjudicate_immunogenicity_positivity",
+          "resolve_reanalysis_final",
+          "assign_milk_matrix_lloq",
+          "assign_cmt_multi",
+          "assign_cmt_ddi_victim_only",
+          "assign_cmt_ddi_victim_perpetrator",
+          "assign_cmt_with_analyte_role",
+          "attach_dyad_linkage",
+          "attach_covariate_time_varying",
+          "attach_covariate_external",
+          "attach_covariate_product_level",
+          "derive_time_postpartum_anchor"
+        ]
+      },
+      "QUARANTINE": {
+        "pattern": "[..., flag_quarantine(q_code=Q0XX)]",
+        "constraint": "NO export_nonmem_ready. q_code must be in Q01..Q14, Q15A..D, Q16, Q18, Q19."
+      },
+      "INVALID": {
+        "pattern": "[flag_invalid(reason=...)]",
+        "constraint": "NO export_nonmem_ready. reason must reference an axis-state pair."
+      },
+      "UNSUPPORTED": {
+        "pattern": "[flag_unsupported(reason=...)]",
+        "constraint": "NO export_nonmem_ready. reason must reference family_id in F31..F33."
+      }
+    }
+  }
+}

@@ -1,0 +1,1192 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<title>PMX Universe v1.0 — 의사결정 트리 대시보드</title>
+<script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/atom-one-light.min.css">
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/languages/r.min.js"></script>
+<style>
+  :root {
+    --c-forced: #e74c3c;
+    --c-optional: #3498db;
+    --c-auto: #27ae60;
+    --c-repair: #f39c12;
+    --c-quarantine: #c0392b;
+    --c-invalid: #7f8c8d;
+    --bg: #f5f7fa;
+    --panel: #ffffff;
+    --text: #2c3e50;
+    --muted: #7f8c8d;
+    --soft: #95a5a6;
+    --border: #dfe4ea;
+    --accent: #2980b9;
+    --highlight: #ffe066;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; height: 100%; font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Helvetica Neue", "Noto Sans KR", Arial, sans-serif; background: var(--bg); color: var(--text); font-size: 13px; }
+  body { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+  header { background: #2c3e50; color: white; padding: 8px 14px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; flex: 0 0 auto; }
+  header h1 { margin: 0; font-size: 14px; font-weight: 600; }
+  header .stats { display: flex; gap: 10px; font-size: 11px; opacity: 0.9; flex-wrap: wrap; }
+  header .stats span b { color: #ffeaa7; }
+  main { display: grid; grid-template-columns: 1fr 520px; grid-template-rows: 1fr; flex: 1 1 auto; min-height: 0; gap: 1px; background: var(--border); }
+  #tree-pane { background: var(--panel); position: relative; min-width: 0; min-height: 0; height: 100%; overflow: hidden; }
+  #network { width: 100%; height: 100%; min-height: 500px; }
+  #legend { position: absolute; top: 8px; left: 8px; background: rgba(255,255,255,0.96); border: 1px solid var(--border); border-radius: 6px; padding: 8px 10px; font-size: 11px; line-height: 1.7; box-shadow: 0 2px 6px rgba(0,0,0,0.06); }
+  #legend .swatch { display: inline-block; width: 12px; height: 12px; border-radius: 50%; vertical-align: middle; margin-right: 6px; border: 1px solid rgba(0,0,0,0.15); }
+  #legend .sub { font-size: 10px; color: var(--muted); margin-top: 3px; }
+  #side { background: var(--panel); overflow: hidden; display: flex; flex-direction: column; height: 100%; min-height: 0; }
+  .tabs { display: flex; border-bottom: 1px solid var(--border); background: #ecf0f1; }
+  .tab { padding: 9px 12px; cursor: pointer; user-select: none; font-size: 12px; font-weight: 500; color: var(--muted); border-right: 1px solid var(--border); flex: 1; text-align: center; }
+  .tab.active { background: white; color: var(--text); border-bottom: 2px solid var(--accent); margin-bottom: -1px; }
+  .tab-body { flex: 1; overflow-y: auto; padding: 14px 16px; }
+  .tab-body.hidden { display: none; }
+  h2 { font-size: 14px; margin: 0 0 4px 0; color: var(--accent); font-weight: 700; }
+  h2 .en { font-size: 10px; color: var(--muted); font-weight: 400; margin-left: 4px; }
+  h3 { font-size: 12px; margin: 14px 0 6px 0; color: var(--text); font-weight: 700; }
+  .intro { font-size: 11px; color: var(--muted); line-height: 1.5; margin-bottom: 10px; }
+  .kv { display: grid; grid-template-columns: 120px 1fr; gap: 5px 10px; font-size: 12px; line-height: 1.5; }
+  .kv .k { color: var(--muted); font-weight: 500; }
+  .kv .v { word-break: break-word; }
+  .code-en { font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 10px; color: var(--soft); background: #f4f6f8; padding: 1px 4px; border-radius: 3px; }
+  .pill { display: inline-block; padding: 1px 7px; border-radius: 9px; font-size: 10px; font-weight: 600; color: white; }
+  .pill.auto { background: var(--c-auto); }
+  .pill.repair { background: var(--c-repair); }
+  .pill.quarantine { background: var(--c-quarantine); }
+  .pill.invalid { background: var(--c-invalid); }
+  .pill.forced { background: var(--c-forced); }
+  .pill.optional { background: var(--c-optional); }
+  .code { font-family: "SF Mono", Menlo, Consolas, monospace; background: #f4f6f8; padding: 7px 9px; border-radius: 4px; font-size: 11px; white-space: pre-wrap; word-break: break-all; color: #34495e; }
+  label { display: block; font-size: 11px; font-weight: 600; color: var(--text); margin-top: 10px; margin-bottom: 3px; }
+  label .en { font-weight: 400; color: var(--muted); font-size: 10px; }
+  select, input[type=text] { width: 100%; padding: 6px 8px; border: 1px solid var(--border); border-radius: 4px; font-size: 12px; background: white; font-family: inherit; }
+  select option { padding: 4px; }
+  button { background: var(--accent); color: white; border: none; padding: 8px 14px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 600; margin-top: 10px; }
+  button:hover { background: #1c5980; }
+  button.secondary { background: #95a5a6; }
+  button.secondary:hover { background: #7f8c8d; }
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .row > div { display: flex; flex-direction: column; }
+  .trace-step { border-left: 3px solid var(--c-optional); padding: 7px 10px; margin: 5px 0; background: #f8f9fa; font-size: 11px; border-radius: 0 4px 4px 0; }
+  .trace-step.forced { border-left-color: var(--c-forced); }
+  .trace-step.yes { background: #eafaf1; }
+  .trace-step.no { background: #fdecea; }
+  .trace-step .head { font-weight: 600; font-size: 12px; }
+  .trace-step .question { margin-top: 3px; color: var(--text); }
+  .trace-step .rule { color: var(--muted); font-family: "SF Mono", Menlo, monospace; font-size: 10px; margin-top: 4px; padding: 3px 6px; background: rgba(255,255,255,0.6); border-radius: 3px; }
+  .trace-leaf { padding: 11px 14px; margin-top: 10px; border-radius: 6px; color: white; font-weight: 600; }
+  .trace-leaf.auto { background: var(--c-auto); }
+  .trace-leaf.repair { background: var(--c-repair); color: #5d3a00; }
+  .trace-leaf.quarantine { background: var(--c-quarantine); }
+  .trace-leaf.invalid { background: var(--c-invalid); }
+  .trace-leaf .label-large { font-size: 14px; }
+  .actions ul { margin: 4px 0 0 18px; padding: 0; font-size: 11px; line-height: 1.7; }
+  .actions li { margin: 1px 0; }
+  .actions li .en { color: var(--soft); font-family: "SF Mono", Menlo, monospace; font-size: 10px; margin-left: 4px; }
+  .small { font-size: 10px; color: var(--muted); }
+  .toolbar { display: flex; gap: 6px; align-items: flex-end; flex-wrap: wrap; margin-bottom: 6px; }
+  details { margin: 8px 0; font-size: 11px; }
+  details summary { cursor: pointer; font-weight: 600; color: var(--accent); padding: 2px 0; }
+  .verdict { padding: 8px 10px; border-radius: 4px; margin-top: 8px; font-size: 12px; font-weight: 500; }
+  .verdict.match { background: #d5f5e3; color: #186a3b; }
+  .verdict.mismatch { background: #fadbd8; color: #922b21; }
+  .verdict .small { opacity: 0.85; margin-top: 4px; }
+  .desc { font-size: 11px; color: var(--muted); line-height: 1.45; margin-top: 2px; }
+  .axis-block { padding: 6px 8px; background: #f8f9fa; border-radius: 4px; margin-bottom: 6px; }
+  .axis-block .title { font-weight: 700; font-size: 11px; color: var(--text); }
+  .axis-block .sub { font-size: 10px; color: var(--muted); margin-top: 2px; }
+  .stat-bar { display: flex; align-items: center; gap: 8px; padding: 4px 8px; margin: 2px 0; background: #f8f9fa; border-radius: 3px; font-size: 11px; }
+  .stat-bar .name { flex: 0 0 auto; }
+  .stat-bar .bar-container { flex: 1; height: 8px; background: #ecf0f1; border-radius: 4px; overflow: hidden; }
+  .stat-bar .bar-fill { height: 100%; background: var(--accent); }
+  .stat-bar .count { flex: 0 0 auto; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .help-note { font-size: 11px; padding: 8px 10px; background: #fff8e1; border-left: 3px solid #f39c12; border-radius: 0 4px 4px 0; margin: 8px 0; line-height: 1.5; }
+
+  /* === Minimum branching node 강조 + R 학습 패널 === */
+  .r-section { margin-top: 14px; padding-top: 10px; border-top: 2px dashed #e74c3c; }
+  .r-section-title { font-size: 12px; font-weight: 700; color: #c0392b; margin-bottom: 4px; display: flex; align-items: center; gap: 6px; }
+  .r-section-title::before { content: "📘"; font-size: 14px; }
+  .step-block { border: 1px solid var(--border); border-radius: 6px; margin: 8px 0; overflow: hidden; }
+  .step-block .step-head { background: #34495e; color: white; padding: 6px 10px; font-size: 11px; font-weight: 600; display: flex; align-items: center; justify-content: space-between; }
+  .step-block .step-head .badge { background: rgba(255,255,255,0.2); padding: 1px 6px; border-radius: 3px; font-size: 10px; }
+  .step-block.yes .step-head { background: #27ae60; }
+  .step-block.no .step-head  { background: #c0392b; }
+  .step-block.check .step-head { background: #2980b9; }
+  .step-block.sample .step-head { background: #8e44ad; }
+  .step-block .step-body { padding: 0; }
+  .step-block pre { margin: 0; padding: 10px 12px; font-size: 11px; line-height: 1.55; background: #f8f9fa; overflow-x: auto; }
+  .step-block pre code.hljs { padding: 0; background: transparent; font-family: "SF Mono", Menlo, Consolas, monospace; }
+  .step-block .step-meta { padding: 6px 10px; background: #fafbfc; border-top: 1px solid var(--border); font-size: 11px; color: var(--muted); }
+  .data-state-card { background: linear-gradient(135deg, #ecf0f1, #d5dbdb); padding: 10px 12px; border-radius: 6px; margin: 8px 0; font-size: 11px; line-height: 1.6; }
+  .data-state-card .stage-label { font-weight: 700; color: #2c3e50; font-size: 12px; margin-bottom: 4px; }
+  .data-state-card .meta-line { display: flex; gap: 8px; margin: 2px 0; }
+  .data-state-card .meta-line .meta-k { font-weight: 600; color: #34495e; flex: 0 0 80px; }
+  .concept-list { background: #fffbea; border-left: 3px solid #f1c40f; padding: 8px 12px; font-size: 11px; line-height: 1.6; border-radius: 0 4px 4px 0; }
+  .concept-list li { margin: 3px 0; }
+  .action-card { background: white; border: 1px solid var(--border); border-radius: 5px; margin: 6px 0; padding: 8px 10px; font-size: 11px; }
+  .action-card .a-head { font-weight: 700; font-size: 12px; color: var(--accent); margin-bottom: 3px; cursor: pointer; user-select: none; }
+  .action-card .a-head::before { content: "▶ "; font-size: 10px; }
+  .action-card.open .a-head::before { content: "▼ "; }
+  .action-card .a-body { display: none; margin-top: 6px; }
+  .action-card.open .a-body { display: block; }
+  .action-card .a-purpose { color: var(--muted); margin-bottom: 4px; font-style: italic; }
+  .sample-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 4px; }
+  .sample-grid > div { background: #f8f9fa; padding: 6px 8px; border-radius: 4px; font-family: "SF Mono", Menlo, monospace; font-size: 10px; white-space: pre-wrap; line-height: 1.4; }
+  .sample-grid .sample-title { font-weight: 700; color: var(--text); margin-bottom: 2px; font-family: -apple-system, "Apple SD Gothic Neo", sans-serif; font-size: 11px; }
+  .pipeline-stages { background: #eaf6fb; border-left: 3px solid var(--accent); padding: 8px 12px; font-size: 11px; line-height: 1.7; border-radius: 0 4px 4px 0; }
+  .pipeline-stages li { margin: 2px 0; }
+  .breadcrumb { background: #f4f6f8; padding: 5px 10px; border-radius: 4px; margin-bottom: 8px; font-size: 11px; color: var(--muted); }
+  .breadcrumb b { color: var(--text); }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>PMX Universe v1.0 — 의사결정 트리 대시보드</h1>
+  <div class="stats" id="header-stats">로딩 중…</div>
+</header>
+
+<main>
+  <div id="tree-pane">
+    <div id="network"></div>
+    <div id="legend">
+      <div style="margin-bottom:4px;font-size:11px;font-weight:700;color:#c0392b">⭐ 19개 최소 분기 노드 (data states)</div>
+      <div><span class="swatch" style="background: var(--c-forced); box-shadow: 0 0 0 2px #f39c12"></span><b>필수 (Forced) 7개</b> — N0/N1/N2/N3/N4/N5/N8</div>
+      <div><span class="swatch" style="background: var(--c-optional); box-shadow: 0 0 0 2px #f39c12"></span><b>선택 (Optional) 12개</b> — N11/N13/…</div>
+      <div style="margin-top:6px;font-size:11px;font-weight:700;color:#2c3e50">▢ 51개 최종 결과 (leaves)</div>
+      <div><span class="swatch" style="background: var(--c-auto); border-radius: 2px"></span>자동 처리 <span class="small">(AUTO)</span></div>
+      <div><span class="swatch" style="background: var(--c-repair); border-radius: 2px"></span>정책 기반 수리 <span class="small">(REPAIR)</span></div>
+      <div><span class="swatch" style="background: var(--c-quarantine); border-radius: 2px"></span>격리 <span class="small">(QUARANTINE)</span></div>
+      <div><span class="swatch" style="background: var(--c-invalid); border-radius: 2px"></span>유효 불가 <span class="small">(INVALID)</span></div>
+      <div class="sub">→ 화살표: <b style="color:#27ae60">녹색=예(YES)</b> · <b style="color:#c0392b">빨강=아니오(NO)</b></div>
+      <div class="sub" style="margin-top:4px">노드 클릭 → 우측에 <b>데이터 상태 + R 코드</b> 학습 자료</div>
+    </div>
+  </div>
+
+  <div id="side">
+    <div class="tabs">
+      <div class="tab active" data-tab="detail">노드 상세</div>
+      <div class="tab" data-tab="trace">경로 추적기</div>
+      <div class="tab" data-tab="universe">시나리오 탐색</div>
+      <div class="tab" data-tab="overview">개요</div>
+    </div>
+
+    <div class="tab-body" id="tab-detail">
+      <h2>노드 상세 + R 학습 <span class="en">Node Detail + R Learning</span></h2>
+      <p class="intro">좌측 트리에서 <b>원형 노드</b>(⭐ 최소 분기 노드)를 클릭하면 그 단계의 <b>데이터 상태</b>, <b>R 검사 코드</b>, <b>YES/NO 변환 코드</b>, <b>샘플 데이터 before/after</b>, <b>핵심 PMX 개념</b>이 함께 표시됩니다. <b>사각형 노드</b>(leaf)는 변환 단계들의 R 함수 라이브러리를 펼쳐볼 수 있습니다.</p>
+      <div id="node-info"></div>
+    </div>
+
+    <div class="tab-body hidden" id="tab-trace">
+      <h2>경로 추적기 <span class="en">Trace Simulator</span></h2>
+      <p class="intro">데이터 시나리오가 의사결정 트리를 통과해 어떤 최종 결과(자동 처리 / 수리 / 격리)에 도달하는지, 각 노드에서 어떤 판단이 일어나는지 단계별로 확인합니다.</p>
+
+      <div class="toolbar">
+        <div style="flex:1">
+          <label>입력 방식 <span class="en">Mode</span></label>
+          <select id="trace-mode">
+            <option value="universe">기존 시나리오에서 선택 (universe 2,998개 중)</option>
+            <option value="custom">직접 조합 입력 (탐색용)</option>
+          </select>
+        </div>
+      </div>
+
+      <div id="trace-universe-controls">
+        <label>시나리오 타입 필터 <span class="en">family</span></label>
+        <select id="trace-filter-family"><option value="">(전체)</option></select>
+
+        <label>최종 결과 필터 <span class="en">terminal state</span></label>
+        <select id="trace-filter-terminal"><option value="">(전체)</option></select>
+
+        <label>격리 사유 필터 <span class="en">Q-code (격리된 경우만)</span></label>
+        <select id="trace-filter-qcode"><option value="">(전체)</option></select>
+
+        <label>시나리오 <span id="trace-universe-count" class="small"></span></label>
+        <select id="trace-scenario" size="6" style="height:auto"></select>
+      </div>
+
+      <div id="trace-custom-controls" style="display:none">
+        <div class="help-note">
+          직접 입력 모드는 트리 구조를 탐색하기 위한 학습용입니다. action_sequence에 의존하는 노드(N13/N14/N17/N19/N29)는 입력만으로 판정할 수 없어 근사치로 평가됩니다.
+        </div>
+        <div class="row" id="custom-axis-grid"></div>
+      </div>
+
+      <button id="trace-run">▶ 경로 추적 실행</button>
+      <button id="trace-clear" class="secondary">초기화</button>
+
+      <div id="trace-result"></div>
+    </div>
+
+    <div class="tab-body hidden" id="tab-universe">
+      <h2>시나리오 탐색 <span class="en">Universe Browser</span></h2>
+      <p class="intro">2,998개 시나리오(universe)의 분포를 카테고리별로 확인합니다.</p>
+      <div id="universe-stats"></div>
+    </div>
+
+    <div class="tab-body hidden" id="tab-overview">
+      <h2>개요 <span class="en">Overview</span></h2>
+      <div id="overview-info"></div>
+    </div>
+  </div>
+</main>
+
+<script>
+// ============================================================
+// Detection rules (JS evaluation, custom 모드용 근사)
+// ============================================================
+const detectionRules = {
+  N0: (s) => s.A0_state !== "AIC-MISSING" && (
+    ["AIC-PKPD","AIC-ER","AIC-TTE","AIC-BIOMARKER","AIC-CELL_THERAPY","AIC-IMMUNOGEN","AIC-LACTATION"].includes(s.A0_state)
+      ? !!s.endpoint_data_type : true
+  ),
+  N1: (s) => ["ID-DEFINED","ID-DUPLICATE-RESOLVABLE","ID-DYAD-LINKABLE"].includes(s.A1_state),
+  N2: (s) => ["TIME-DEFINED","TIME-ACTUAL-VS-NOMINAL-RESOLVABLE","TIME-INTERVAL-RESOLVABLE","TIME-ELAPSED-RESOLVABLE"].includes(s.A2_state),
+  N3: (s) => !["DOSE-UNRECOVERABLE","DOSE-AMBIGUOUS"].includes(s.A3_state)
+            && !["MISSING-NO-POLICY","UNRECOVERABLE"].includes(s.A4_state),
+  N4: (s) => !["ABSENT","BIOANALYTICAL-FINAL-FLAG-MISSING","BLQ-NO-POLICY","LLOQ-MISSING","CELLULAR-LLOQ-POLICY-MISSING","IMMUNOGEN-POSITIVITY-MISSING"].includes(s.A5_state)
+            && s.A8_state !== "CMT-POLICY-MISSING",
+  N5: (s) => !["BLQ-NO-POLICY","LLOQ-MISSING","CELLULAR-LLOQ-POLICY-MISSING"].includes(s.A5_state),
+  N8: (s) => s.q_code !== "Q15A",
+  N11: (s) => ["MATERNAL_INFANT_PK","MILK_PK"].includes(s.endpoint_data_type),
+  N13: (s) => /canonicalize_blq|canonicalize_cellular_blq/.test(s.action_sequence || ""),
+  N14: (s) => /reconstruct_dose|expand_addl_ii|resolve_addl_actual_conflict/.test(s.action_sequence || ""),
+  N17: (s) => /derive_time_postpartum_anchor|derive_time_elapsed/.test(s.action_sequence || ""),
+  N19: (s) => /attach_covariate_|attach_dyad_linkage/.test(s.action_sequence || ""),
+  N20: (s) => s.A5_state === "BIOANALYTICAL-FINAL-FLAG-MISSING",
+  N21: (s) => ["MULTI-CMT-DEFINED","DDI-VICTIM-PERPETRATOR","METABOLITE-DEFINED"].includes(s.A8_state),
+  N22: (s) => s.A8_state === "DDI-VICTIM-PERPETRATOR",
+  N24: (s) => s.A4_state === "ADDL-ACTUAL-CONFLICT",
+  N25: (s) => ["ADC","BISPECIFIC","CELL_THERAPY","GENE_THERAPY"].includes(s.modality_class),
+  N27: (s) => s.A5_state === "CELLULAR-BLQ-DEFINED",
+  N29: (s) => /adjudicate_immunogenicity_positivity/.test(s.action_sequence || ""),
+};
+
+// ============================================================
+// Globals
+// ============================================================
+let TREE, NODES_META, AXIS_DICT, Q_CODES, UNIVERSE, DECISION_TABLE, ACTION_LABELS, SUMMARY, LBL, R_LIB;
+let NETWORK = null;
+const NODE_LOOKUP_BY_TREE_ID = {};
+const LEAF_LOOKUP = {};
+const SCENARIO_INDEX = {};
+const ACTION_INDEX = {};
+const SID_TO_DC = {};
+
+// ============================================================
+// Korean label helpers
+// ============================================================
+function termCls(t) { return (t || "").toLowerCase(); }
+
+function lblTerminal(code) {
+  if (!code) return "—";
+  const entry = LBL?.terminal_state?.[code];
+  return entry ? `${entry.label} (${code})` : code;
+}
+
+function lblTerminalShort(code) {
+  if (!code) return "—";
+  return LBL?.terminal_state?.[code]?.label || code;
+}
+
+function lblQ(code) {
+  if (!code) return "—";
+  const entry = LBL?.q_code?.[code];
+  return entry ? `${entry.label} (${code})` : code;
+}
+
+function lblModality(code) {
+  if (!code) return "—";
+  const entry = LBL?.modality_class?.[code];
+  return entry ? `${entry.label} (${code})` : code;
+}
+
+function lblEndpoint(code) {
+  if (!code) return "—";
+  const entry = LBL?.endpoint_data_type?.[code];
+  return entry ? `${entry.label} (${code})` : code;
+}
+
+function lblAnalyteRole(code) {
+  if (!code) return "—";
+  const entry = LBL?.analyte_role?.[code];
+  return entry ? `${entry.label} (${code})` : code;
+}
+
+function lblFamily(code) {
+  if (!code) return "—";
+  const entry = LBL?.family?.[code];
+  return entry ? `${entry.label} (${code})` : code;
+}
+
+function lblAxisState(axisId, stateCode) {
+  if (!stateCode) return "—";
+  const axis = LBL?.axis_state?.[axisId];
+  const entry = axis?.states?.[stateCode];
+  return entry ? `${entry.label} (${stateCode})` : stateCode;
+}
+
+function descAxisState(axisId, stateCode) {
+  return LBL?.axis_state?.[axisId]?.states?.[stateCode]?.desc || "";
+}
+
+function lblAction(fn) {
+  if (!fn) return "";
+  const entry = LBL?.action_function?.[fn];
+  return entry ? entry.label : fn;
+}
+
+function lblNodeQuestion(nodeId) {
+  return LBL?.node_question_ko?.[nodeId] || null;
+}
+
+// ============================================================
+// Bootstrap
+// ============================================================
+function setBootStatus(msg, isErr = false) {
+  const el = document.getElementById("network");
+  if (!el) return;
+  el.innerHTML = `<div style="padding:24px;font-family:system-ui;line-height:1.6;color:${isErr ? '#c0392b' : '#2c3e50'}">
+    <div style="font-size:14px;font-weight:600;margin-bottom:6px">${isErr ? '❌ 로딩 실패' : '⏳ 로딩 중…'}</div>
+    <div style="font-size:12px">${msg}</div>
+  </div>`;
+}
+
+async function load() {
+  console.log("[dashboard] load() 시작");
+  setBootStatus("초기화 중…");
+
+  // 1) vis-network 라이브러리 존재 검사
+  if (typeof vis === "undefined" || !vis.Network) {
+    setBootStatus("vis-network 라이브러리가 로드되지 않았습니다. CDN 차단 또는 인라인 임베드 누락 의심. F12 콘솔 에러 확인.", true);
+    console.error("vis is undefined");
+    return;
+  }
+  console.log("[dashboard] vis-network OK, version:", vis.NetworkVersion || "unknown");
+
+  if (window.__INLINE_DATA__) {
+    // Self-contained artifact mode: data is embedded in HTML
+    console.log("[dashboard] inline data 모드");
+    setBootStatus("내장 데이터 로딩 중…");
+    const D = window.__INLINE_DATA__;
+    TREE = D.tree; NODES_META = D.nodes; AXIS_DICT = D.axis_dictionary;
+    Q_CODES = D.q_codes; UNIVERSE = D.universe || []; DECISION_TABLE = D.decision_table || [];
+    ACTION_LABELS = D.action_labels || []; SUMMARY = D.summary;
+    LBL = D.labels_ko; R_LIB = D.r_code_library;
+  } else {
+    console.log("[dashboard] fetch 모드 (HTTP 서버 필요)");
+    setBootStatus("JSON 데이터 fetch 중…");
+    // Live mode: fetch JSON via HTTP server
+    const fetchJson = (p) => fetch(p).then(r => r.json());
+    [TREE, NODES_META, AXIS_DICT, Q_CODES, UNIVERSE, DECISION_TABLE, ACTION_LABELS, SUMMARY, LBL, R_LIB] = await Promise.all([
+      fetchJson("../data/tree.json"),
+      fetchJson("../data/nodes.json"),
+      fetchJson("../data/axis_dictionary.json"),
+      fetchJson("../data/q_codes.json"),
+      fetchJson("../data/universe.json"),
+      fetchJson("../data/decision_table.json"),
+      fetchJson("../data/action_labels.json"),
+      fetchJson("../data/summary.json"),
+      fetchJson("../data/labels_ko.json"),
+      fetchJson("../data/r_code_library.json"),
+    ]);
+  }
+  console.log("[dashboard] 데이터 로드 완료, 트리 그리기 시작");
+  setBootStatus("트리 시각화 준비 중…");
+
+  if (!TREE || !TREE.internal_nodes) {
+    setBootStatus("트리 데이터가 비어있습니다. tree.json 파일을 확인하세요.", true);
+    console.error("TREE missing", TREE);
+    return;
+  }
+
+  TREE.internal_nodes.forEach(n => NODE_LOOKUP_BY_TREE_ID[n.id] = n);
+  TREE.leaves.forEach(l => LEAF_LOOKUP[l.id] = l);
+  UNIVERSE.forEach(u => SCENARIO_INDEX[u.scenario_id] = u);
+  ACTION_LABELS.forEach(a => ACTION_INDEX[a.scenario_id] = a);
+  DECISION_TABLE.forEach(d => {
+    (d.member_scenario_ids || "").split(";").forEach(sid => {
+      if (sid) SID_TO_DC[sid] = d;
+    });
+  });
+
+  renderHeader();
+  renderNetwork();
+  initTabs();
+  initTraceUI();
+  renderUniverseStats();
+  renderOverview();
+  renderInitialNodeInfo();
+  console.log("[dashboard] 모든 렌더링 완료 ✓");
+}
+
+function renderInitialNodeInfo() {
+  // 초기 화면 — 어디부터 시작할지 안내
+  const el = document.getElementById("node-info");
+  const stages = R_LIB?.pipeline_overview?.stages || [];
+  el.innerHTML = `
+    <div class="pipeline-stages">
+      <b>🎯 학습 시작점</b> — 좌측 트리에서 <b>맨 위 빨간 원 (tree_N0)</b>을 클릭해보세요. R 데이터 wrangling 학습은 다음 순서로 진행됩니다:
+      <ol style="margin: 6px 0 0 18px; padding: 0">
+        ${stages.map(s => `<li>${s}</li>`).join("")}
+      </ol>
+    </div>
+    <h3>대시보드 활용법</h3>
+    <ul style="font-size:11px;line-height:1.7;margin-left:18px">
+      <li>⭐ <b>원형 노드 (19개 최소 분기 노드)</b> — 데이터 상태 + R 검사 코드 학습</li>
+      <li>▢ <b>사각형 노드 (51개 최종 결과)</b> — 변환 단계별 R 함수 라이브러리 + end-to-end 예시</li>
+      <li>🔄 <b>경로 추적기 탭</b> — 실제 시나리오로 트리 따라가기 (전체 흐름 체화)</li>
+      <li>📊 <b>시나리오 탐색 탭</b> — 2,998개 universe 분포 점검</li>
+    </ul>
+    <div class="concept-list" style="margin-top: 10px">
+      <b>💡 첫 클릭 추천 순서</b>
+      <ol style="margin: 4px 0 0 18px; padding: 0">
+        <li><b>tree_N0</b> (root) — AIC 검증부터 시작</li>
+        <li>YES branch 따라 N1 → N8 → N2 → N3 → N4 → N5 순서로 forced 게이트 학습</li>
+        <li>그 다음 optional 분기들 (N14 용량재구성, N13 BLQ 표준화 등)</li>
+        <li>마지막에 AUTO leaf 하나 클릭 → end-to-end R 파이프라인 확인</li>
+      </ol>
+    </div>
+  `;
+}
+
+function renderHeader() {
+  const s = SUMMARY;
+  document.getElementById("header-stats").innerHTML = `
+    <span>버전 <b>${s.version}</b></span>
+    <span>노드 <b>${s.node_count_selected}</b>개 선택 (필수 ${s.forced_node_count} + 선택 ${s.optional_node_count})</span>
+    <span>트리 내부노드 <b>${s.internal_node_count}</b> · 잎 <b>${s.leaf_count}</b></span>
+    <span>시나리오 <b>${s.scenario_count.toLocaleString()}</b>개 → DC 클래스 <b>${s.dc_class_count}</b>개</span>
+  `;
+}
+
+// ============================================================
+// Network rendering
+// ============================================================
+function renderNetwork() {
+  const forced = new Set(TREE.forced_nodes);
+  const nodes = [];
+  const edges = [];
+
+  TREE.internal_nodes.forEach(n => {
+    const isForced = forced.has(n.node_id);
+    const koQ = lblNodeQuestion(n.node_id);
+    const titleHtml = koQ
+      ? `${n.node_id} — ${koQ.title}\n  ${koQ.question}\n  (클릭 → R 학습 자료)`
+      : `${n.node_id}: ${n.question}`;
+    nodes.push({
+      id: n.id,
+      label: n.node_id,
+      title: titleHtml,
+      shape: "circle",
+      color: {
+        background: isForced ? "#e74c3c" : "#3498db",
+        border: "#f39c12",  // gold halo for ALL 19 minimum branching nodes
+        highlight: { background: "#ffe066", border: "#e67e22" },
+      },
+      font: { color: "white", size: 13, face: "monospace", bold: true },
+      borderWidth: 3,        // thicker outline = 최소 분기 노드
+      borderWidthSelected: 5,
+      group: isForced ? "forced" : "optional",
+      size: 18,              // larger than leaves
+      shadow: { enabled: true, color: "rgba(243,156,18,0.45)", size: 6, x: 0, y: 0 },
+    });
+    if (n.yes_branch) edges.push({ from: n.id, to: n.yes_branch, color: { color: "#27ae60" }, arrows: "to", width: 1.4, label: "예", font: { size: 9, align: "middle", color: "#27ae60", background: "white" } });
+    if (n.no_branch) edges.push({ from: n.id, to: n.no_branch, color: { color: "#c0392b" }, dashes: [4,4], arrows: "to", width: 1.4, label: "아니오", font: { size: 9, align: "middle", color: "#c0392b", background: "white" } });
+  });
+
+  TREE.leaves.forEach(l => {
+    const colorMap = { AUTO: "#27ae60", REPAIR: "#f39c12", QUARANTINE: "#c0392b", INVALID: "#7f8c8d" };
+    const bg = colorMap[l.terminal_state] || "#7f8c8d";
+    const labelText = l.terminal_state === "AUTO" ? "자동"
+                    : l.terminal_state === "REPAIR" ? "수리"
+                    : l.terminal_state === "INVALID" ? "유효불가"
+                    : l.q_code || "격리";
+    const titleHtml = `${lblTerminalShort(l.terminal_state)}${l.q_code ? "\n사유: " + lblQ(l.q_code) : ""}\n변환 단계 ${(l.action_sequence||[]).length}단계`;
+    nodes.push({
+      id: l.id,
+      label: labelText,
+      title: titleHtml,
+      shape: "box",
+      color: { background: bg, border: "#2c3e50", highlight: { background: "#ffe066", border: "#2c3e50" } },
+      font: { color: l.terminal_state === "REPAIR" ? "#5d3a00" : "white", size: 10 },
+      borderWidth: 1,
+      group: "leaf",
+      widthConstraint: { maximum: 90 },
+    });
+  });
+
+  NETWORK = new vis.Network(
+    document.getElementById("network"),
+    { nodes: new vis.DataSet(nodes), edges: new vis.DataSet(edges) },
+    {
+      layout: { hierarchical: { enabled: true, direction: "UD", sortMethod: "directed", levelSeparation: 90, nodeSpacing: 70, treeSpacing: 120, blockShifting: true, edgeMinimization: true, parentCentralization: true } },
+      physics: { enabled: false },
+      interaction: { hover: true, tooltipDelay: 150, navigationButtons: true, zoomView: true },
+      edges: { smooth: { type: "cubicBezier", forceDirection: "vertical", roundness: 0.4 } },
+    }
+  );
+
+  NETWORK.on("click", (params) => {
+    if (params.nodes.length === 0) return;
+    showNodeDetail(params.nodes[0]);
+    activateTab("detail");
+  });
+
+  // Ensure proper sizing after layout settles (handles late CSS computed heights, banner offsets, etc.)
+  setTimeout(() => {
+    try {
+      NETWORK.redraw();
+      NETWORK.fit({ animation: false });
+    } catch (e) { console.warn("redraw failed", e); }
+  }, 80);
+  window.addEventListener("resize", () => {
+    try { NETWORK.redraw(); } catch (e) {}
+  });
+}
+
+// ============================================================
+// Node Detail
+// ============================================================
+function showNodeDetail(id) {
+  const el = document.getElementById("node-info");
+  if (id.startsWith("tree_")) {
+    const n = NODE_LOOKUP_BY_TREE_ID[id];
+    const meta = NODES_META.find(m => m.node_id === n.node_id);
+    const isForced = TREE.forced_nodes.includes(n.node_id);
+    const ko = lblNodeQuestion(n.node_id);
+    const rNode = R_LIB?.candidate_nodes?.[n.node_id];
+
+    el.innerHTML = `
+      <div class="breadcrumb">트리 위치: <b>${n.id}</b> · 노드 타입: <b>${n.node_id}</b> ⭐최소 분기 노드</div>
+      <h2>${ko ? ko.title : n.node_id} <span class="en">${n.node_id}</span></h2>
+      <div style="margin-bottom:10px">
+        <span class="pill ${isForced ? "forced" : "optional"}">${isForced ? "필수 분기 (FORCED)" : "선택 분기 (OPTIONAL)"}</span>
+        ${meta ? `<span class="small" style="margin-left:6px">의존 축: ${meta.depends_on_axis}</span>` : ""}
+      </div>
+
+      ${rNode?.summary_ko ? `<p class="intro" style="margin-top:0">${rNode.summary_ko}</p>` : ""}
+
+      <div class="kv">
+        <div class="k">질문</div><div class="v">${ko ? ko.question : n.question}</div>
+        <div class="k">검사 규칙</div><div class="v"><div class="code">${n.detection_rule}</div></div>
+        <div class="k">예(YES)면 →</div><div class="v"><a href="#" onclick="showNodeDetail('${n.yes_branch}');return false">${describeBranch(n.yes_branch)}</a></div>
+        <div class="k">아니오(NO)면 →</div><div class="v"><a href="#" onclick="showNodeDetail('${n.no_branch}');return false">${describeBranch(n.no_branch)}</a></div>
+        ${meta ? `
+          <div class="k">제외 시 비용</div><div class="v">${meta.cost_if_excluded}</div>
+          <div class="k">실패 시 Q-code</div><div class="v">${meta.q_code_if_fail ? lblQ(meta.q_code_if_fail) : "—"}</div>
+          <div class="k">존재 이유</div><div class="v">${meta.rationale}</div>
+        ` : ""}
+      </div>
+
+      ${renderRLearning(n.node_id, rNode)}
+    `;
+    hljsRefresh();
+  } else if (id.startsWith("leaf_")) {
+    const l = LEAF_LOOKUP[id];
+    const cls = termCls(l.terminal_state);
+    const actionSeq = Array.isArray(l.action_sequence) ? l.action_sequence : [];
+    el.innerHTML = `
+      <div class="breadcrumb">트리 위치: <b>${l.id}</b> · 최종 결과 leaf</div>
+      <h2>최종 결과 — ${lblTerminalShort(l.terminal_state)} <span class="en">${l.terminal_state}${l.q_code ? "/"+l.q_code : ""}</span></h2>
+      <div style="margin-bottom:10px">
+        <span class="pill ${cls}">${l.terminal_state}</span>
+        ${l.q_code ? `<span class="pill quarantine" style="margin-left:4px">${l.q_code}</span>` : ""}
+      </div>
+      <div class="kv">
+        <div class="k">최종 분류</div><div class="v"><b>${lblTerminalShort(l.terminal_state)}</b> <span class="code-en">${l.terminal_state}</span></div>
+        ${l.q_code ? `<div class="k">격리 사유</div><div class="v"><b>${LBL?.q_code?.[l.q_code]?.label || ""}</b> <span class="code-en">${l.q_code}</span><div class="desc">${LBL?.q_code?.[l.q_code]?.desc || ""}</div></div>` : ""}
+        <div class="k">변환 단계 수</div><div class="v">${actionSeq.length}단계</div>
+        <div class="k">속한 DC 클래스</div><div class="v">${l.member_class_count}개 <span class="small">(${(l.member_classes||[]).slice(0,5).join(", ")}${(l.member_classes||[]).length > 5 ? ", …" : ""})</span></div>
+      </div>
+
+      <div class="r-section">
+        <div class="r-section-title">변환 단계별 R 학습</div>
+        <p class="intro">이 leaf에 도달하기까지 적용되는 ${actionSeq.length}개의 wrangling 함수입니다. 각 카드를 클릭하면 R 구현 코드가 펼쳐집니다.</p>
+        ${actionSeq.map((a, idx) => renderActionCard(a, idx)).join("")}
+      </div>
+
+      ${l.terminal_state === "AUTO" || l.terminal_state === "REPAIR" ? renderEndToEndExample() : ""}
+    `;
+    hljsRefresh();
+  }
+}
+
+// ============================================================
+// R Learning render helpers
+// ============================================================
+function escapeHtml(s) { return (s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+
+function renderRLearning(nodeId, rNode) {
+  if (!rNode) {
+    return `<div class="r-section">
+      <div class="r-section-title">R 학습 자료</div>
+      <div class="help-note">노드 <code>${nodeId}</code>의 R 학습 자료는 아직 라이브러리에 없습니다. (선택 노드 중 일부는 분기 평가만 수행하며 별도 R 코드는 없을 수 있습니다.)</div>
+    </div>`;
+  }
+
+  const dsb = rNode.data_state_before || {};
+  const dataStateCard = (dsb.stage || dsb.inputs || dsb.what_we_check) ? `
+    <div class="data-state-card">
+      <div class="stage-label">📍 데이터 상태 — 이 노드에 도착했을 때</div>
+      ${dsb.stage ? `<div class="meta-line"><div class="meta-k">단계</div><div>${dsb.stage}</div></div>` : ""}
+      ${dsb.inputs ? `<div class="meta-line"><div class="meta-k">입력</div><div>${(Array.isArray(dsb.inputs)?dsb.inputs:[dsb.inputs]).map(x => `<code>${x}</code>`).join(", ")}</div></div>` : ""}
+      ${dsb.what_we_know ? `<div class="meta-line"><div class="meta-k">알고있음</div><div>${dsb.what_we_know}</div></div>` : ""}
+      ${dsb.what_we_check ? `<div class="meta-line"><div class="meta-k">검사대상</div><div>${dsb.what_we_check}</div></div>` : ""}
+    </div>
+  ` : "";
+
+  const checkBlock = rNode.r_code_check ? `
+    <div class="step-block check">
+      <div class="step-head">① R 검사 코드 — Y/N 판정<span class="badge">check function</span></div>
+      <pre><code class="language-r">${escapeHtml(rNode.r_code_check)}</code></pre>
+    </div>
+  ` : "";
+
+  const passBlock = rNode.r_code_pass ? `
+    <div class="step-block yes">
+      <div class="step-head">② R 변환 코드 — YES면 다음 데이터 상태로<span class="badge">→ ${rNode.next_node_on_pass || "다음 분기"}</span></div>
+      <pre><code class="language-r">${escapeHtml(rNode.r_code_pass)}</code></pre>
+    </div>
+  ` : (rNode.r_code_yes_example ? `
+    <div class="step-block yes">
+      <div class="step-head">② R 변환 예시 — YES 경로<span class="badge">example</span></div>
+      <pre><code class="language-r">${escapeHtml(rNode.r_code_yes_example)}</code></pre>
+    </div>
+  ` : "");
+
+  const failBlock = rNode.r_code_fail ? `
+    <div class="step-block no">
+      <div class="step-head">③ R 처리 코드 — NO면 격리/실패<span class="badge">quarantine</span></div>
+      <pre><code class="language-r">${escapeHtml(rNode.r_code_fail)}</code></pre>
+    </div>
+  ` : "";
+
+  const sampleBlock = (rNode.sample_transform_before || rNode.sample_transform_after || rNode.sample_input_table) ? `
+    <div class="step-block sample">
+      <div class="step-head">④ 샘플 데이터 — 변환 전후<span class="badge">before / after</span></div>
+      <div class="step-body" style="padding: 8px 10px">
+        ${rNode.sample_input_table ? `<div class="sample-title">입력</div><div class="sample-grid"><div>${escapeHtml(rNode.sample_input_table)}</div></div>` : ""}
+        ${rNode.sample_transform_before && rNode.sample_transform_after ? `
+          <div class="sample-grid">
+            <div><div class="sample-title">변환 전</div>${escapeHtml(rNode.sample_transform_before)}</div>
+            <div><div class="sample-title">변환 후 (YES)</div>${escapeHtml(rNode.sample_transform_after)}</div>
+          </div>
+        ` : ""}
+      </div>
+    </div>
+  ` : "";
+
+  const aicSampleBlock = rNode.sample_aic_yaml ? `
+    <div class="step-block sample">
+      <div class="step-head">샘플 AIC YAML (이 노드 통과 예시)<span class="badge">aic.yaml</span></div>
+      <pre><code class="language-yaml">${escapeHtml(rNode.sample_aic_yaml)}</code></pre>
+    </div>
+  ` : "";
+
+  const concepts = rNode.key_concepts ? `
+    <div class="concept-list">
+      <b>💡 핵심 개념</b>
+      <ul style="margin: 4px 0 0 18px; padding: 0">
+        ${rNode.key_concepts.map(c => `<li>${c}</li>`).join("")}
+      </ul>
+    </div>
+  ` : "";
+
+  return `
+    <div class="r-section">
+      <div class="r-section-title">R 학습 자료 — 데이터 상태 + wrangling 코드</div>
+      ${dataStateCard}
+      ${checkBlock}
+      ${passBlock}
+      ${failBlock}
+      ${sampleBlock}
+      ${aicSampleBlock}
+      ${concepts}
+    </div>
+  `;
+}
+
+function renderActionCard(actionName, idx) {
+  const meta = R_LIB?.action_functions?.[actionName];
+  const koLabel = LBL?.action_function?.[actionName]?.label || actionName;
+  const id = `act-${actionName}-${idx}`;
+  if (!meta) {
+    return `<div class="action-card">
+      <div class="a-head" onclick="this.parentElement.classList.toggle('open')">${idx+1}. ${koLabel} <span class="code-en">${actionName}</span></div>
+      <div class="a-body"><div class="help-note">이 함수의 R 코드 라이브러리는 아직 등록되지 않았습니다.</div></div>
+    </div>`;
+  }
+  return `<div class="action-card" id="${id}">
+    <div class="a-head" onclick="this.parentElement.classList.toggle('open'); hljsRefresh()">${idx+1}. ${meta.title_ko} <span class="code-en">${actionName}</span></div>
+    <div class="a-body">
+      <div class="a-purpose">${meta.purpose || ""}</div>
+      ${meta.r_code ? `<pre><code class="language-r">${escapeHtml(meta.r_code)}</code></pre>` : ""}
+    </div>
+  </div>`;
+}
+
+function renderEndToEndExample() {
+  const ex = R_LIB?.end_to_end_example;
+  if (!ex) return "";
+  return `
+    <div class="r-section">
+      <div class="r-section-title">▶ End-to-end 파이프라인 예시</div>
+      <p class="intro"><b>${ex.title}</b><br/>${ex.description}</p>
+      <div class="step-block">
+        <div class="step-head">전체 R 파이프라인 (Stage 0 → NONMEM-ready)<span class="badge">runnable</span></div>
+        <pre><code class="language-r">${escapeHtml(ex.r_pipeline)}</code></pre>
+      </div>
+    </div>
+  `;
+}
+
+function hljsRefresh() {
+  if (typeof hljs !== "undefined") {
+    document.querySelectorAll("pre code:not(.hljs)").forEach(b => hljs.highlightElement(b));
+  }
+}
+
+function describeBranch(branchId) {
+  if (!branchId) return "(없음)";
+  if (branchId.startsWith("tree_")) {
+    const n = NODE_LOOKUP_BY_TREE_ID[branchId];
+    const ko = n ? lblNodeQuestion(n.node_id) : null;
+    return `${branchId} <span class="small">${ko ? "— " + ko.title : ""}</span>`;
+  }
+  if (branchId.startsWith("leaf_")) {
+    const l = LEAF_LOOKUP[branchId];
+    if (!l) return branchId;
+    return `${branchId} <span class="small">— ${lblTerminalShort(l.terminal_state)}${l.q_code ? " / " + lblQ(l.q_code) : ""}</span>`;
+  }
+  return branchId;
+}
+
+function axisExpand(axisStr) {
+  if (!axisStr) return "";
+  const parts = axisStr.split(/\s*\+\s*|\s*,\s*/).filter(Boolean);
+  const names = parts.map(p => {
+    const a = LBL?.axis_state?.[p];
+    return a ? `${p}=${a.name}` : p;
+  });
+  return names.length ? `<span class="small">(${names.join(", ")})</span>` : "";
+}
+
+// ============================================================
+// Trace
+// ============================================================
+function traverse(scenario, mode = "rule") {
+  let current = TREE.root;
+  const path = [];
+  const dc = (mode === "dc" && scenario.scenario_id) ? SID_TO_DC[scenario.scenario_id] : null;
+  while (current && current.startsWith("tree_")) {
+    const node = NODE_LOOKUP_BY_TREE_ID[current];
+    let decision, source;
+    if (dc) {
+      decision = dc[node.node_id] === "Y";
+      source = "dc";
+    } else {
+      const rule = detectionRules[node.node_id];
+      decision = rule ? !!rule(scenario) : false;
+      source = rule ? "rule" : "default";
+    }
+    path.push({
+      tree_id: node.id,
+      node_id: node.node_id,
+      question: node.question,
+      detection_rule: node.detection_rule,
+      decision,
+      source,
+      forced: TREE.forced_nodes.includes(node.node_id),
+    });
+    current = decision ? node.yes_branch : node.no_branch;
+    if (!current) break;
+  }
+  const leaf = current && current.startsWith("leaf_") ? LEAF_LOOKUP[current] : null;
+  return { path, leaf };
+}
+
+function initTraceUI() {
+  // Artifact 모드: universe 비어있으면 모드를 custom으로 고정
+  if (UNIVERSE.length === 0) {
+    const modeSel = document.getElementById("trace-mode");
+    modeSel.value = "custom";
+    Array.from(modeSel.options).forEach(opt => {
+      if (opt.value === "universe") opt.disabled = true;
+    });
+    document.getElementById("trace-universe-controls").style.display = "none";
+    document.getElementById("trace-custom-controls").style.display = "";
+    setTimeout(() => initCustomAxisGrid(), 0);
+  }
+  const families = [...new Set(UNIVERSE.map(u => u.family_id))].sort();
+  const terminals = [...new Set(UNIVERSE.map(u => u.terminal_state))].sort();
+  const qcodes = [...new Set(UNIVERSE.map(u => u.q_code).filter(Boolean))].sort();
+
+  const fSel = document.getElementById("trace-filter-family");
+  families.forEach(f => fSel.insertAdjacentHTML("beforeend", `<option value="${f}">${lblFamily(f)}</option>`));
+
+  const tSel = document.getElementById("trace-filter-terminal");
+  terminals.forEach(t => tSel.insertAdjacentHTML("beforeend", `<option value="${t}">${lblTerminal(t)}</option>`));
+
+  const qSel = document.getElementById("trace-filter-qcode");
+  qcodes.forEach(q => qSel.insertAdjacentHTML("beforeend", `<option value="${q}">${lblQ(q)}</option>`));
+
+  ["trace-filter-family","trace-filter-terminal","trace-filter-qcode"].forEach(id => {
+    document.getElementById(id).addEventListener("change", refreshScenarioList);
+  });
+  refreshScenarioList();
+
+  document.getElementById("trace-mode").addEventListener("change", (e) => {
+    const isCustom = e.target.value === "custom";
+    document.getElementById("trace-universe-controls").style.display = isCustom ? "none" : "";
+    document.getElementById("trace-custom-controls").style.display = isCustom ? "" : "none";
+    if (isCustom) initCustomAxisGrid();
+  });
+
+  document.getElementById("trace-run").addEventListener("click", runTrace);
+  document.getElementById("trace-clear").addEventListener("click", () => {
+    document.getElementById("trace-result").innerHTML = "";
+    NETWORK.unselectAll();
+  });
+}
+
+function refreshScenarioList() {
+  if (UNIVERSE.length === 0) {
+    document.getElementById("trace-universe-count").textContent = "(아티팩트 모드 — universe 데이터 미포함)";
+    const sel = document.getElementById("trace-scenario");
+    sel.innerHTML = `<option disabled>이 단일 파일에는 2,998개 universe 시나리오가 포함되지 않습니다 (용량 절감). "직접 조합 입력" 모드를 사용하거나, 전체 시나리오 라이브러리는 dashboard/index.html(HTTP 서버 모드)에서 사용하세요.</option>`;
+    return;
+  }
+  const f = document.getElementById("trace-filter-family").value;
+  const t = document.getElementById("trace-filter-terminal").value;
+  const q = document.getElementById("trace-filter-qcode").value;
+  let filtered = UNIVERSE.filter(u =>
+    (!f || u.family_id === f) &&
+    (!t || u.terminal_state === t) &&
+    (!q || u.q_code === q)
+  );
+  document.getElementById("trace-universe-count").textContent = `(${filtered.length.toLocaleString()}개 일치)`;
+  const sel = document.getElementById("trace-scenario");
+  sel.innerHTML = "";
+  filtered.slice(0, 500).forEach(u => {
+    const ep = u.endpoint_data_type ? `${LBL?.endpoint_data_type?.[u.endpoint_data_type]?.label || u.endpoint_data_type}` : "엔드포인트 없음";
+    const term = lblTerminalShort(u.terminal_state) + (u.q_code ? "/" + (LBL?.q_code?.[u.q_code]?.label || u.q_code) : "");
+    const label = `[${term}] ${LBL?.modality_class?.[u.modality_class]?.label || u.modality_class} · ${ep} · ${LBL?.family?.[u.family_id]?.label || u.family_id} (${u.scenario_id})`;
+    sel.insertAdjacentHTML("beforeend", `<option value="${u.scenario_id}">${label}</option>`);
+  });
+  if (filtered.length > 500) {
+    sel.insertAdjacentHTML("beforeend", `<option disabled>… 나머지 ${(filtered.length - 500).toLocaleString()}개는 필터를 추가로 적용해 좁혀주세요</option>`);
+  }
+}
+
+function initCustomAxisGrid() {
+  const grid = document.getElementById("custom-axis-grid");
+  if (grid.dataset.initialized) return;
+  grid.dataset.initialized = "1";
+
+  AXIS_DICT.axes.forEach(ax => {
+    const states = (ax.states || []).map(s => s.state_code);
+    const axisKO = LBL?.axis_state?.[ax.axis_id];
+    const axisLabel = axisKO ? `${axisKO.name} (${ax.axis_id})` : ax.axis_id;
+    const sub = axisKO?.subtitle || "";
+    const div = document.createElement("div");
+    div.innerHTML = `
+      <label>${axisLabel}<div class="small" style="font-weight:400">${sub}</div></label>
+      <select data-axis="${ax.axis_id}_state">
+        ${states.map(s => `<option value="${s}">${lblAxisState(ax.axis_id, s)}</option>`).join("")}
+      </select>`;
+    grid.appendChild(div);
+  });
+
+  // auxiliary
+  const aux = [
+    { key: "modality_class", values: ["SMALL_MOLECULE","PEPTIDE","MAB","ADC","BISPECIFIC","CELL_THERAPY","GENE_THERAPY","MRNA","VACCINE","OLIGO_ASO_SIRNA","RADIOPHARMACEUTICAL","OTHER_CUSTOM"], labeler: lblModality, ko: "약물 형태", sub: "modality_class" },
+    { key: "endpoint_data_type", values: ["", "PK_CONCENTRATION","EXPOSURE_METRIC","CONTINUOUS_PD","CATEGORICAL_PD","COUNT_PD","TTE_EVENT","CELLULAR_KINETICS","IMMUNOGENICITY","MILK_PK","MATERNAL_INFANT_PK"], labeler: lblEndpoint, ko: "엔드포인트 데이터 타입", sub: "endpoint_data_type" },
+    { key: "analyte_role", values: ["", "PARENT","ACTIVE_METABOLITE","PAYLOAD","TOTAL_ANTIBODY","NAKED_AB","CONJUGATED_AB","VECTOR","TRANSGENE_PRODUCT","VICTIM","PERPETRATOR"], labeler: lblAnalyteRole, ko: "분석물질 역할", sub: "analyte_role" },
+  ];
+  aux.forEach(a => {
+    const div = document.createElement("div");
+    div.innerHTML = `
+      <label>${a.ko} <span class="en">${a.sub}</span></label>
+      <select data-axis="${a.key}">
+        ${a.values.map(v => `<option value="${v}">${v ? a.labeler(v) : "(없음)"}</option>`).join("")}
+      </select>`;
+    grid.appendChild(div);
+  });
+}
+
+function readCustomScenario() {
+  const s = {};
+  document.querySelectorAll("#custom-axis-grid select").forEach(sel => {
+    s[sel.dataset.axis] = sel.value;
+  });
+  return s;
+}
+
+function runTrace() {
+  const mode = document.getElementById("trace-mode").value;
+  let scenario, universeRow = null, traverseMode = "rule";
+  if (mode === "universe") {
+    const id = document.getElementById("trace-scenario").value;
+    universeRow = SCENARIO_INDEX[id];
+    if (!universeRow) return;
+    const actionRow = ACTION_INDEX[id] || {};
+    scenario = { ...universeRow, action_sequence: actionRow.action_sequence || "" };
+    traverseMode = "dc";
+  } else {
+    scenario = readCustomScenario();
+    scenario.action_sequence = "";
+  }
+  const result = traverse(scenario, traverseMode);
+  renderTrace(scenario, result, universeRow, traverseMode);
+}
+
+function renderTrace(scenario, result, universeRow, traverseMode) {
+  const out = document.getElementById("trace-result");
+  const { path, leaf } = result;
+  const reachedTerm = leaf ? leaf.terminal_state : "";
+  const reachedQ = leaf ? (leaf.q_code || "") : "";
+
+  let verdict = "";
+  if (universeRow) {
+    const exp = (universeRow.terminal_state || "") + "/" + (universeRow.q_code || "");
+    const got = reachedTerm + "/" + reachedQ;
+    const match = exp === got;
+    verdict = `<div class="verdict ${match ? "match" : "mismatch"}">
+      ${match ? "✓ 추적 결과가 universe 정답과 일치합니다" : "✗ 추적 결과 불일치"} —
+      예상 <b>${lblTerminalShort(universeRow.terminal_state)}${universeRow.q_code ? " / " + (LBL?.q_code?.[universeRow.q_code]?.label || "") : ""}</b>,
+      실제 <b>${lblTerminalShort(reachedTerm)}${reachedQ ? " / " + (LBL?.q_code?.[reachedQ]?.label || "") : ""}</b>
+      <div class="small">판단 근거: ${traverseMode === "dc" ? LBL.ui_text.verdict_source_dc : LBL.ui_text.verdict_source_rule}</div>
+    </div>`;
+  } else {
+    verdict = `<div class="help-note">${LBL.ui_text.verdict_custom_mode}</div>`;
+  }
+
+  // Render input scenario in Korean
+  const inputHtml = universeRow ? renderScenarioInput(scenario) : renderCustomScenarioInput(scenario);
+
+  const stepsHTML = path.map((p, idx) => {
+    const cls = p.decision ? "yes" : "no";
+    const ko = lblNodeQuestion(p.node_id);
+    const forcedCls = p.forced ? "forced" : "";
+    const srcBadge = p.source === "dc"
+      ? `<span class="small" style="color:#27ae60">●정답 매핑</span>`
+      : `<span class="small" style="color:#7f8c8d">●규칙 평가</span>`;
+    return `<div class="trace-step ${cls} ${forcedCls}">
+      <div class="head">${idx + 1}. <b>${p.node_id}</b> ${ko ? "— " + ko.title : ""}
+        ${srcBadge}
+        <span class="pill ${p.forced ? "forced" : "optional"}">${p.forced ? "필수" : "선택"}</span>
+        → <b style="color:${p.decision ? "#186a3b" : "#922b21"}">${p.decision ? "예 (YES)" : "아니오 (NO)"}</b>
+      </div>
+      <div class="question">${ko ? ko.question : p.question}</div>
+      <div class="rule">${p.detection_rule}</div>
+    </div>`;
+  }).join("");
+
+  const leafHTML = leaf ? `
+    <div class="trace-leaf ${termCls(leaf.terminal_state)}">
+      <div>▼ 최종 도달: <span class="label-large">${lblTerminalShort(leaf.terminal_state)}</span>${leaf.q_code ? " · " + (LBL?.q_code?.[leaf.q_code]?.label || leaf.q_code) : ""}</div>
+      ${leaf.q_code ? `<div class="small" style="opacity:0.9;margin-top:3px">코드: <b>${leaf.terminal_state}/${leaf.q_code}</b></div>` : `<div class="small" style="opacity:0.9;margin-top:3px">코드: <b>${leaf.terminal_state}</b></div>`}
+    </div>
+    <h3>${LBL.ui_text.action_sequence_label}</h3>
+    <div class="actions">
+      <ol style="margin-left:18px;padding:0;font-size:11px;line-height:1.7">
+        ${(leaf.action_sequence||[]).map(a => `<li>${lblAction(a)} <span class="en">${a}</span></li>`).join("")}
+      </ol>
+    </div>
+  ` : `<div class="trace-leaf invalid">잎에 도달하지 못함 (경로 비정상 종료)</div>`;
+
+  out.innerHTML = `
+    <h3>${LBL.ui_text.input_label}</h3>
+    ${inputHtml}
+    ${verdict}
+    <h3>${LBL.ui_text.decision_path_label} <span class="small">(${path.length}단계)</span></h3>
+    ${stepsHTML}
+    ${leafHTML}
+  `;
+
+  const toHighlight = path.map(p => p.tree_id);
+  if (leaf) toHighlight.push(leaf.id);
+  NETWORK.selectNodes(toHighlight);
+  if (toHighlight.length) NETWORK.focus(toHighlight[0], { scale: 0.7, animation: true });
+}
+
+function renderScenarioInput(scenario) {
+  // Show in Korean per-axis breakdown
+  const axisIds = ["A0","A1","A2","A3","A4","A5","A6","A7","A8","A9","A10"];
+  const axisRows = axisIds.map(aid => {
+    const key = `${aid}_state`;
+    const val = scenario[key];
+    const axisKO = LBL?.axis_state?.[aid];
+    if (!val) return "";
+    return `<div class="kv" style="margin:2px 0">
+      <div class="k">${axisKO?.name || aid} (${aid})</div>
+      <div class="v">${lblAxisState(aid, val)}<div class="desc">${descAxisState(aid, val)}</div></div>
+    </div>`;
+  }).join("");
+
+  return `
+    <div class="axis-block">
+      <div class="title">시나리오 ${scenario.scenario_id || ""} <span class="small">${lblFamily(scenario.family_id)}</span></div>
+      <div class="kv" style="margin-top:6px">
+        <div class="k">약물 형태</div><div class="v">${lblModality(scenario.modality_class)}</div>
+        <div class="k">엔드포인트</div><div class="v">${scenario.endpoint_data_type ? lblEndpoint(scenario.endpoint_data_type) : "—"}</div>
+        ${scenario.analyte_role ? `<div class="k">분석물질 역할</div><div class="v">${lblAnalyteRole(scenario.analyte_role)}</div>` : ""}
+      </div>
+    </div>
+    <details><summary>11개 축(axis) 상태 상세</summary>${axisRows}</details>
+    ${scenario.action_sequence ? `<details><summary>예상 변환 단계 (action_sequence)</summary><div class="code" style="margin-top:4px">${scenario.action_sequence}</div></details>` : ""}
+  `;
+}
+
+function renderCustomScenarioInput(scenario) {
+  const axisIds = ["A0","A1","A2","A3","A4","A5","A6","A7","A8","A9","A10"];
+  const rows = axisIds.map(aid => {
+    const key = `${aid}_state`;
+    const val = scenario[key];
+    if (!val) return "";
+    return `<div class="kv" style="margin:2px 0"><div class="k">${LBL?.axis_state?.[aid]?.name || aid} (${aid})</div><div class="v">${lblAxisState(aid, val)}</div></div>`;
+  }).join("");
+  return `
+    <div class="axis-block">
+      <div class="title">직접 입력 시나리오</div>
+      <div class="kv" style="margin-top:6px">
+        <div class="k">약물 형태</div><div class="v">${lblModality(scenario.modality_class)}</div>
+        <div class="k">엔드포인트</div><div class="v">${scenario.endpoint_data_type ? lblEndpoint(scenario.endpoint_data_type) : "—"}</div>
+        ${scenario.analyte_role ? `<div class="k">분석물질 역할</div><div class="v">${lblAnalyteRole(scenario.analyte_role)}</div>` : ""}
+      </div>
+    </div>
+    <details><summary>11개 축(axis) 상태 상세</summary>${rows}</details>
+  `;
+}
+
+// ============================================================
+// Universe Browser
+// ============================================================
+function renderUniverseStats() {
+  const total = UNIVERSE.length;
+  if (total === 0) {
+    document.getElementById("universe-stats").innerHTML = `
+      <div class="help-note">
+        📦 <b>아티팩트 모드</b> — 이 단일 파일에는 2,998개 universe 데이터가 포함되지 않습니다 (용량 절감, ~2 MB 절약).<br/>
+        전체 universe 분포는 <code>dashboard/index.html</code>(HTTP 서버 모드)에서 확인 가능합니다.<br/><br/>
+        대신 이 아티팩트는 <b>트리 구조 학습 + 노드별 R 코드 학습</b>에 최적화되어 있습니다.
+      </div>`;
+    return;
+  }
+  const byTerm = {}, byQ = {}, byFam = {}, byMod = {}, byEp = {};
+  UNIVERSE.forEach(u => {
+    byTerm[u.terminal_state] = (byTerm[u.terminal_state] || 0) + 1;
+    if (u.q_code) byQ[u.q_code] = (byQ[u.q_code] || 0) + 1;
+    byFam[u.family_id] = (byFam[u.family_id] || 0) + 1;
+    byMod[u.modality_class] = (byMod[u.modality_class] || 0) + 1;
+    if (u.endpoint_data_type) byEp[u.endpoint_data_type] = (byEp[u.endpoint_data_type] || 0) + 1;
+  });
+
+  const max = (obj) => Math.max(...Object.values(obj));
+  const bars = (obj, labeler) => {
+    const m = max(obj);
+    return Object.entries(obj).sort((a,b)=>b[1]-a[1]).map(([k,v]) => `
+      <div class="stat-bar">
+        <div class="name" style="flex:0 0 220px">${labeler(k)}</div>
+        <div class="bar-container"><div class="bar-fill" style="width:${v/m*100}%"></div></div>
+        <div class="count">${v.toLocaleString()} (${(v/total*100).toFixed(1)}%)</div>
+      </div>`).join("");
+  };
+
+  document.getElementById("universe-stats").innerHTML = `
+    <h3>최종 결과 분포 <span class="en">terminal state</span></h3>${bars(byTerm, lblTerminal)}
+    <h3>격리 사유 분포 <span class="en">Q-code (QUARANTINE만)</span></h3>${bars(byQ, lblQ)}
+    <h3>시나리오 타입 분포 <span class="en">family</span></h3>${bars(byFam, lblFamily)}
+    <h3>약물 형태 분포 <span class="en">modality_class</span></h3>${bars(byMod, lblModality)}
+    <h3>엔드포인트 분포 <span class="en">endpoint_data_type</span></h3>${bars(byEp, lblEndpoint)}
+  `;
+}
+
+// ============================================================
+// Overview
+// ============================================================
+function renderOverview() {
+  document.getElementById("overview-info").innerHTML = `
+    <p class="intro">이 대시보드는 v1.0으로 잠긴(LOCKED) 의사결정 트리를 시각화하고 검증하는 도구입니다. 모든 데이터는 원본 <code>config/</code> + <code>data/</code> 폴더에서 변환된 사본입니다.</p>
+
+    <h3>좌측 트리 — 어떻게 보는가</h3>
+    <ul style="font-size:11px;line-height:1.7;margin-left:18px">
+      <li>맨 위 <b>tree_N0</b>(빨간 원)에서 시작 — 분석의도계약(AIC) 검사</li>
+      <li>각 원 노드는 질문 — <b>녹색 화살표</b>는 "예", <b>빨강 화살표</b>는 "아니오"</li>
+      <li>사각형이 <b>최종 결과(잎, leaf)</b> — 자동 처리 / 수리 / 격리 / 유효 불가</li>
+      <li>마우스 휠로 줌, 드래그로 이동, 노드 클릭 시 우측에 상세 표시</li>
+    </ul>
+
+    <h3>필수 노드 7개 <span class="en">forced — 순서 고정, 모든 분기에 등장</span></h3>
+    <div class="code" style="line-height:1.8">${TREE.node_order.slice(0, 7).map(n => {
+      const ko = lblNodeQuestion(n);
+      return `${n} ${ko ? "— " + ko.title : ""}`;
+    }).join("\n")}</div>
+
+    <h3>선택 노드 12개 <span class="en">optional — ILP로 선택, 실패위험 내림차순</span></h3>
+    <div class="code" style="line-height:1.8">${TREE.node_order.slice(7).map(n => {
+      const ko = lblNodeQuestion(n);
+      return `${n} ${ko ? "— " + ko.title : ""}`;
+    }).join("\n")}</div>
+
+    <h3>트리 규모</h3>
+    <div class="kv">
+      <div class="k">내부 노드</div><div class="v">${SUMMARY.internal_node_count}개</div>
+      <div class="k">잎 (최종 결과)</div><div class="v">${SUMMARY.leaf_count}개</div>
+      <div class="k">커버리지</div><div class="v">시나리오 ${SUMMARY.scenario_count.toLocaleString()}개 → DC 클래스 ${SUMMARY.dc_class_count}개 → 잎 ${SUMMARY.leaf_count}개</div>
+    </div>
+
+    <h3>참고 원본 파일</h3>
+    <ul style="font-size:11px;line-height:1.7;margin-left:18px">
+      <li><code>config/operational_decision_tree.yaml</code> — 트리 원본 (LOCKED)</li>
+      <li><code>config/candidate_node_dictionary_with_costs.csv</code> — 30개 후보 노드</li>
+      <li><code>data/scenario_universe/scenario_universe_v1.0.csv</code> — 2,998개 universe</li>
+      <li><code>data/decision_table/reduced_decision_table_v1.0.csv</code> — 337 DC 클래스</li>
+      <li><code>config/axis_dictionary.yaml</code> — A0~A10 축 정의</li>
+      <li><code>config/quarantine_reason_codes.yaml</code> — Q-code 사전</li>
+      <li><code>HANDOVER.md</code> · <code>reports/decision_tree_construction_plan.md</code></li>
+    </ul>
+
+    <h3>사용 흐름</h3>
+    <ol style="font-size:11px;line-height:1.7;margin-left:18px">
+      <li><b>경로 추적기</b> 탭에서 universe 시나리오를 골라 어떻게 트리를 따라가는지 본다</li>
+      <li>여러 시나리오에서 ✓ 일치 확인 → 트리 정확성 검증</li>
+      <li><b>시나리오 탐색</b>으로 universe 분포를 점검 (편향/누락 여부)</li>
+      <li>특정 노드 클릭 → 어떤 검사를 하는지 학습</li>
+      <li>학습/검증 완료 후 → R 노트북에서 같은 변환을 dplyr/data.table로 따라가기</li>
+    </ol>
+  `;
+}
+
+// ============================================================
+// Tabs
+// ============================================================
+function initTabs() {
+  document.querySelectorAll(".tab").forEach(t => {
+    t.addEventListener("click", () => activateTab(t.dataset.tab));
+  });
+}
+function activateTab(name) {
+  document.querySelectorAll(".tab").forEach(t => t.classList.toggle("active", t.dataset.tab === name));
+  ["detail","trace","universe","overview"].forEach(n => {
+    document.getElementById(`tab-${n}`).classList.toggle("hidden", n !== name);
+  });
+}
+
+// ============================================================
+// Go
+// ============================================================
+load().catch(err => {
+  console.error("[dashboard] FATAL", err);
+  if (typeof setBootStatus === "function") {
+    setBootStatus(`예외 발생: ${err.message}<br/><br/>스택:<pre style="font-size:10px;background:#f4f6f8;padding:6px;border-radius:4px;overflow:auto;max-height:240px">${(err.stack||"").replace(/</g,"&lt;")}</pre><br/>F12 콘솔에서 더 자세한 에러 확인 가능.`, true);
+  } else {
+    document.getElementById("network").innerHTML = `<div style="padding:20px;color:red">로딩 실패: ${err.message}</div>`;
+  }
+});
+</script>
+</body>
+</html>

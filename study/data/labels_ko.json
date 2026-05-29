@@ -1,0 +1,381 @@
+{
+  "version": "v1.0",
+  "notes": "한국어 풀이 라벨 사전. 시스템 코드(원문)는 데이터 무결성을 위해 그대로 보존되며, 표시될 때 'label (코드)' 형식으로 병기됩니다.",
+
+  "terminal_state": {
+    "AUTO":       { "label": "자동 처리",          "desc": "정책이 모두 충족되어 사람 개입 없이 NONMEM-ready 변환 가능" },
+    "REPAIR":     { "label": "정책 기반 수리",     "desc": "AIC에 선언된 정책으로 일부 변환이 필요하지만 자동 처리 가능" },
+    "QUARANTINE": { "label": "격리 (사람 판단 필요)", "desc": "필수 정책/정보가 누락되어 처리 중단, 사람의 결정을 기다림" },
+    "INVALID":    { "label": "유효 불가",          "desc": "데이터 자체가 복구 불가능한 손상 상태" }
+  },
+
+  "modality_class": {
+    "SMALL_MOLECULE":      { "label": "저분자 약물",            "desc": "전통적 화학 합성 약물" },
+    "PEPTIDE":             { "label": "펩타이드",               "desc": "" },
+    "MAB":                 { "label": "단클론항체",             "desc": "단일 표적 항체 (예: trastuzumab)" },
+    "ADC":                 { "label": "항체-약물 결합체",       "desc": "항체에 세포독성 페이로드를 결합한 약물" },
+    "BISPECIFIC":          { "label": "이중특이항체",           "desc": "두 표적을 동시에 결합 (예: T-cell engager)" },
+    "CELL_THERAPY":        { "label": "세포치료제",             "desc": "CAR-T 등 생세포 기반 치료" },
+    "GENE_THERAPY":        { "label": "유전자치료제",           "desc": "AAV 벡터 등을 통한 유전자 전달" },
+    "MRNA":                { "label": "mRNA",                   "desc": "전령 RNA 기반 (백신/치료제)" },
+    "VACCINE":             { "label": "백신",                   "desc": "" },
+    "OLIGO_ASO_SIRNA":     { "label": "올리고/ASO/siRNA",       "desc": "핵산 기반 치료제" },
+    "RADIOPHARMACEUTICAL": { "label": "방사성 의약품",          "desc": "" },
+    "OTHER_CUSTOM":        { "label": "기타",                   "desc": "" }
+  },
+
+  "endpoint_data_type": {
+    "PK_CONCENTRATION":   { "label": "약물농도 측정",        "desc": "혈장/혈청 등 매트릭스에서 측정한 약물 농도 (가장 일반적)" },
+    "EXPOSURE_METRIC":    { "label": "노출 지표",            "desc": "AUC, Cmax 등 농도-시간 데이터에서 파생된 지표" },
+    "CONTINUOUS_PD":      { "label": "연속형 약력학",        "desc": "혈압, 종양 크기 등 연속값으로 측정되는 효과" },
+    "CATEGORICAL_PD":     { "label": "범주형 약력학",        "desc": "유효/무효, 등급(grade) 등 카테고리로 표현되는 효과" },
+    "COUNT_PD":           { "label": "카운트 약력학",        "desc": "발작 횟수 등 정수 카운트로 측정되는 효과" },
+    "TTE_EVENT":          { "label": "사건 발생 시간",       "desc": "재발/사망 등 이벤트까지의 시간 (생존분석)" },
+    "CELLULAR_KINETICS":  { "label": "세포 동태학",          "desc": "CAR-T 등 생세포의 체내 동태 (Poisson-LLOQ 사용)" },
+    "IMMUNOGENICITY":     { "label": "면역원성 (ADA/NAb)",   "desc": "항약물 항체 (ADA), 중화 항체 (NAb)" },
+    "MILK_PK":            { "label": "모유 PK",              "desc": "수유 중 모유로 이행되는 약물 농도" },
+    "MATERNAL_INFANT_PK": { "label": "산모-영아 PK",         "desc": "엄마-아기 짝(dyad)으로 약물 노출 평가" }
+  },
+
+  "analyte_role": {
+    "PARENT":                                          { "label": "원약물",                "desc": "투여된 모(母)화합물" },
+    "ACTIVE_METABOLITE":                               { "label": "활성 대사체",           "desc": "" },
+    "PAYLOAD":                                         { "label": "ADC 페이로드",          "desc": "ADC에서 항체로부터 분리된 세포독성 약물" },
+    "TOTAL_ANTIBODY":                                  { "label": "전체 항체 (TAb)",       "desc": "결합/비결합 모두 합친 항체 농도" },
+    "NAKED_AB":                                        { "label": "비결합 항체",           "desc": "" },
+    "CONJUGATED_AB":                                   { "label": "결합 항체",             "desc": "" },
+    "VECTOR":                                          { "label": "벡터",                  "desc": "유전자 치료제 전달체 (AAV 등)" },
+    "TRANSGENE_PRODUCT":                               { "label": "전이유전자 산물",       "desc": "" },
+    "VICTIM":                                          { "label": "DDI 피해자",            "desc": "약물상호작용에서 영향을 받는 약물" },
+    "PERPETRATOR":                                     { "label": "DDI 가해자",            "desc": "약물상호작용에서 영향을 주는 약물" },
+    "PARENT|SOLUBLE_TARGET|DRUG_TARGET_COMPLEX":       { "label": "원약물 + 가용성 표적 + 약물-표적 복합체", "desc": "이중특이/표적 결합 모델용 세트" },
+    "TOTAL_ANTIBODY|CONJUGATED_ADC|UNCONJUGATED_PAYLOAD": { "label": "전체 항체 + 결합 ADC + 비결합 페이로드", "desc": "ADC 다중 분석물질" },
+    "VECTOR_COPY|CAR_POSITIVE_CELL":                   { "label": "벡터 카피수 + CAR 양성 세포", "desc": "CAR-T 세포동태 분석물질" }
+  },
+
+  "axis_state": {
+    "A0": {
+      "name": "분석 의도 계약",
+      "subtitle": "AIC — 어떤 분석을 할지/엔드포인트/필요 정책 묶음",
+      "states": {
+        "AIC-MISSING":         { "label": "AIC 자체 누락",            "desc": "데이터와 함께 분석의도계약 문서가 오지 않음 → 격리(Q11)" },
+        "AIC-PK":              { "label": "PK 전용 분석",             "desc": "약동학만 (가장 단순)" },
+        "AIC-PKPD":            { "label": "PK+약력학 통합",           "desc": "농도와 효과를 함께 모델링" },
+        "AIC-ER":              { "label": "노출-반응",                "desc": "Exposure-Response 분석" },
+        "AIC-TTE":             { "label": "사건발생시간 분석",        "desc": "" },
+        "AIC-BIOMARKER":       { "label": "바이오마커 분석",          "desc": "" },
+        "AIC-CELL_THERAPY":    { "label": "세포치료 분석",            "desc": "CAR-T 등, 세포 동태학과 짝지어짐" },
+        "AIC-IMMUNOGEN":       { "label": "면역원성 분석",            "desc": "양성 판정 규칙 필수" },
+        "AIC-LACTATION":       { "label": "수유/태아 짝(dyad) 분석",  "desc": "엄마-아기 연결 정책 필수" },
+        "AIC-PRECLINICAL":     { "label": "전임상 PK 분석",           "desc": "동물 데이터" },
+        "AIC-UNRECOVERABLE":   { "label": "AIC 있으나 데이터와 충돌", "desc": "내용이 데이터와 화해 불가" }
+      }
+    },
+    "A1": {
+      "name": "환자 식별자",
+      "subtitle": "Subject ID — 누가 누구인지 확정 가능한가",
+      "states": {
+        "ID-DEFINED":                     { "label": "ID 명확함",            "desc": "한 환자=한 ID, 일관성 보장" },
+        "ID-DUPLICATE-RESOLVABLE":        { "label": "중복 있지만 해결 가능", "desc": "선언된 정책으로 disambiguation 가능" },
+        "ID-DYAD-LINKABLE":               { "label": "엄마-아기 연결 가능",  "desc": "별도 ID지만 짝(dyad) 키로 연결" },
+        "ID-DYAD-UNLINKED-POLICY-MISSING":{ "label": "엄마-아기 연결 정책 누락", "desc": "데이터는 있는데 어떻게 연결할지 모름 → Q18" },
+        "ID-AMBIGUOUS":                   { "label": "ID 모호함",            "desc": "동일 ID가 여러 환자, 규칙 없음 → Q03" },
+        "ID-UNRECOVERABLE":               { "label": "ID 복구 불가",         "desc": "" }
+      }
+    },
+    "A2": {
+      "name": "시간 축",
+      "subtitle": "Time — 언제 일어났는가",
+      "states": {
+        "TIME-DEFINED":                       { "label": "시간 완전 정의",       "desc": "AIC와 데이터가 일치" },
+        "TIME-ACTUAL-VS-NOMINAL-RESOLVABLE":  { "label": "실제 vs 명목 시간 해결가능", "desc": "둘 다 있을 때 어느 것을 쓸지 정책 있음" },
+        "TIME-INTERVAL-RESOLVABLE":           { "label": "채취 구간 해결가능",   "desc": "소변 등 구간 채취 데이터" },
+        "TIME-ELAPSED-RESOLVABLE":            { "label": "경과시간 산출가능",    "desc": "첫 투여/분만일 등 기준점에서 계산" },
+        "TIME-ANCHOR-AMBIGUOUS":              { "label": "기준점 모호",          "desc": "여러 후보 기준점, 정책 없음 → Q02" },
+        "TIME-UNRECOVERABLE":                 { "label": "시간 복구 불가",       "desc": "" }
+      }
+    },
+    "A3": {
+      "name": "용량 (Dose)",
+      "subtitle": "투여량을 알 수 있는가",
+      "states": {
+        "DOSE-DEFINED":               { "label": "용량 완전 정의",        "desc": "양/경로/시간 모두 선언됨" },
+        "DOSE-WEIGHT-BASED":          { "label": "체중 기반 (재구성 필요)", "desc": "mg/kg 정책으로 계산" },
+        "DOSE-BSA-BASED":             { "label": "체표면적 기반 (재구성 필요)", "desc": "mg/m² 정책으로 계산" },
+        "DOSE-TITRATION":             { "label": "적응적 용량조정",       "desc": "환자별 조정 — 정책에 따라 재구성" },
+        "DOSE-LOADING-MAINTENANCE":   { "label": "로딩+유지 용량",        "desc": "전환점은 AIC에 명시" },
+        "DOSE-INFUSION-STOP-RESTART": { "label": "주입 중단/재개 있음",   "desc": "정책에 따라 재구성" },
+        "DOSE-ADDL-ACTUAL-CONFLICT":  { "label": "ADDL과 실투여 충돌",    "desc": "" },
+        "DOSE-AMBIGUOUS":             { "label": "용량 모호",             "desc": "단위/경로 불명 → Q08" },
+        "DOSE-UNRECOVERABLE":         { "label": "용량 복구 불가",        "desc": "" }
+      }
+    },
+    "A4": {
+      "name": "투여 계획 (Regimen)",
+      "subtitle": "어떻게 반복 투여되었는가",
+      "states": {
+        "REGIMEN-FIXED":          { "label": "고정 투여 계획",          "desc": "예: q24h, qweekly" },
+        "REGIMEN-EXPANDABLE-ADDL":{ "label": "ADDL/II로 펼치기 가능",    "desc": "NONMEM 표준 다회투여 표기" },
+        "TITRATION-ADAPTIVE":     { "label": "적응적 용량조정 계획",    "desc": "" },
+        "LOADING-MAINTENANCE":    { "label": "로딩+유지 계획",          "desc": "" },
+        "INFUSION-STOP-RESTART":  { "label": "주입 중단/재개 이벤트",   "desc": "" },
+        "ADDL-ACTUAL-CONFLICT":   { "label": "ADDL과 실투여 충돌",      "desc": "기대 횟수와 실제 기록 다름 → Q14" },
+        "MISSING-NO-POLICY":      { "label": "투여계획 미흡 + 정책 없음","desc": "" },
+        "UNRECOVERABLE":          { "label": "투여계획 복구 불가",      "desc": "" }
+      }
+    },
+    "A5": {
+      "name": "관측치 / 생체분석",
+      "subtitle": "측정값과 BLQ/LLOQ 정책",
+      "states": {
+        "BIOANALYTICAL-FINAL":             { "label": "생체분석 최종값 확정",      "desc": "분석 결과 확정 플래그 있음" },
+        "BIOANALYTICAL-FINAL-FLAG-MISSING":{ "label": "최종 확정 플래그 누락",      "desc": "결과는 있지만 상류 판정 미완 → Q15A" },
+        "BLQ-DEFINED-POLICY":              { "label": "BLQ 처리 정책 명시",        "desc": "M1/M3/M4/제외/프로젝트별 선언됨" },
+        "BLQ-NO-POLICY":                   { "label": "BLQ 행 있는데 정책 없음",   "desc": "→ Q01" },
+        "LLOQ-MISSING":                    { "label": "LLOQ 값 미제공",            "desc": "정량 하한값 자체가 없음 → Q01" },
+        "CELLULAR-BLQ-DEFINED":            { "label": "세포 BLQ 정책 명시",        "desc": "Poisson-LLOQ" },
+        "CELLULAR-LLOQ-POLICY-MISSING":    { "label": "세포 LLOQ 정책 누락",       "desc": "CELLULAR_KINETICS인데 정책 없음 → Q01" },
+        "IMMUNOGEN-POSITIVITY-DEFINED":    { "label": "면역원성 양성판정 규칙 명시","desc": "" },
+        "IMMUNOGEN-POSITIVITY-MISSING":    { "label": "면역원성 양성판정 규칙 누락","desc": "IMMUNOGENICITY인데 규칙 없음 → Q19" },
+        "ABSENT":                          { "label": "관측치 자체 없음",          "desc": "" }
+      }
+    },
+    "A6": {
+      "name": "공변량 (Covariate)",
+      "subtitle": "체중/연령/검사치 등 모델 입력 변수",
+      "states": {
+        "COVARIATE-COMPLETE":              { "label": "필수 공변량 완비",          "desc": "" },
+        "COVARIATE-BASELINE-ONLY":         { "label": "기저 공변량만 (충분)",      "desc": "분석에 충분한 baseline 값만 보유" },
+        "COVARIATE-TIME-VARYING-RESOLVABLE":{ "label": "시간변동 공변량 해결가능", "desc": "" },
+        "COVARIATE-PARTIAL-POLICY":        { "label": "부분 공변량 + 대치 정책",   "desc": "" },
+        "COVARIATE-IMPUTATION-POLICY-MISSING":{ "label": "부분 공변량인데 대치 정책 없음", "desc": "→ Q06" },
+        "COVARIATE-ABSENT":                { "label": "필수 공변량 없음",          "desc": "" }
+      }
+    },
+    "A7": {
+      "name": "외부 데이터 연결",
+      "subtitle": "공변량/제품 메타데이터를 어떻게 붙일지",
+      "states": {
+        "SUBJECT-LEVEL-COVARIATE": { "label": "환자 단위 공변량",      "desc": "표준적 연결" },
+        "BASELINE-CLEAN":          { "label": "기저 외부 공변량 깨끗", "desc": "" },
+        "TIME-VARYING":            { "label": "시간변동 외부 공변량",  "desc": "" },
+        "EXTERNAL-LINKABLE":       { "label": "외부 테이블 연결 가능", "desc": "선언된 키로 join" },
+        "PRODUCT-LEVEL-COVARIATE": { "label": "제품 단위 공변량",      "desc": "CAR-T 로트/배치/제조 속성 (역방향 key join)" },
+        "KEY-MISSING":             { "label": "연결 키 누락",          "desc": "→ Q13" },
+        "POLICY-MISSING":          { "label": "연결 정책 누락",        "desc": "→ Q07" },
+        "UNRECOVERABLE":           { "label": "외부 연결 복구 불가",   "desc": "" }
+      }
+    },
+    "A8": {
+      "name": "구획 / 분석물질",
+      "subtitle": "Compartment & Analyte — 무엇을 어디에 할당할지",
+      "states": {
+        "SINGLE-ANALYTE":          { "label": "단일 분석물질",                  "desc": "가장 단순 (CMT=1)" },
+        "MULTI-CMT-DEFINED":       { "label": "다중 구획 정책 명시",            "desc": "여러 CMT 어떻게 나눌지 선언됨" },
+        "DDI-VICTIM-ONLY":         { "label": "DDI 피해자만",                   "desc": "" },
+        "DDI-VICTIM-PERPETRATOR":  { "label": "DDI 피해자+가해자",              "desc": "두 약물 모두 모델링" },
+        "METABOLITE-DEFINED":      { "label": "원약물+대사체",                  "desc": "" },
+        "CMT-POLICY-MISSING":      { "label": "다중 분석물질인데 CMT 정책 없음","desc": "→ Q09" }
+      }
+    },
+    "A9": {
+      "name": "재분석 처리",
+      "subtitle": "Reanalysis — 다시 측정한 값이 있을 때",
+      "states": {
+        "REANALYSIS-NONE":              { "label": "재분석 없음",               "desc": "" },
+        "REANALYSIS-FINAL-RESOLVABLE":  { "label": "재분석 최종 선택 규칙 있음", "desc": "" },
+        "REANALYSIS-FINAL-MISSING":     { "label": "재분석 있는데 최종선택 규칙 없음", "desc": "→ Q15D" },
+        "PROTOCOL-DEVIATION-RESOLVABLE":{ "label": "프로토콜 이탈 처리 규칙 있음","desc": "" },
+        "PROTOCOL-DEVIATION-NO-POLICY": { "label": "프로토콜 이탈인데 정책 없음", "desc": "" },
+        "IRRECONCILABLE":               { "label": "화해 불가",                  "desc": "" }
+      }
+    },
+    "A10": {
+      "name": "원본 구조",
+      "subtitle": "Source structure — 데이터가 어떤 형태로 왔는가",
+      "states": {
+        "STRUCTURED":                 { "label": "정형 (잘 정리된 표)",      "desc": "SDTM/ADaM 등 표준 형식" },
+        "SEMI-STRUCTURED":            { "label": "반정형 (파서 선언됨)",     "desc": "" },
+        "NON-TABULAR":                { "label": "비표형식",                 "desc": "FCS, omics raw 등" },
+        "CORRUPTED":                  { "label": "원본 손상",                "desc": "" },
+        "SEMI-STRUCTURED-LEGACY-FLAG":{ "label": "반정형 + 레거시 플래그 미문서화","desc": "옛 시스템 플래그/필드 정의 부재 → Q15B" },
+        "RWD-ADHERENCE-UNRESOLVED":   { "label": "실세계 복용이력 미해결",   "desc": "RWD/TDM 실제 복용 불명확 → Q15C" }
+      }
+    }
+  },
+
+  "q_code": {
+    "Q01":  { "label": "BLQ/LLOQ 정책 누락",            "desc": "정량한계 미만 측정값 처리 규칙(M1/M3/M4) 또는 LLOQ 값이 없음" },
+    "Q02":  { "label": "시간 기준점 모호",              "desc": "경과시간 계산 기준점이 여러 후보 (예: 무작위배정 vs 첫투여)" },
+    "Q03":  { "label": "환자 ID 모호",                  "desc": "동일 ID가 여러 환자/규칙 없음" },
+    "Q04":  { "label": "주입 재구성 정책 누락",         "desc": "주입 중단/재개 이벤트 있지만 재구성 방법 없음" },
+    "Q05":  { "label": "관측값 단위 모호",              "desc": "농도 단위, 카피수 단위 등 불명" },
+    "Q06":  { "label": "공변량/이탈 정책 누락",         "desc": "공변량 대치 또는 프로토콜 이탈 처리 정책 없음" },
+    "Q07":  { "label": "외부 연결 정책 누락",           "desc": "외부 테이블 어떻게 붙일지 규칙 없음" },
+    "Q08":  { "label": "투여계획 정책 누락",            "desc": "투여계획 미완 + fallback 정책 없음" },
+    "Q09":  { "label": "구획(CMT) 정책 누락",           "desc": "다중 분석물질인데 어느 CMT에 넣을지 미정" },
+    "Q10":  { "label": "Occasion 정의 누락",            "desc": "IOV/시점별 random effect용 occasion 미정의" },
+    "Q11":  { "label": "AIC 또는 엔드포인트 타입 누락", "desc": "AIC 자체가 없거나 필수 endpoint_data_type 미선언" },
+    "Q12":  { "label": "필수 기준점 누락",              "desc": "예: MATERNAL_INFANT_PK에 delivery_anchor 없음" },
+    "Q13":  { "label": "외부/제품 연결 키 누락",        "desc": "외부 또는 제품 단위 키 부재 (구 Q17 흡수)" },
+    "Q14":  { "label": "ADDL/실투여 충돌 정책 누락",    "desc": "ADDL 펼친 결과와 실제 투여 기록 충돌, 해결 규칙 없음" },
+    "Q15A": { "label": "상류 판정 미제출",              "desc": "데이터 패키지 불완전 - 생체분석/임상 최종 판정 결정 미제출" },
+    "Q15B": { "label": "레거시 플래그 미문서화",        "desc": "옛 데이터의 플래그/필드 정의 부재로 해석 불가" },
+    "Q15C": { "label": "실세계 복용이력 미해결",        "desc": "RWD/TDM 실제 복용 이력 불명확" },
+    "Q15D": { "label": "재분석 최종 판정 누락",         "desc": "여러 분석 결과 중 최종 선택 기준 없음" },
+    "Q16":  { "label": "분석물질 역할 정책 누락",       "desc": "ADC/CAR-T/이중특이/유전자 - 어떤 분석물질이 어떤 역할인지 미정" },
+    "Q17":  { "label": "(금지된 코드 - Q13으로 흡수)",   "desc": "사용 불가" },
+    "Q18":  { "label": "엄마-아기 연결 누락",           "desc": "MATERNAL_INFANT_PK에 dyad 연결 키/정책 미선언" },
+    "Q19":  { "label": "면역원성 양성판정 규칙 누락",   "desc": "ADA/NAb 데이터 있지만 양성 판정 규칙 없음" }
+  },
+
+  "family": {
+    "F01": { "label": "표준 SDTM/ADaM popPK",      "desc": "가장 흔한 케이스 - CDISC 표준 데이터" },
+    "F02": { "label": "다기관 통합 popPK",         "desc": "여러 임상 풀링" },
+    "F03": { "label": "EDC 다중테이블 임상 PK",    "desc": "" },
+    "F04": { "label": "CRO PK + 투여 데이터",      "desc": "" },
+    "F05": { "label": "Excel/CSV 평면 PMX",        "desc": "" },
+    "F06": { "label": "레거시 NONMEM 형태",        "desc": "" },
+    "F07": { "label": "SAD/MAD 용량증량",          "desc": "단회/반복 첫 인체 시험" },
+    "F08": { "label": "교차 설계 BA/BE",           "desc": "생체이용률/생물학적 동등성" },
+    "F09": { "label": "DDI 피해자만",              "desc": "" },
+    "F10": { "label": "음식 효과",                 "desc": "" },
+    "F11": { "label": "특수 모집단",               "desc": "" },
+    "F12": { "label": "소아 PK",                   "desc": "" },
+    "F13": { "label": "PKPD 연속형 바이오마커",    "desc": "" },
+    "F14": { "label": "노출-반응",                 "desc": "" },
+    "F15": { "label": "TTE/카운트/범주형",         "desc": "사건발생시간/카운트/범주형 PD" },
+    "F16": { "label": "외부 공변량 연결",          "desc": "" },
+    "F17": { "label": "FACS 유래 엔드포인트",      "desc": "" },
+    "F18": { "label": "qPCR 유래 엔드포인트",      "desc": "" },
+    "F19": { "label": "단순 전임상 PK",            "desc": "동물 데이터" },
+    "F20": { "label": "TDM/실세계 데이터",         "desc": "치료적 약물 모니터링" },
+    "F21": { "label": "소변 구간 PK",              "desc": "" },
+    "F22": { "label": "DDI 피해자+가해자",         "desc": "" },
+    "F23": { "label": "병용요법",                  "desc": "" },
+    "F24": { "label": "ADC PK/PKPD",               "desc": "항체-약물 결합체" },
+    "F25": { "label": "이중특이 T세포 인게이저 PKPD","desc": "" },
+    "F26": { "label": "CAR-T 세포 동태학",         "desc": "" },
+    "F27": { "label": "mRNA 백신류",               "desc": "" },
+    "F28": { "label": "임신 PK",                   "desc": "" },
+    "F29": { "label": "수유 산모-영아 PK",         "desc": "" },
+    "F31": { "label": "원본 FCS/qPCR (파생불가)",   "desc": "" },
+    "F32": { "label": "Omics/이미지/파형 원본",    "desc": "" },
+    "F33": { "label": "비정형 노트만",             "desc": "" },
+    "F34": { "label": "복구불가 핵심정보 누락",    "desc": "" }
+  },
+
+  "action_function": {
+    "parse_source":                         { "label": "원본 파일 읽기",                "desc": "" },
+    "standardize_column_names":             { "label": "컬럼명 표준화",                 "desc": "" },
+    "convert_units":                        { "label": "단위 변환",                     "desc": "ng/mL ↔ μg/L 등" },
+    "map_subject_id":                       { "label": "환자 ID 매핑/통합",             "desc": "" },
+    "attach_dyad_linkage":                  { "label": "엄마-아기 연결 키 부착",        "desc": "" },
+    "derive_time_actual":                   { "label": "실제 채혈/투여 시간 계산",      "desc": "" },
+    "derive_time_nominal":                  { "label": "명목 시간(planned) 계산",       "desc": "" },
+    "derive_time_elapsed":                  { "label": "경과시간 계산",                 "desc": "첫 투여 시점부터 경과한 시간" },
+    "derive_time_interval":                 { "label": "채취 구간 시간 계산",           "desc": "소변 등 구간" },
+    "derive_time_postpartum_anchor":        { "label": "산후 일수 기준점 계산",         "desc": "분만일 anchor" },
+    "reconstruct_dose_weight":              { "label": "체중 기반 용량 재구성 (mg/kg)", "desc": "" },
+    "reconstruct_dose_bsa":                 { "label": "체표면적 기반 용량 재구성 (mg/m²)","desc": "" },
+    "reconstruct_dose_titration":           { "label": "적응적 용량조정 재구성",        "desc": "" },
+    "reconstruct_loading_maintenance":      { "label": "로딩/유지 용량 재구성",         "desc": "" },
+    "reconstruct_infusion_stop_restart":    { "label": "주입 중단/재개 이벤트 재구성",  "desc": "" },
+    "expand_addl_ii":                       { "label": "ADDL/II로 다회투여 펼치기",     "desc": "NONMEM 표준" },
+    "resolve_addl_actual_conflict":         { "label": "ADDL과 실제투여 충돌 해결",     "desc": "" },
+    "canonicalize_blq":                     { "label": "BLQ 표준화 (M1/M3/M4)",         "desc": "정량한계 미만 측정값 처리" },
+    "canonicalize_cellular_blq":            { "label": "세포 BLQ 표준화 (Poisson-LLOQ)","desc": "" },
+    "adjudicate_immunogenicity_positivity": { "label": "면역원성 양성 판정",            "desc": "" },
+    "resolve_reanalysis_final":             { "label": "재분석 결과 최종 선택",         "desc": "" },
+    "assign_milk_matrix_lloq":              { "label": "모유 매트릭스 LLOQ 할당",       "desc": "" },
+    "assign_evid":                          { "label": "EVID 이벤트 ID 할당",           "desc": "투여=1, 관측=0 등" },
+    "assign_cmt_single":                    { "label": "단일 CMT 구획 할당",            "desc": "" },
+    "assign_cmt_multi":                     { "label": "다중 CMT 구획 할당",            "desc": "" },
+    "assign_cmt_ddi_victim_only":           { "label": "DDI 피해자 CMT 할당",           "desc": "" },
+    "assign_cmt_ddi_victim_perpetrator":    { "label": "DDI 피해자+가해자 CMT 할당",    "desc": "" },
+    "assign_cmt_with_analyte_role":         { "label": "분석물질 역할별 CMT 할당",      "desc": "ADC TAb/cADC/payload 등" },
+    "attach_covariate_baseline":            { "label": "기저 공변량 부착",              "desc": "" },
+    "attach_covariate_time_varying":        { "label": "시간변동 공변량 부착",          "desc": "" },
+    "attach_covariate_external":            { "label": "외부 공변량 부착",              "desc": "" },
+    "attach_covariate_product_level":       { "label": "제품 단위 공변량 부착 (CAR-T 로트)","desc": "" },
+    "remove_exact_duplicates":              { "label": "완전 중복 행 제거",             "desc": "" },
+    "sort_records":                         { "label": "ID/시간 기준 정렬",             "desc": "" },
+    "flag_quarantine":                      { "label": "격리 플래그 표시",              "desc": "" },
+    "flag_invalid":                         { "label": "유효불가 플래그 표시",          "desc": "" },
+    "flag_unsupported":                     { "label": "미지원 시나리오 플래그 표시",   "desc": "" },
+    "export_nonmem_ready":                  { "label": "NONMEM-ready 형식으로 출력",    "desc": "ID/TIME/AMT/DV/EVID/CMT/MDV" }
+  },
+
+  "node_question_ko": {
+    "N0":  { "title": "AIC + 엔드포인트 타입 검사",                "question": "분석의도계약(AIC)이 유효하고, 필요한 경우 엔드포인트 데이터 타입이 선언되어 있는가?" },
+    "N1":  { "title": "환자 식별자 검사",                          "question": "환자 ID가 해결 가능한가? (모자 연결도 포함)" },
+    "N2":  { "title": "시간 축 검사",                              "question": "시간 축이 해결 가능한가? (실제/명목/경과/산후)" },
+    "N3":  { "title": "용량 기록 검사",                            "question": "용량 기록이 완전한가? (계획 + 주입 + ADDL)" },
+    "N4":  { "title": "관측치/구획 검사",                          "question": "관측치/구획이 해결 가능한가? (분석물질 역할 포함)" },
+    "N5":  { "title": "BLQ/MDV 정책 검사",                         "question": "BLQ/MDV 정책이 적용되어 있는가?" },
+    "N6":  { "title": "공변량 부착 검사",                          "question": "공변량 부착이 해결 가능한가? (CAR-T 제품 단위 포함)" },
+    "N7":  { "title": "잔여 모호성 검사",                          "question": "남은 모호성이 임계 미만인가? (catch-all)" },
+    "N8":  { "title": "AIC 정책 묶음 검사",                        "question": "제안된 action_sequence에 필요한 모든 정책이 AIC에 선언되어 있는가?" },
+    "N9":  { "title": "세포 동태학 엔드포인트?",                   "question": "엔드포인트가 CELLULAR_KINETICS인가?" },
+    "N10": { "title": "면역원성 엔드포인트?",                      "question": "엔드포인트가 IMMUNOGENICITY인가?" },
+    "N11": { "title": "산모-영아 / 모유 PK?",                       "question": "엔드포인트가 MATERNAL_INFANT_PK 또는 MILK_PK인가?" },
+    "N12": { "title": "v4.2 modality?",                            "question": "ADC/Bispecific/Cell/Gene/mRNA modality인가?" },
+    "N13": { "title": "BLQ 표준화 함수 포함?",                     "question": "action sequence에 BLQ 표준화 함수가 포함되는가?" },
+    "N14": { "title": "용량 재구성 함수 포함?",                    "question": "action sequence에 용량 재구성 함수(reconstruct/expand_addl)가 포함되는가?" },
+    "N15": { "title": "환자 ID 매핑 함수 포함?",                   "question": "action sequence에 map_subject_id가 포함되는가? (통합 연구)" },
+    "N16": { "title": "재분석 결과 최종 선택 포함?",               "question": "action sequence에 resolve_reanalysis_final이 포함되는가?" },
+    "N17": { "title": "산후/경과시간 기준점 함수 포함?",           "question": "action sequence에 derive_time_postpartum_anchor 또는 derive_time_elapsed가 포함되는가?" },
+    "N18": { "title": "다중 CMT 할당 함수 포함?",                  "question": "action sequence에 multi-CMT 할당 함수가 포함되는가?" },
+    "N19": { "title": "공변량 부착 함수 포함?",                    "question": "action sequence에 attach_covariate_* 또는 attach_dyad_linkage가 포함되는가?" },
+    "N20": { "title": "생체분석 최종 확정 플래그 누락?",            "question": "A5가 BIOANALYTICAL-FINAL-FLAG-MISSING인가?" },
+    "N21": { "title": "A8 다중-CMT 클래스?",                       "question": "A8이 multi-CMT 계열 상태인가? (MULTI/DDI/METABOLITE)" },
+    "N22": { "title": "DDI 피해자+가해자?",                        "question": "A8이 DDI-VICTIM-PERPETRATOR인가?" },
+    "N23": { "title": "레거시 플래그?",                            "question": "A10이 SEMI-STRUCTURED-LEGACY-FLAG인가?" },
+    "N24": { "title": "ADDL과 실투여 충돌?",                       "question": "A4가 ADDL-ACTUAL-CONFLICT인가?" },
+    "N25": { "title": "분석물질 역할 modality?",                   "question": "modality가 ADC/Bispecific/Cell/Gene인가? (analyte_role 태깅)" },
+    "N26": { "title": "분석물질 역할 CMT 할당?",                   "question": "action sequence에 assign_cmt_with_analyte_role이 포함되는가?" },
+    "N27": { "title": "세포 BLQ?",                                 "question": "A5가 CELLULAR-BLQ-DEFINED인가?" },
+    "N28": { "title": "세포 BLQ 표준화 함수?",                     "question": "action sequence에 canonicalize_cellular_blq가 포함되는가?" },
+    "N29": { "title": "면역원성 양성판정 함수?",                   "question": "action sequence에 adjudicate_immunogenicity_positivity가 포함되는가?" }
+  },
+
+  "ui_text": {
+    "header_title": "PMX Universe v1.0 — 의사결정 트리 대시보드",
+    "tab_detail": "노드 상세",
+    "tab_trace": "경로 추적기",
+    "tab_universe": "시나리오 탐색",
+    "tab_overview": "개요",
+    "legend_forced": "필수 노드 (Forced) — 7개",
+    "legend_optional": "선택 노드 (Optional) — 12개",
+    "legend_leaf_auto": "최종 결과 — 자동 처리 (AUTO)",
+    "legend_leaf_repair": "최종 결과 — 정책 기반 수리 (REPAIR)",
+    "legend_leaf_quarantine": "최종 결과 — 격리 (QUARANTINE)",
+    "legend_leaf_invalid": "최종 결과 — 유효 불가 (INVALID)",
+    "legend_edges": "화살표: 녹색=예(YES) · 빨강=아니오(NO)",
+    "trace_mode_label": "입력 방식",
+    "trace_mode_universe": "기존 시나리오에서 선택 (2,998개 중)",
+    "trace_mode_custom": "직접 조합 입력 (탐색용)",
+    "trace_filter_family": "시나리오 타입 (family) 필터",
+    "trace_filter_terminal": "최종 결과 필터",
+    "trace_filter_qcode": "격리 사유 (Q-code) 필터",
+    "trace_scenario_label": "시나리오",
+    "trace_run": "▶ 경로 추적 실행",
+    "trace_clear": "초기화",
+    "node_detail_empty": "트리에서 노드를 클릭하면 세부 정보가 표시됩니다.",
+    "trace_intro": "시나리오를 선택하거나 직접 axis state를 입력하여 의사결정 트리를 따라가는 경로를 추적합니다.",
+    "universe_intro": "2,998개 시나리오의 분포를 한눈에 확인합니다.",
+    "verdict_match": "✓ 추적 결과가 universe 라벨과 일치",
+    "verdict_mismatch": "✗ 추적 불일치",
+    "verdict_source_dc": "decision_table N답 (정답)",
+    "verdict_source_rule": "JS detection rule (근사)",
+    "verdict_custom_mode": "직접 입력 모드: action_sequence 의존 노드는 근사치로 평가됩니다.",
+    "input_label": "입력 시나리오",
+    "decision_path_label": "결정 경로",
+    "terminal_label": "최종 도달",
+    "action_sequence_label": "NONMEM-ready 변환 단계 (action sequence)",
+    "label_kind_forced": "필수",
+    "label_kind_optional": "선택",
+    "label_yes": "예",
+    "label_no": "아니오"
+  }
+}

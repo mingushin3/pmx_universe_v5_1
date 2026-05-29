@@ -1,0 +1,85 @@
+{
+  "terminal_state_taxonomy": {
+    "version": "v5.1",
+    "hard_rule_refs": [
+      "HR1",
+      "HR2",
+      "HR3",
+      "HR4",
+      "HR5"
+    ],
+    "states": [
+      {
+        "state": "AUTO",
+        "definition": "The data + AIC are sufficient to produce a NONMEM-ready dataset through deterministic transformations that involve NO analytical judgment and NO repair function.",
+        "entry_condition": "All axes resolve to AUTO-class state codes; all required policies declared in AIC; no q-code triggered by any dependency_constraint.",
+        "allowed_next_action": "Compose action_sequence from {parse_source, standardize_column_names, convert_units, map_subject_id, derive_time_*, assign_evid, assign_cmt_single, attach_covariate_baseline, attach_covariate_time_varying, attach_covariate_external, remove_exact_duplicates, sort_records, export_nonmem_ready}. NO repair function may appear.",
+        "required_output": "NONMEM-ready dataset + audit_log",
+        "required_audit_log_fields": [
+          "policy_used",
+          "function_sequence",
+          "row_counts_in_out",
+          "timestamps"
+        ],
+        "failure_condition": "action_sequence contains any function not in the AUTO allow-list, OR a required_policy is declared but missing in AIC, OR a hidden policy dependency is detected by N8.",
+        "examples_count": 2
+      },
+      {
+        "state": "REPAIR",
+        "definition": "The data require declared deterministic transformation(s) that consume an AIC-declared policy and produce a unique output. Each repair function references a single algorithm in repair_rule_dictionary.yaml.",
+        "entry_condition": "At least one axis is in a REPAIR-class state code AND every required_policy for the selected repair_executor function is declared in AIC AND no q-code triggers an earlier QUARANTINE.",
+        "allowed_next_action": "Compose action_sequence including ≥1 repair function from action_function_library.yaml. Final step must be export_nonmem_ready.",
+        "required_output": "NONMEM-ready dataset + audit_log with policy + function dispatch",
+        "required_audit_log_fields": [
+          "policy_used",
+          "function_sequence",
+          "parameter_values_per_function",
+          "row_counts_in_out",
+          "timestamps",
+          "input_row_hashes"
+        ],
+        "failure_condition": "No executable function exists in repair_rule_dictionary.yaml for the proposed transformation, OR the required policy is not declared in AIC, OR the function admits non-unique outputs."
+      },
+      {
+        "state": "QUARANTINE",
+        "definition": "The data cannot proceed without an external decision (additional documentation, adjudication, or policy declaration). Every QUARANTINE row carries a q_code that names the missing input.",
+        "entry_condition": "q_code in [Q01..Q14, Q15A, Q15B, Q15C, Q15D, Q16, Q18, Q19]. Q15 standalone is FORBIDDEN. Q17 is FORBIDDEN.",
+        "allowed_next_action": "[flag_quarantine(q_code=Q0XX)] — NO export_nonmem_ready",
+        "required_output": "Quarantine report + q_code + recommended_human_action",
+        "required_audit_log_fields": [
+          "q_code",
+          "detection_rule_matched",
+          "recommended_human_action",
+          "data_snapshot_pointer"
+        ],
+        "failure_condition": "q_code missing OR q_code == Q15 standalone OR q_code == Q17 OR no recommended_human_action attached."
+      },
+      {
+        "state": "UNSUPPORTED",
+        "definition": "The data class is captured by the v4.2 universe but is OUT OF SCOPE for the dataset-transformation system (e.g., raw FCS, omics, unstructured notes-only). The system records the class but does not attempt transformation.",
+        "entry_condition": "Family in [F31, F32, F33] OR A10 == NON-TABULAR with no applicable derivation policy.",
+        "allowed_next_action": "[flag_unsupported(reason=...)] — NO export_nonmem_ready",
+        "required_output": "Unsupported flag + family classification + rationale",
+        "required_audit_log_fields": [
+          "family_id",
+          "reason",
+          "data_snapshot_pointer"
+        ],
+        "failure_condition": "family_id in [F01..F29] (operational) — operational data should not land in UNSUPPORTED."
+      },
+      {
+        "state": "INVALID",
+        "definition": "The data cannot be transformed to a NONMEM-ready dataset under any policy because a core axis is unrecoverable.",
+        "entry_condition": "Any axis resolves to *-UNRECOVERABLE / IRRECONCILABLE / CORRUPTED / ABSENT.",
+        "allowed_next_action": "[flag_invalid(reason=...)] — NO export_nonmem_ready",
+        "required_output": "Invalid flag + offending axis + rationale",
+        "required_audit_log_fields": [
+          "offending_axis",
+          "reason",
+          "data_snapshot_pointer"
+        ],
+        "failure_condition": "Reason missing OR offending_axis not in [A0..A10]."
+      }
+    ]
+  }
+}

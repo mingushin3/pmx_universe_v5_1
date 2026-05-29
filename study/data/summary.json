@@ -1,0 +1,12 @@
+{
+  "version": "v1.0",
+  "generated_at_utc": "2026-05-22T12:51:29.346202+00:00",
+  "node_count_total_candidate": 30,
+  "node_count_selected": 19,
+  "forced_node_count": 7,
+  "optional_node_count": 12,
+  "internal_node_count": 126,
+  "leaf_count": 51,
+  "scenario_count": 2998,
+  "dc_class_count": 337
+}

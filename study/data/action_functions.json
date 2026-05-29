@@ -1,0 +1,657 @@
+{
+  "action_function_library": {
+    "version": "v5.1",
+    "functions": [
+      {
+        "function_name": "parse_source",
+        "required_parameters": [
+          "source_path",
+          "file_format"
+        ],
+        "required_policy": [],
+        "output_columns_added": [],
+        "audit_log_fields": [
+          "source_path",
+          "file_format",
+          "parser_version",
+          "row_count_in"
+        ],
+        "failure_mode_q_code": null,
+        "v4_2_new": false
+      },
+      {
+        "function_name": "standardize_column_names",
+        "required_parameters": [
+          "column_map"
+        ],
+        "required_policy": [],
+        "output_columns_added": [],
+        "audit_log_fields": [
+          "column_map_version"
+        ],
+        "failure_mode_q_code": null,
+        "v4_2_new": false
+      },
+      {
+        "function_name": "convert_units",
+        "required_parameters": [
+          "unit_map"
+        ],
+        "required_policy": [],
+        "output_columns_added": [],
+        "audit_log_fields": [
+          "unit_map_version",
+          "conversions_applied"
+        ],
+        "failure_mode_q_code": "Q05",
+        "v4_2_new": false
+      },
+      {
+        "function_name": "map_subject_id",
+        "required_parameters": [
+          "id_column"
+        ],
+        "required_policy": [
+          "id_disambiguation_policy"
+        ],
+        "output_columns_added": [
+          "ID"
+        ],
+        "audit_log_fields": [
+          "id_column",
+          "n_unique_subjects",
+          "disambiguation_actions"
+        ],
+        "failure_mode_q_code": "Q03",
+        "v4_2_new": false
+      },
+      {
+        "function_name": "attach_dyad_linkage",
+        "required_parameters": [
+          "mother_id_col",
+          "infant_id_col",
+          "linkage_key"
+        ],
+        "required_policy": [
+          "dyad_linkage_policy"
+        ],
+        "output_columns_added": [
+          "MOTHER_SUBJID",
+          "INFANT_SUBJID",
+          "DYAD_ID"
+        ],
+        "audit_log_fields": [
+          "dyads_linked",
+          "dyads_unlinked"
+        ],
+        "failure_mode_q_code": "Q18",
+        "v4_2_new": true
+      },
+      {
+        "function_name": "derive_time_actual",
+        "required_parameters": [
+          "time_actual_col"
+        ],
+        "required_policy": [],
+        "output_columns_added": [
+          "TIME"
+        ],
+        "audit_log_fields": [
+          "anchor",
+          "time_col"
+        ],
+        "failure_mode_q_code": "Q02",
+        "v4_2_new": false
+      },
+      {
+        "function_name": "derive_time_nominal",
+        "required_parameters": [
+          "time_nominal_col"
+        ],
+        "required_policy": [
+          "time_policy"
+        ],
+        "output_columns_added": [
+          "TIME"
+        ],
+        "audit_log_fields": [
+          "policy_used"
+        ],
+        "failure_mode_q_code": "Q02",
+        "v4_2_new": false
+      },
+      {
+        "function_name": "derive_time_elapsed",
+        "required_parameters": [
+          "anchor_col"
+        ],
+        "required_policy": [
+          "elapsed_anchor_policy"
+        ],
+        "output_columns_added": [
+          "TIME"
+        ],
+        "audit_log_fields": [
+          "elapsed_anchor"
+        ],
+        "failure_mode_q_code": "Q02",
+        "v4_2_new": false
+      },
+      {
+        "function_name": "derive_time_interval",
+        "required_parameters": [
+          "interval_start_col",
+          "interval_end_col"
+        ],
+        "required_policy": [],
+        "output_columns_added": [
+          "TIME",
+          "TAFD",
+          "INTERVAL"
+        ],
+        "audit_log_fields": [
+          "interval_count"
+        ],
+        "failure_mode_q_code": "Q02",
+        "v4_2_new": false
+      },
+      {
+        "function_name": "derive_time_postpartum_anchor",
+        "required_parameters": [
+          "delivery_date_col"
+        ],
+        "required_policy": [
+          "delivery_anchor_policy"
+        ],
+        "output_columns_added": [
+          "TIME",
+          "POSTPARTUM_DAY"
+        ],
+        "audit_log_fields": [
+          "delivery_anchor"
+        ],
+        "failure_mode_q_code": "Q12",
+        "v4_2_new": true
+      },
+      {
+        "function_name": "reconstruct_dose_weight",
+        "required_parameters": [
+          "weight_col",
+          "dose_per_kg"
+        ],
+        "required_policy": [
+          "dose_reconstruction_policy"
+        ],
+        "output_columns_added": [
+          "AMT",
+          "AMT_UNIT"
+        ],
+        "audit_log_fields": [
+          "dose_per_kg",
+          "n_records_reconstructed"
+        ],
+        "failure_mode_q_code": "Q08",
+        "v4_2_new": false
+      },
+      {
+        "function_name": "reconstruct_dose_bsa",
+        "required_parameters": [
+          "bsa_col",
+          "dose_per_m2"
+        ],
+        "required_policy": [
+          "dose_reconstruction_policy"
+        ],
+        "output_columns_added": [
+          "AMT",
+          "AMT_UNIT"
+        ],
+        "audit_log_fields": [
+          "dose_per_m2",
+          "n_records_reconstructed"
+        ],
+        "failure_mode_q_code": "Q08",
+        "v4_2_new": false
+      },
+      {
+        "function_name": "reconstruct_dose_titration",
+        "required_parameters": [
+          "titration_table"
+        ],
+        "required_policy": [
+          "dose_adaptation_policy"
+        ],
+        "output_columns_added": [
+          "AMT",
+          "RATE_OR_INFTIME"
+        ],
+        "audit_log_fields": [
+          "titration_rule_id"
+        ],
+        "failure_mode_q_code": "Q08",
+        "v4_2_new": false
+      },
+      {
+        "function_name": "reconstruct_loading_maintenance",
+        "required_parameters": [
+          "transition_point"
+        ],
+        "required_policy": [
+          "dose_reconstruction_policy"
+        ],
+        "output_columns_added": [
+          "AMT",
+          "RATE_OR_INFTIME"
+        ],
+        "audit_log_fields": [
+          "transition_point"
+        ],
+        "failure_mode_q_code": "Q08",
+        "v4_2_new": false
+      },
+      {
+        "function_name": "reconstruct_infusion_stop_restart",
+        "required_parameters": [
+          "infusion_events"
+        ],
+        "required_policy": [
+          "infusion_reconstruction_policy"
+        ],
+        "output_columns_added": [
+          "AMT",
+          "RATE",
+          "DUR"
+        ],
+        "audit_log_fields": [
+          "n_segments"
+        ],
+        "failure_mode_q_code": "Q04",
+        "v4_2_new": false
+      },
+      {
+        "function_name": "expand_addl_ii",
+        "required_parameters": [
+          "addl_col",
+          "ii_col"
+        ],
+        "required_policy": [
+          "dose_reconstruction_policy"
+        ],
+        "output_columns_added": [
+          "TIME",
+          "AMT"
+        ],
+        "audit_log_fields": [
+          "n_expanded"
+        ],
+        "failure_mode_q_code": "Q08",
+        "v4_2_new": false
+      },
+      {
+        "function_name": "resolve_addl_actual_conflict",
+        "required_parameters": [
+          "conflict_priority"
+        ],
+        "required_policy": [
+          "addl_actual_conflict_policy"
+        ],
+        "output_columns_added": [
+          "AMT"
+        ],
+        "audit_log_fields": [
+          "policy_used",
+          "n_conflicts_resolved"
+        ],
+        "failure_mode_q_code": "Q14",
+        "v4_2_new": false
+      },
+      {
+        "function_name": "canonicalize_blq",
+        "required_parameters": [
+          "lloq",
+          "blq_method"
+        ],
+        "required_policy": [
+          "blq_handling_policy"
+        ],
+        "output_columns_added": [
+          "DV",
+          "BLQ_FLAG"
+        ],
+        "audit_log_fields": [
+          "blq_method",
+          "n_blq_in",
+          "n_blq_handled"
+        ],
+        "failure_mode_q_code": "Q01",
+        "v4_2_new": false
+      },
+      {
+        "function_name": "canonicalize_cellular_blq",
+        "required_parameters": [
+          "poisson_lloq_params"
+        ],
+        "required_policy": [
+          "cellular_LLOQ_derivation_policy"
+        ],
+        "output_columns_added": [
+          "DV",
+          "CELLULAR_BLQ_FLAG"
+        ],
+        "audit_log_fields": [
+          "lloq_derivation_method",
+          "n_cells_in_below"
+        ],
+        "failure_mode_q_code": "Q01",
+        "v4_2_new": true
+      },
+      {
+        "function_name": "adjudicate_immunogenicity_positivity",
+        "required_parameters": [
+          "screening_cutpoint",
+          "confirmation_tier"
+        ],
+        "required_policy": [
+          "positivity_adjudication_rule"
+        ],
+        "output_columns_added": [
+          "DV",
+          "ADA_POSITIVE_FLAG"
+        ],
+        "audit_log_fields": [
+          "rule_id",
+          "n_positive",
+          "n_negative"
+        ],
+        "failure_mode_q_code": "Q19",
+        "v4_2_new": true
+      },
+      {
+        "function_name": "resolve_reanalysis_final",
+        "required_parameters": [
+          "reanalysis_priority"
+        ],
+        "required_policy": [
+          "reanalysis_final_selection_policy"
+        ],
+        "output_columns_added": [
+          "DV"
+        ],
+        "audit_log_fields": [
+          "policy_used",
+          "n_resolved"
+        ],
+        "failure_mode_q_code": "Q15D",
+        "v4_2_new": false
+      },
+      {
+        "function_name": "assign_milk_matrix_lloq",
+        "required_parameters": [
+          "milk_lloq"
+        ],
+        "required_policy": [
+          "milk_matrix_lloq_policy"
+        ],
+        "output_columns_added": [
+          "DV",
+          "MATRIX_BLQ_FLAG"
+        ],
+        "audit_log_fields": [
+          "milk_lloq"
+        ],
+        "failure_mode_q_code": "Q01",
+        "v4_2_new": true
+      },
+      {
+        "function_name": "assign_evid",
+        "required_parameters": [],
+        "required_policy": [],
+        "output_columns_added": [
+          "EVID"
+        ],
+        "audit_log_fields": [
+          "n_evid_0",
+          "n_evid_1",
+          "n_evid_other"
+        ],
+        "failure_mode_q_code": null,
+        "v4_2_new": false
+      },
+      {
+        "function_name": "assign_cmt_single",
+        "required_parameters": [],
+        "required_policy": [],
+        "output_columns_added": [
+          "CMT"
+        ],
+        "audit_log_fields": [],
+        "failure_mode_q_code": null,
+        "v4_2_new": false
+      },
+      {
+        "function_name": "assign_cmt_multi",
+        "required_parameters": [
+          "cmt_map"
+        ],
+        "required_policy": [
+          "cmt_analyte_policy"
+        ],
+        "output_columns_added": [
+          "CMT"
+        ],
+        "audit_log_fields": [
+          "cmt_map_version"
+        ],
+        "failure_mode_q_code": "Q09",
+        "v4_2_new": false
+      },
+      {
+        "function_name": "assign_cmt_ddi_victim_only",
+        "required_parameters": [
+          "victim_cmt"
+        ],
+        "required_policy": [
+          "cmt_analyte_policy"
+        ],
+        "output_columns_added": [
+          "CMT"
+        ],
+        "audit_log_fields": [],
+        "failure_mode_q_code": "Q09",
+        "v4_2_new": false
+      },
+      {
+        "function_name": "assign_cmt_ddi_victim_perpetrator",
+        "required_parameters": [
+          "victim_cmt",
+          "perpetrator_cmt"
+        ],
+        "required_policy": [
+          "cmt_analyte_policy",
+          "dual_cmt_policy"
+        ],
+        "output_columns_added": [
+          "CMT"
+        ],
+        "audit_log_fields": [],
+        "failure_mode_q_code": "Q09",
+        "v4_2_new": false
+      },
+      {
+        "function_name": "assign_cmt_with_analyte_role",
+        "required_parameters": [
+          "cmt_map",
+          "analyte_role_map"
+        ],
+        "required_policy": [
+          "cmt_analyte_policy",
+          "analyte_role_declaration"
+        ],
+        "output_columns_added": [
+          "CMT",
+          "ANALYTE_ROLE"
+        ],
+        "audit_log_fields": [
+          "analyte_role_map_version"
+        ],
+        "failure_mode_q_code": "Q16",
+        "v4_2_new": true
+      },
+      {
+        "function_name": "attach_covariate_baseline",
+        "required_parameters": [
+          "covariate_list"
+        ],
+        "required_policy": [],
+        "output_columns_added": [
+          "<covariate_names>"
+        ],
+        "audit_log_fields": [
+          "covariate_count"
+        ],
+        "failure_mode_q_code": null,
+        "v4_2_new": false
+      },
+      {
+        "function_name": "attach_covariate_time_varying",
+        "required_parameters": [
+          "covariate_list",
+          "fill_policy"
+        ],
+        "required_policy": [
+          "covariate_policy"
+        ],
+        "output_columns_added": [
+          "<covariate_names>"
+        ],
+        "audit_log_fields": [
+          "fill_policy",
+          "n_imputed"
+        ],
+        "failure_mode_q_code": "Q06",
+        "v4_2_new": false
+      },
+      {
+        "function_name": "attach_covariate_external",
+        "required_parameters": [
+          "external_table_path",
+          "join_key"
+        ],
+        "required_policy": [
+          "external_linkage_policy"
+        ],
+        "output_columns_added": [
+          "<external_cov_names>"
+        ],
+        "audit_log_fields": [
+          "external_table_hash",
+          "n_joined"
+        ],
+        "failure_mode_q_code": "Q07",
+        "v4_2_new": false
+      },
+      {
+        "function_name": "attach_covariate_product_level",
+        "required_parameters": [
+          "product_table_path",
+          "lot_subject_map"
+        ],
+        "required_policy": [
+          "product_level_covariate_linkage_policy"
+        ],
+        "output_columns_added": [
+          "<product_cov_names>"
+        ],
+        "audit_log_fields": [
+          "lots_mapped",
+          "subjects_with_product_cov"
+        ],
+        "failure_mode_q_code": "Q13",
+        "v4_2_new": true
+      },
+      {
+        "function_name": "remove_exact_duplicates",
+        "required_parameters": [],
+        "required_policy": [],
+        "output_columns_added": [],
+        "audit_log_fields": [
+          "n_removed"
+        ],
+        "failure_mode_q_code": null,
+        "v4_2_new": false
+      },
+      {
+        "function_name": "sort_records",
+        "required_parameters": [
+          "sort_keys"
+        ],
+        "required_policy": [],
+        "output_columns_added": [],
+        "audit_log_fields": [
+          "sort_keys"
+        ],
+        "failure_mode_q_code": null,
+        "v4_2_new": false
+      },
+      {
+        "function_name": "flag_quarantine",
+        "required_parameters": [
+          "q_code"
+        ],
+        "required_policy": [],
+        "output_columns_added": [
+          "QUARANTINE_REASON"
+        ],
+        "audit_log_fields": [
+          "q_code",
+          "recommended_human_action"
+        ],
+        "failure_mode_q_code": null,
+        "v4_2_new": false
+      },
+      {
+        "function_name": "flag_invalid",
+        "required_parameters": [
+          "reason"
+        ],
+        "required_policy": [],
+        "output_columns_added": [],
+        "audit_log_fields": [
+          "reason",
+          "offending_axis"
+        ],
+        "failure_mode_q_code": null,
+        "v4_2_new": false
+      },
+      {
+        "function_name": "flag_unsupported",
+        "required_parameters": [
+          "reason"
+        ],
+        "required_policy": [],
+        "output_columns_added": [],
+        "audit_log_fields": [
+          "reason",
+          "family_id"
+        ],
+        "failure_mode_q_code": null,
+        "v4_2_new": false
+      },
+      {
+        "function_name": "export_nonmem_ready",
+        "required_parameters": [
+          "output_path"
+        ],
+        "required_policy": [],
+        "output_columns_added": [],
+        "audit_log_fields": [
+          "output_path",
+          "output_row_count",
+          "output_sha256"
+        ],
+        "failure_mode_q_code": null,
+        "v4_2_new": false
+      }
+    ]
+  }
+}

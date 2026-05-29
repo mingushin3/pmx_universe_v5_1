@@ -1,0 +1,1682 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<title>PMX Wrangling Tree v3 — 학습 대시보드</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+  /* ═══════════════════════════════════════════════════════════════
+     색 팔레트 — 5색 토큰만 사용 (forced/optional/auto/repair/quar/inv)
+     ─────────────────────────────────────────────────────────────── */
+  :root {
+    /* core node colors */
+    --c-forced: #dc2626;
+    --c-optional: #2563eb;
+    --c-auto: #16a34a;
+    --c-repair: #f59e0b;
+    --c-quarantine: #991b1b;
+    --c-invalid: #64748b;
+
+    /* neutrals */
+    --bg: #f1f5f9;
+    --panel: #ffffff;
+    --ink: #0f172a;
+    --ink-2: #334155;
+    --muted: #64748b;
+    --soft: #94a3b8;
+    --border: #e2e8f0;
+    --border-2: #cbd5e1;
+    --accent: #2563eb;
+    --highlight: #fde047;
+
+    /* card backgrounds */
+    --ctx-bg: #eff6ff;
+    --ctx-border: #2563eb;
+    --warn-bg: #fffbeb;
+    --warn-border: #f59e0b;
+    --kpoint-bg: #fefce8;
+    --kpoint-border: #ca8a04;
+
+    /* before/after cells */
+    --bad-bg: #fee2e2;
+    --bad-fg: #991b1b;
+    --good-bg: #dcfce7;
+    --good-fg: #166534;
+
+    /* sizing scale */
+    --radius: 10px;
+    --radius-sm: 6px;
+    --pad: 16px;
+    --pad-sm: 12px;
+    --gap: 14px;
+    --shadow-sm: 0 1px 2px 0 rgba(15,23,42,0.05);
+    --shadow: 0 2px 8px rgba(15,23,42,0.08), 0 1px 2px rgba(15,23,42,0.04);
+    --shadow-lg: 0 8px 24px rgba(15,23,42,0.12);
+  }
+
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0; height: 100%;
+    font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo",
+                 "Helvetica Neue", "Noto Sans KR", "Pretendard", system-ui, sans-serif;
+    background: var(--bg); color: var(--ink);
+    font-size: 13px; line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  body { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+
+  /* ─── 고정 헤더 ─────────────────────────────────────────────── */
+  header {
+    background: var(--ink); color: white;
+    padding: 12px 20px;
+    display: flex; align-items: center; gap: 20px; flex-wrap: wrap;
+    flex: 0 0 auto;
+    box-shadow: var(--shadow);
+    z-index: 10;
+  }
+  header h1 {
+    margin: 0; font-size: 15px; font-weight: 700; letter-spacing: -0.01em;
+  }
+  header h1 .sub {
+    font-size: 10px; opacity: 0.65; font-weight: 400; margin-left: 6px;
+  }
+  header .stats { font-size: 11px; opacity: 0.7; }
+  header .stats b { color: #fde047; font-weight: 600; }
+
+  .forced-counter {
+    display: inline-flex; align-items: center; gap: 10px;
+    background: rgba(255,255,255,0.06);
+    padding: 6px 14px; border-radius: 999px;
+    font-size: 11px; font-weight: 500;
+  }
+  .forced-counter .dots {
+    letter-spacing: 3px; font-size: 13px; line-height: 1;
+  }
+  .forced-counter .dot { color: rgba(255,255,255,0.2); transition: color 0.3s; }
+  .forced-counter .dot.on {
+    color: var(--c-forced);
+    text-shadow: 0 0 6px rgba(220,38,38,0.6);
+  }
+  .forced-counter .count {
+    font-variant-numeric: tabular-nums; color: #fde047; font-weight: 600;
+  }
+
+  .header-btn {
+    background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.15);
+    padding: 6px 14px; border-radius: var(--radius-sm); cursor: pointer;
+    font-size: 11px; font-weight: 500;
+    transition: background 0.15s;
+  }
+  .header-btn:hover { background: rgba(255,255,255,0.18); }
+  .header-btn.active { background: var(--accent); border-color: var(--accent); }
+
+  /* ─── 메인 그리드 ─────────────────────────────────────────── */
+  main {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 540px;
+    flex: 1 1 auto; min-height: 0;
+    gap: 1px; background: var(--border);
+  }
+
+  /* ─── 트리 패널 ───────────────────────────────────────────── */
+  #tree-pane {
+    background: var(--panel);
+    position: relative;
+    overflow: hidden;
+    min-width: 0; min-height: 0;
+    display: flex; flex-direction: column;
+  }
+  .tree-breadcrumb {
+    background: white;
+    padding: 10px 18px;
+    border-bottom: 1px solid var(--border);
+    font-size: 12px; color: var(--muted);
+    display: flex; align-items: center; gap: 10px;
+    flex: 0 0 auto;
+    min-height: 42px;
+  }
+  .tree-breadcrumb .crumb-here {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--ctx-bg);
+    padding: 4px 10px; border-radius: var(--radius-sm);
+    border: 1px solid var(--ctx-border);
+    color: var(--accent); font-weight: 600;
+  }
+  .tree-breadcrumb .crumb-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--accent);
+    animation: pulse-dot 1.8s ease-in-out infinite;
+  }
+  @keyframes pulse-dot {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(1.3); }
+  }
+  .tree-breadcrumb .crumb-meta { font-size: 11px; color: var(--soft); }
+  .tree-breadcrumb .crumb-meta b { color: var(--ink-2); font-weight: 600; }
+
+  #tree-svg-wrap {
+    flex: 1 1 auto; min-height: 0;
+    position: relative;
+    overflow: hidden;
+    background:
+      radial-gradient(circle at 10% 10%, rgba(37,99,235,0.04), transparent 35%),
+      radial-gradient(circle at 90% 90%, rgba(220,38,38,0.03), transparent 30%),
+      var(--panel);
+  }
+  #tree-svg {
+    width: 100%; height: 100%; display: block;
+  }
+  #tree-svg.exploring { cursor: grab; }
+  #tree-svg.exploring.panning { cursor: grabbing; }
+
+  /* ─── 범례 (좌측 상단) ────────────────────────────────────── */
+  .legend {
+    position: absolute; top: 12px; left: 12px;
+    background: rgba(255,255,255,0.95);
+    backdrop-filter: blur(8px);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 10px 14px;
+    font-size: 11px; line-height: 1.7;
+    box-shadow: var(--shadow);
+    max-width: 220px;
+  }
+  .legend .leg-title {
+    font-weight: 700; font-size: 11px; color: var(--ink-2);
+    margin-bottom: 4px;
+  }
+  .legend .leg-row {
+    display: flex; align-items: center; gap: 7px;
+  }
+  .legend .leg-swatch {
+    width: 14px; height: 14px;
+    border: 1px solid rgba(0,0,0,0.08);
+    flex: 0 0 14px;
+  }
+  .legend .leg-swatch.circle { border-radius: 50%; }
+  .legend .leg-swatch.rect { border-radius: 3px; }
+  .legend .leg-section { margin-top: 8px; }
+  .legend .leg-edge {
+    margin-top: 6px; font-size: 10px; color: var(--muted);
+    border-top: 1px dashed var(--border); padding-top: 6px;
+  }
+
+  .tree-toolbar {
+    position: absolute; bottom: 12px; left: 50%;
+    transform: translateX(-50%);
+    display: flex; gap: 8px;
+    background: rgba(255,255,255,0.95);
+    backdrop-filter: blur(8px);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 6px 10px;
+    box-shadow: var(--shadow);
+  }
+  .tree-toolbar button {
+    background: transparent; border: 1px solid var(--border);
+    padding: 5px 12px; border-radius: 999px; cursor: pointer;
+    font-size: 11px; font-weight: 500; color: var(--ink-2);
+    transition: all 0.15s;
+  }
+  .tree-toolbar button:hover { background: var(--bg); border-color: var(--border-2); }
+  .tree-toolbar button.on {
+    background: var(--accent); color: white; border-color: var(--accent);
+  }
+
+  /* ─── 사이드 패널 ─────────────────────────────────────────── */
+  #side {
+    background: var(--panel);
+    display: flex; flex-direction: column;
+    min-height: 0;
+  }
+  .tabs {
+    display: flex;
+    border-bottom: 1px solid var(--border);
+    background: #f8fafc;
+  }
+  .tab {
+    padding: 11px 14px; cursor: pointer; user-select: none;
+    font-size: 12px; font-weight: 500; color: var(--muted);
+    flex: 1; text-align: center;
+    border-bottom: 2px solid transparent;
+    transition: color 0.15s, border-color 0.15s, background 0.15s;
+  }
+  .tab:hover { color: var(--ink-2); background: rgba(255,255,255,0.6); }
+  .tab.active {
+    color: var(--accent); background: white;
+    border-bottom-color: var(--accent);
+  }
+  .tab-body {
+    flex: 1 1 auto; overflow-y: auto;
+    padding: 20px 22px;
+    scroll-behavior: smooth;
+  }
+  .tab-body.hidden { display: none; }
+
+  h2 {
+    font-size: 17px; font-weight: 700; margin: 0 0 6px 0;
+    color: var(--ink); letter-spacing: -0.01em;
+  }
+  h2 .meta {
+    font-size: 11px; color: var(--muted); font-weight: 500;
+    margin-left: 8px;
+  }
+  h3 {
+    font-size: 13px; font-weight: 700; margin: 24px 0 10px 0;
+    color: var(--ink-2);
+    display: flex; align-items: center; gap: 6px;
+  }
+  .lead {
+    font-size: 12px; color: var(--muted); line-height: 1.6;
+    margin: 2px 0 0 0;
+  }
+
+  /* ─── 4섹션 패널 카드들 ────────────────────────────────────── */
+  .breadcrumb-side {
+    background: #f8fafc;
+    border: 1px solid var(--border);
+    padding: 8px 12px;
+    border-radius: var(--radius-sm);
+    font-size: 11px; color: var(--muted);
+    margin-bottom: 14px;
+  }
+  .breadcrumb-side b { color: var(--ink-2); }
+
+  .pill {
+    display: inline-flex; align-items: center;
+    padding: 3px 9px; border-radius: 999px;
+    font-size: 10px; font-weight: 600; color: white;
+    letter-spacing: 0.02em;
+  }
+  .pill.forced { background: var(--c-forced); }
+  .pill.optional { background: var(--c-optional); }
+  .pill.auto { background: var(--c-auto); }
+  .pill.repair { background: var(--c-repair); color: #5d3a00; }
+  .pill.quarantine { background: var(--c-quarantine); }
+  .pill.invalid { background: var(--c-invalid); }
+
+  /* 섹션 1 — 실무 맥락 카드 */
+  .persona {
+    background: linear-gradient(135deg, var(--kpoint-bg), #fffce8);
+    border-left: 3px solid var(--kpoint-border);
+    border-radius: var(--radius-sm);
+    padding: 12px 14px;
+    margin: 14px 0;
+    font-size: 12px; line-height: 1.55;
+    color: #713f12;
+  }
+  .persona .persona-title {
+    font-weight: 700; font-size: 11px; color: #854d0e;
+    margin-bottom: 4px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .persona .persona-quote { font-style: italic; }
+
+  .context-card {
+    background: var(--ctx-bg);
+    border: 1px solid #bfdbfe;
+    border-radius: var(--radius);
+    padding: 16px 18px;
+    margin: 14px 0;
+  }
+  .context-card .ctx-section {
+    margin: 12px 0;
+    font-size: 12px; line-height: 1.6;
+    color: var(--ink-2);
+  }
+  .context-card .ctx-section:first-child { margin-top: 0; }
+  .context-card .ctx-section:last-child { margin-bottom: 0; }
+  .context-card .ctx-label {
+    display: flex; align-items: center; gap: 6px;
+    font-weight: 700; font-size: 11px;
+    color: var(--accent);
+    margin-bottom: 4px;
+    text-transform: none;
+  }
+  .context-card .ctx-section.glossary { background: white; padding: 10px 12px; border-radius: var(--radius-sm); border: 1px solid #dbeafe; }
+  .context-card .ctx-section.glossary .ctx-label { color: #1d4ed8; }
+  .context-card .ctx-section.raw .ctx-label { color: #0891b2; }
+  .context-card .ctx-section.dist .ctx-label { color: #7c3aed; }
+  .context-card .ctx-section.nonmem .ctx-label { color: #059669; }
+  .context-card .ctx-section.why {
+    background: var(--warn-bg);
+    border-left: 3px solid var(--warn-border);
+    padding: 10px 12px;
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  }
+  .context-card .ctx-section.why .ctx-label { color: #b45309; }
+  .context-card code {
+    font-family: "SF Mono", Menlo, Consolas, monospace;
+    background: rgba(37,99,235,0.08);
+    padding: 1px 5px; border-radius: 3px;
+    font-size: 11px; color: var(--accent);
+  }
+
+  /* 섹션 2 — Before / After */
+  .ba-section { margin: 20px 0; }
+  .ba-arrow {
+    display: flex; align-items: center; justify-content: center; gap: 12px;
+    font-size: 12px; font-weight: 600; color: var(--ink-2);
+    margin-bottom: 10px;
+  }
+  .ba-arrow .badge {
+    padding: 5px 14px; border-radius: 999px;
+  }
+  .ba-arrow .before {
+    background: var(--bad-bg); color: var(--bad-fg);
+    border: 1px solid #fecaca;
+  }
+  .ba-arrow .after {
+    background: var(--good-bg); color: var(--good-fg);
+    border: 1px solid #bbf7d0;
+  }
+  .ba-arrow .arrow-icon {
+    font-size: 16px; color: var(--muted);
+  }
+  .ba-stage {
+    font-size: 11px; color: var(--accent); font-weight: 600;
+    margin: 6px 0;
+  }
+  .ba-tbl-wrap { margin: 10px 0; }
+  .ba-tbl-wrap .label {
+    font-size: 11px; font-weight: 700; color: var(--ink-2);
+    margin-bottom: 4px;
+  }
+  .ba-tbl {
+    width: 100%; border-collapse: collapse;
+    font-size: 11px;
+    font-family: "SF Mono", Menlo, Consolas, monospace;
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+  }
+  .ba-tbl th, .ba-tbl td {
+    border-bottom: 1px solid var(--border);
+    border-right: 1px solid var(--border);
+    padding: 6px 9px; text-align: left;
+  }
+  .ba-tbl th { background: #f8fafc; font-weight: 700; color: var(--ink-2); font-size: 10px; }
+  .ba-tbl td:last-child, .ba-tbl th:last-child { border-right: none; }
+  .ba-tbl tr:last-child td { border-bottom: none; }
+  .ba-tbl td.bad, .ba-tbl .bad { background: var(--bad-bg); color: var(--bad-fg); font-weight: 700; }
+  .ba-tbl td.good, .ba-tbl .good { background: var(--good-bg); color: var(--good-fg); font-weight: 700; }
+  .ba-note {
+    list-style: none; padding: 0; margin: 6px 0 0 0;
+    font-size: 11px; color: var(--muted); line-height: 1.55;
+  }
+  .ba-note li {
+    padding: 3px 0 3px 16px; position: relative;
+  }
+  .ba-note.bad li::before { content: "⚠"; position: absolute; left: 0; color: var(--bad-fg); }
+  .ba-note.good li::before { content: "✓"; position: absolute; left: 0; color: var(--good-fg); }
+
+  /* 섹션 3 — R 코드 */
+  .r-block {
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin: 10px 0;
+    overflow: hidden;
+    background: white;
+    box-shadow: var(--shadow-sm);
+  }
+  .r-block .r-head {
+    background: #1e293b; color: white;
+    padding: 8px 14px;
+    font-size: 11px; font-weight: 600;
+    display: flex; align-items: center; justify-content: space-between;
+    letter-spacing: 0.01em;
+  }
+  .r-block.check .r-head { background: linear-gradient(135deg, #1e40af, #1e3a8a); }
+  .r-block.pass .r-head { background: linear-gradient(135deg, #166534, #14532d); }
+  .r-block.fail .r-head { background: linear-gradient(135deg, #991b1b, #7f1d1d); }
+  .r-block .r-head .copy-btn {
+    background: rgba(255,255,255,0.15); color: white;
+    border: none;
+    padding: 3px 10px; border-radius: 4px; cursor: pointer;
+    font-size: 10px; font-weight: 500;
+    transition: background 0.15s;
+  }
+  .r-block .r-head .copy-btn:hover { background: rgba(255,255,255,0.28); }
+  .r-block .r-head .copy-btn.copied { background: rgba(34,197,94,0.6); }
+  .r-block pre {
+    margin: 0; padding: 12px 14px;
+    font-size: 11px; line-height: 1.65;
+    background: #fafafa;
+    overflow-x: auto;
+    color: #1e293b;
+  }
+  .r-block pre code {
+    font-family: "SF Mono", Menlo, Consolas, monospace;
+  }
+  .r-block .kpoint {
+    background: var(--kpoint-bg);
+    border-top: 1px solid #fef08a;
+    padding: 10px 14px;
+    font-size: 11px; line-height: 1.55; color: #713f12;
+  }
+  .r-block .kpoint b { color: #854d0e; }
+
+  .tips {
+    background: white;
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--kpoint-border);
+    border-radius: var(--radius-sm);
+    padding: 12px 14px;
+    margin: 12px 0;
+    font-size: 11px; line-height: 1.7;
+  }
+  .tips .tips-title {
+    font-weight: 700; color: #854d0e; margin-bottom: 6px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .tips ul { margin: 0; padding-left: 18px; }
+  .tips li { margin: 3px 0; color: var(--ink-2); }
+
+  /* 섹션 4 — 분기 네비게이션 */
+  .branch-nav {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+    margin: 14px 0 4px 0;
+  }
+  .branch-btn {
+    background: white;
+    border: 1.5px solid var(--border);
+    padding: 12px 14px;
+    border-radius: var(--radius);
+    cursor: pointer;
+    font-size: 11px;
+    text-align: left;
+    line-height: 1.5;
+    display: flex; flex-direction: column; gap: 4px;
+    font-family: inherit;
+    transition: all 0.15s;
+    color: var(--ink-2);
+  }
+  .branch-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow);
+    border-color: var(--accent);
+  }
+  .branch-btn .branch-label {
+    font-weight: 700; font-size: 12px;
+  }
+  .branch-btn.yes .branch-label { color: var(--c-auto); }
+  .branch-btn.no .branch-label { color: var(--c-quarantine); }
+  .branch-btn .branch-target {
+    color: var(--muted); font-size: 11px;
+  }
+  .branch-btn .branch-target b { color: var(--ink-2); font-weight: 600; }
+
+  /* Leaf 패널 */
+  .leaf-card {
+    padding: 16px 18px; border-radius: var(--radius); color: white;
+    margin: 14px 0;
+    box-shadow: var(--shadow);
+  }
+  .leaf-card.auto { background: linear-gradient(135deg, var(--c-auto), #15803d); }
+  .leaf-card.repair { background: linear-gradient(135deg, var(--c-repair), #d97706); color: #422006; }
+  .leaf-card.quarantine { background: linear-gradient(135deg, var(--c-quarantine), #7f1d1d); }
+  .leaf-card.invalid { background: linear-gradient(135deg, var(--c-invalid), #475569); }
+  .leaf-card .leaf-title { font-size: 16px; font-weight: 700; }
+  .leaf-card .leaf-sub { font-size: 11px; opacity: 0.95; margin-top: 4px; }
+
+  /* ─── Quick Ref 슬라이드 ──────────────────────────────────── */
+  .qref-overlay {
+    position: fixed; inset: 0;
+    background: rgba(15,23,42,0.5);
+    backdrop-filter: blur(2px);
+    z-index: 50; display: none;
+  }
+  .qref-overlay.open { display: block; }
+  .qref-panel {
+    position: fixed; top: 0; right: -540px; width: 500px; height: 100vh;
+    background: white; box-shadow: var(--shadow-lg);
+    z-index: 51; transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow-y: auto;
+    padding: 22px 26px 40px 26px;
+  }
+  .qref-panel.open { right: 0; }
+  .qref-panel .qref-head {
+    display: flex; justify-content: space-between; align-items: center;
+    border-bottom: 2px solid var(--border); padding-bottom: 12px;
+    margin-bottom: 18px;
+    position: sticky; top: 0; background: white;
+  }
+  .qref-panel h2 { font-size: 16px; margin: 0; }
+  .qref-panel .qref-close {
+    background: transparent; border: none;
+    font-size: 24px; line-height: 1; cursor: pointer;
+    color: var(--muted); padding: 0 8px;
+    transition: color 0.15s;
+  }
+  .qref-panel .qref-close:hover { color: var(--ink); }
+  .qref-panel h3 {
+    background: #f1f5f9;
+    padding: 8px 12px;
+    border-radius: var(--radius-sm);
+    margin: 22px 0 8px 0;
+    font-size: 12px;
+  }
+  .qref-tbl {
+    width: 100%; border-collapse: collapse;
+    font-size: 11px; margin: 6px 0;
+    border-radius: var(--radius-sm); overflow: hidden;
+    border: 1px solid var(--border);
+  }
+  .qref-tbl th, .qref-tbl td {
+    border-bottom: 1px solid var(--border);
+    border-right: 1px solid var(--border);
+    padding: 6px 10px; text-align: left;
+    vertical-align: top;
+  }
+  .qref-tbl th { background: #f8fafc; font-weight: 700; font-size: 10px; color: var(--ink-2); }
+  .qref-tbl td:last-child, .qref-tbl th:last-child { border-right: none; }
+  .qref-tbl tr:last-child td { border-bottom: none; }
+  .qref-tbl code {
+    font-family: "SF Mono", Menlo, Consolas, monospace;
+    background: #eff6ff; color: var(--accent);
+    padding: 1px 5px; border-radius: 3px; font-size: 10px;
+  }
+
+  /* ─── Overview / Universe placeholder ────────────────────── */
+  .kv { display: grid; grid-template-columns: 140px 1fr; gap: 8px 14px; font-size: 12px; line-height: 1.55; }
+  .kv .k { color: var(--muted); font-weight: 500; }
+  .kv .v { color: var(--ink-2); word-break: break-word; }
+  .code {
+    font-family: "SF Mono", Menlo, Consolas, monospace;
+    background: #f8fafc; color: var(--ink-2);
+    padding: 10px 14px; border-radius: var(--radius-sm);
+    font-size: 11px; line-height: 1.65;
+    white-space: pre-wrap; word-break: break-all;
+    border: 1px solid var(--border);
+  }
+  .help-note {
+    font-size: 11px; padding: 12px 14px;
+    background: var(--warn-bg);
+    border-left: 3px solid var(--warn-border);
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    color: #713f12; line-height: 1.6;
+    margin: 10px 0;
+  }
+
+  /* ─── SVG 노드/간선 스타일 ───────────────────────────────── */
+  .node-group { cursor: pointer; }
+  .node-circle {
+    stroke-width: 2.5;
+    transition: stroke-width 0.15s;
+  }
+  .node-circle.forced { fill: var(--c-forced); stroke: #fca5a5; }
+  .node-circle.optional { fill: var(--c-optional); stroke: #93c5fd; }
+  .node-group:hover .node-circle { stroke: var(--highlight); stroke-width: 5; }
+  .node-circle.selected {
+    stroke: var(--highlight);
+    stroke-width: 7;
+    filter: drop-shadow(0 0 6px var(--highlight));
+  }
+
+  .node-rect {
+    stroke-width: 1.2; stroke: #334155;
+    rx: 5; ry: 5;
+    transition: stroke-width 0.15s;
+  }
+  .node-rect.auto { fill: var(--c-auto); }
+  .node-rect.repair { fill: var(--c-repair); }
+  .node-rect.quarantine { fill: var(--c-quarantine); }
+  .node-rect.invalid { fill: var(--c-invalid); }
+  .node-group:hover .node-rect { stroke: var(--highlight); stroke-width: 3; }
+  .node-rect.selected {
+    stroke: var(--highlight);
+    stroke-width: 5;
+    filter: drop-shadow(0 0 6px var(--highlight));
+  }
+
+  .node-label {
+    font-family: "SF Mono", Menlo, Consolas, monospace;
+    font-weight: 700;
+    fill: white;
+    text-anchor: middle;
+    dominant-baseline: central;
+    pointer-events: none;
+    user-select: none;
+  }
+  .node-label.dark { fill: #422006; }
+
+  .edge-yes {
+    stroke: var(--c-auto); stroke-width: 1.8; fill: none;
+    opacity: 0.75;
+  }
+  .edge-no {
+    stroke: var(--c-quarantine); stroke-width: 1.8; fill: none;
+    stroke-dasharray: 6 4;
+    opacity: 0.65;
+  }
+  .edge-label {
+    font-size: 9px; font-weight: 600;
+    pointer-events: none; user-select: none;
+  }
+  .edge-label.yes { fill: var(--c-auto); }
+  .edge-label.no { fill: var(--c-quarantine); }
+
+  /* 펄스 강조 — 현재 선택 노드 */
+  @keyframes pulse-glow {
+    0%, 100% { filter: drop-shadow(0 0 4px var(--highlight)); }
+    50% { filter: drop-shadow(0 0 12px var(--highlight)); }
+  }
+  .node-circle.selected, .node-rect.selected {
+    animation: pulse-glow 1.6s ease-in-out infinite;
+  }
+
+  /* 부트 오버레이 */
+  #boot-status {
+    position: absolute; inset: 0;
+    background: rgba(255,255,255,0.96);
+    display: none;
+    padding: 32px;
+    z-index: 20;
+    color: var(--ink);
+  }
+
+  /* 트레이스 / 오버뷰 미니멀 스타일 (universe 없이) */
+  .trace-step {
+    border-left: 3px solid var(--c-optional);
+    padding: 9px 12px; margin: 6px 0;
+    background: #f8fafc;
+    font-size: 11px;
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  }
+  .trace-step.forced { border-left-color: var(--c-forced); }
+  .trace-step.yes { background: #f0fdf4; }
+  .trace-step.no { background: #fef2f2; }
+  .trace-step .head { font-weight: 600; font-size: 12px; }
+  .trace-step .rule {
+    color: var(--muted); font-family: "SF Mono", Menlo, monospace;
+    font-size: 10px; margin-top: 5px;
+    padding: 4px 8px; background: rgba(255,255,255,0.7);
+    border-radius: 3px;
+  }
+  .verdict { padding: 10px 12px; border-radius: var(--radius-sm); margin-top: 8px; font-size: 12px; }
+  .verdict.match { background: var(--good-bg); color: var(--good-fg); }
+  .verdict.mismatch { background: var(--bad-bg); color: var(--bad-fg); }
+
+  label.field {
+    display: block; font-size: 11px; font-weight: 600; color: var(--ink-2);
+    margin-top: 10px; margin-bottom: 4px;
+  }
+  select, input[type=text] {
+    width: 100%; padding: 7px 10px;
+    border: 1px solid var(--border); border-radius: var(--radius-sm);
+    font-size: 12px; background: white; font-family: inherit;
+  }
+  button.primary {
+    background: var(--accent); color: white; border: none;
+    padding: 8px 16px; border-radius: var(--radius-sm); cursor: pointer;
+    font-size: 12px; font-weight: 600; margin-top: 12px;
+    transition: background 0.15s;
+  }
+  button.primary:hover { background: #1d4ed8; }
+  button.secondary {
+    background: white; color: var(--ink-2); border: 1px solid var(--border);
+    padding: 8px 16px; border-radius: var(--radius-sm); cursor: pointer;
+    font-size: 12px; font-weight: 500; margin-top: 12px;
+  }
+
+  /* 반응형: 좁은 화면 */
+  @media (max-width: 1100px) {
+    main { grid-template-columns: minmax(0, 1fr) 460px; }
+  }
+  @media (max-width: 900px) {
+    main { grid-template-columns: 1fr; grid-template-rows: 1fr auto; }
+    #tree-pane { min-height: 50vh; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>PMX Wrangling Tree v3 <span class="sub">학습용 단일 파일 대시보드</span></h1>
+  <div class="stats" id="header-stats">로딩 중…</div>
+  <div class="forced-counter" title="필수 게이트(N0~N5, N8) 7개 중 클릭하여 학습한 개수. 브라우저에 저장됨.">
+    <span>필수 게이트:</span>
+    <span class="dots" id="forced-dots"></span>
+    <span class="count" id="forced-count">0/7</span>
+  </div>
+  <button class="header-btn" onclick="QuickRef.open()">Quick Ref 📋</button>
+</header>
+
+<main>
+  <div id="tree-pane">
+    <div class="tree-breadcrumb" id="tree-breadcrumb">
+      <span class="crumb-dot"></span>
+      <span class="crumb-here" id="crumb-here">노드를 클릭하면 학습 시작됨</span>
+      <span class="crumb-meta" id="crumb-meta"></span>
+    </div>
+
+    <div id="tree-svg-wrap">
+      <svg id="tree-svg" preserveAspectRatio="xMidYMid meet"></svg>
+      <div id="boot-status"></div>
+
+      <div class="legend">
+        <div class="leg-title">⭐ 19개 최소 분기 노드</div>
+        <div class="leg-row"><span class="leg-swatch circle" style="background:var(--c-forced)"></span><b>필수 7개</b> <span style="color:var(--muted);font-size:10px">(N0·N1·N2·N3·N4·N5·N8)</span></div>
+        <div class="leg-row"><span class="leg-swatch circle" style="background:var(--c-optional)"></span><b>선택 12개</b></div>
+        <div class="leg-section leg-title">▢ 51개 최종 결과</div>
+        <div class="leg-row"><span class="leg-swatch rect" style="background:var(--c-auto)"></span>자동 처리 (AUTO)</div>
+        <div class="leg-row"><span class="leg-swatch rect" style="background:var(--c-repair)"></span>정책 수리 (REPAIR)</div>
+        <div class="leg-row"><span class="leg-swatch rect" style="background:var(--c-quarantine)"></span>격리 (QUARANTINE)</div>
+        <div class="leg-row"><span class="leg-swatch rect" style="background:var(--c-invalid)"></span>유효 불가 (INVALID)</div>
+        <div class="leg-edge">→ <b style="color:var(--c-auto)">녹색 실선</b>=예 · <b style="color:var(--c-quarantine)">빨강 점선</b>=아니오</div>
+      </div>
+
+      <div class="tree-toolbar">
+        <button id="btn-fit" onclick="SvgTree.fit()" title="화면에 맞춤">⊡ 화면 맞춤</button>
+        <button id="btn-explore" onclick="SvgTree.toggleExplore()" title="자유 탐색 (드래그·휠 줌)">🔍 자유 탐색</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="side">
+    <div class="tabs">
+      <div class="tab active" data-tab="detail">노드 상세</div>
+      <div class="tab" data-tab="trace">경로 추적</div>
+      <div class="tab" data-tab="overview">개요</div>
+    </div>
+
+    <div class="tab-body" id="tab-detail">
+      <div id="node-info"></div>
+    </div>
+
+    <div class="tab-body hidden" id="tab-trace">
+      <h2>경로 추적 <span class="meta">— 시나리오 → 결과</span></h2>
+      <p class="lead">11개 축(axis) 상태를 골라서 어떤 결과로 도달하는지 단계별로 추적함.</p>
+      <div id="custom-axis-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:8px"></div>
+      <button class="primary" id="trace-run">▶ 추적 실행</button>
+      <button class="secondary" id="trace-clear">초기화</button>
+      <div id="trace-result"></div>
+    </div>
+
+    <div class="tab-body hidden" id="tab-overview">
+      <h2>개요 <span class="meta">— Overview</span></h2>
+      <div id="overview-info"></div>
+    </div>
+  </div>
+</main>
+
+<!-- Quick Reference 슬라이드 -->
+<div class="qref-overlay" id="qref-overlay" onclick="QuickRef.close()"></div>
+<aside class="qref-panel" id="qref-panel" aria-hidden="true">
+  <div class="qref-head">
+    <h2>📋 Quick Reference</h2>
+    <button class="qref-close" onclick="QuickRef.close()" aria-label="닫기">×</button>
+  </div>
+  <div id="qref-content"></div>
+</aside>
+
+<!-- INLINE_DATA_START -->
+<!-- (build step injects window.__INLINE_DATA__ here) -->
+<!-- INLINE_DATA_END -->
+
+<script>
+// ════════════════════════════════════════════════════════════════════
+// PMX Wrangling Tree v3 — JS
+//   - 단일 파일 (file:// 동작), 외부 의존성 0
+//   - 트리 항상 viewport에 fit, pan/zoom은 명시적 토글
+//   - 음슴체, v3_context_card / v3_r_code_kpoint 우선 표시
+//   - 현재 위치 = 트리 펄스 + breadcrumb 동시 표시
+// ════════════════════════════════════════════════════════════════════
+
+const DETECTION_RULES = {
+  N0: (s) => s.A0_state !== "AIC-MISSING" && (
+    ["AIC-PKPD","AIC-ER","AIC-TTE","AIC-BIOMARKER","AIC-CELL_THERAPY","AIC-IMMUNOGEN","AIC-LACTATION"].includes(s.A0_state)
+      ? !!s.endpoint_data_type : true),
+  N1: (s) => ["ID-DEFINED","ID-DUPLICATE-RESOLVABLE","ID-DYAD-LINKABLE"].includes(s.A1_state),
+  N2: (s) => ["TIME-DEFINED","TIME-ACTUAL-VS-NOMINAL-RESOLVABLE","TIME-INTERVAL-RESOLVABLE","TIME-ELAPSED-RESOLVABLE"].includes(s.A2_state),
+  N3: (s) => !["DOSE-UNRECOVERABLE","DOSE-AMBIGUOUS"].includes(s.A3_state)
+          && !["MISSING-NO-POLICY","UNRECOVERABLE"].includes(s.A4_state),
+  N4: (s) => !["ABSENT","BIOANALYTICAL-FINAL-FLAG-MISSING","BLQ-NO-POLICY","LLOQ-MISSING","CELLULAR-LLOQ-POLICY-MISSING","IMMUNOGEN-POSITIVITY-MISSING"].includes(s.A5_state)
+          && s.A8_state !== "CMT-POLICY-MISSING",
+  N5: (s) => !["BLQ-NO-POLICY","LLOQ-MISSING","CELLULAR-LLOQ-POLICY-MISSING"].includes(s.A5_state),
+  N8: (s) => s.q_code !== "Q15A",
+  N11: (s) => ["MATERNAL_INFANT_PK","MILK_PK"].includes(s.endpoint_data_type),
+  N13: (s) => /canonicalize_blq|canonicalize_cellular_blq/.test(s.action_sequence || ""),
+  N14: (s) => /reconstruct_dose|expand_addl_ii|resolve_addl_actual_conflict/.test(s.action_sequence || ""),
+  N17: (s) => /derive_time_postpartum_anchor|derive_time_elapsed/.test(s.action_sequence || ""),
+  N19: (s) => /attach_covariate_|attach_dyad_linkage/.test(s.action_sequence || ""),
+  N20: (s) => s.A5_state === "BIOANALYTICAL-FINAL-FLAG-MISSING",
+  N21: (s) => ["MULTI-CMT-DEFINED","DDI-VICTIM-PERPETRATOR","METABOLITE-DEFINED"].includes(s.A8_state),
+  N22: (s) => s.A8_state === "DDI-VICTIM-PERPETRATOR",
+  N24: (s) => s.A4_state === "ADDL-ACTUAL-CONFLICT",
+  N25: (s) => ["ADC","BISPECIFIC","CELL_THERAPY","GENE_THERAPY"].includes(s.modality_class),
+  N27: (s) => s.A5_state === "CELLULAR-BLQ-DEFINED",
+  N29: (s) => /adjudicate_immunogenicity_positivity/.test(s.action_sequence || ""),
+};
+
+let TREE, NODES_META, AXIS_DICT, Q_CODES, SUMMARY, LBL, R_LIB;
+const NODE_LOOKUP = {}, LEAF_LOOKUP = {};
+let SELECTED_ID = null;
+
+// ─── 라벨 헬퍼 (음슴체 유지 — 외부 데이터는 그대로 보여줌) ─────────
+const termCls = (t) => (t||"").toLowerCase();
+const lblTerminalShort = (c) => LBL?.terminal_state?.[c]?.label || c || "—";
+const lblTerminal = (c) => { const e = LBL?.terminal_state?.[c]; return e ? `${e.label} (${c})` : c||"—"; };
+const lblQ = (c) => { const e = LBL?.q_code?.[c]; return e ? `${e.label} (${c})` : c||"—"; };
+const lblModality = (c) => { const e = LBL?.modality_class?.[c]; return e ? `${e.label} (${c})` : c||"—"; };
+const lblEndpoint = (c) => { const e = LBL?.endpoint_data_type?.[c]; return e ? `${e.label} (${c})` : c||"—"; };
+const lblAnalyteRole = (c) => { const e = LBL?.analyte_role?.[c]; return e ? `${e.label} (${c})` : c||"—"; };
+const lblFamily = (c) => { const e = LBL?.family?.[c]; return e ? `${e.label} (${c})` : c||"—"; };
+const lblAxisState = (aid, sc) => { const e = LBL?.axis_state?.[aid]?.states?.[sc]; return e ? `${e.label} (${sc})` : sc||"—"; };
+const descAxisState = (aid, sc) => LBL?.axis_state?.[aid]?.states?.[sc]?.desc || "";
+const lblAction = (fn) => LBL?.action_function?.[fn]?.label || fn||"";
+const lblNodeQuestion = (nid) => LBL?.node_question_ko?.[nid] || null;
+
+// ─── Boot ────────────────────────────────────────────────────────────
+function setBootStatus(msg, isErr=false) {
+  const el = document.getElementById("boot-status");
+  if (!el) return;
+  el.style.display = "block";
+  el.style.color = isErr ? "#991b1b" : "var(--ink)";
+  el.innerHTML = `<div style="font-size:14px;font-weight:600;margin-bottom:6px">${isErr ? '❌ 로딩 실패' : '⏳ 로딩 중…'}</div>
+                  <div style="font-size:12px;line-height:1.6">${msg}</div>`;
+}
+function clearBootStatus() {
+  const el = document.getElementById("boot-status");
+  if (el) el.style.display = "none";
+}
+
+async function load() {
+  try {
+    setBootStatus("초기화 중…");
+    if (window.__INLINE_DATA__) {
+      const D = window.__INLINE_DATA__;
+      TREE = D.tree; NODES_META = D.nodes; AXIS_DICT = D.axis_dictionary;
+      Q_CODES = D.q_codes; SUMMARY = D.summary; LBL = D.labels_ko; R_LIB = D.r_code_library;
+    } else {
+      // file:// 동작 보장 위해 inline data가 기본이지만, dev 편의로 fetch fallback도 제공
+      const fj = (p) => fetch(p).then(r => { if (!r.ok) throw new Error(`${p} ${r.status}`); return r.json(); });
+      [TREE, NODES_META, AXIS_DICT, Q_CODES, SUMMARY, LBL, R_LIB] = await Promise.all([
+        fj("./data/tree.json"), fj("./data/nodes.json"), fj("./data/axis_dictionary.json"),
+        fj("./data/q_codes.json"), fj("./data/summary.json"),
+        fj("./data/labels_ko.json"), fj("./data/r_code_library.json"),
+      ]);
+    }
+    if (!TREE?.internal_nodes) throw new Error("tree 데이터가 비어 있음");
+
+    TREE.internal_nodes.forEach(n => NODE_LOOKUP[n.id] = n);
+    TREE.leaves.forEach(l => LEAF_LOOKUP[l.id] = l);
+
+    renderHeader();
+    SvgTree.render();
+    clearBootStatus();
+    ForcedCounter.render();
+    initTabs();
+    initTraceUI();
+    renderOverview();
+    renderInitialPanel();
+    QuickRef.build();
+    console.log("[v3] 모든 렌더링 완료");
+  } catch (err) {
+    console.error("[v3] FATAL", err);
+    setBootStatus(`데이터 로딩 실패 — ${err.message}<br/><br/>
+      이 파일은 단일 파일이라 데이터가 인라인되어 있어야 함. 만약 fetch 모드라면
+      <code>python3 -m http.server</code>로 띄워서 접속해야 함.<br/><br/>
+      <pre style="font-size:10px;background:#f1f5f9;padding:8px;border-radius:4px;overflow:auto;max-height:240px">${(err.stack||"").replace(/</g,"&lt;")}</pre>`, true);
+  }
+}
+
+function renderHeader() {
+  const s = SUMMARY;
+  document.getElementById("header-stats").innerHTML =
+    `<span>v<b>${s.version}</b></span> · <span>내부노드 <b>${s.internal_node_count}</b> · 잎 <b>${s.leaf_count}</b></span> · <span>커버 시나리오 <b>${s.scenario_count.toLocaleString()}</b></span>`;
+}
+
+// ════════════════════════════════════════════════════════════════════
+// SvgTree — viewBox 기반 fit, pan/zoom 명시적 토글
+// ════════════════════════════════════════════════════════════════════
+const SvgTree = (() => {
+  const NODE_R = 28;
+  const LEAF_W = 70, LEAF_H = 30;
+  const V_GAP = 100;
+  const SLOT = 50;   // leaf 폭(70) - 약간 압축, 실제 슬롯
+  const PADDING = 40;
+
+  let positions = {};
+  let bounds = { w: 0, h: 0 };
+  let viewport = { panX: 0, panY: 0, scale: 1, exploring: false };
+
+  const isLeaf = (id) => id?.startsWith("leaf_");
+
+  function layout() {
+    positions = {};
+    const root = TREE.root;
+    // depth via BFS
+    const depthOf = {};
+    const q = [[root, 0]];
+    while (q.length) {
+      const [id, d] = q.shift();
+      if (depthOf[id] !== undefined) continue;
+      depthOf[id] = d;
+      if (!isLeaf(id)) {
+        const n = NODE_LOOKUP[id];
+        if (n.yes_branch) q.push([n.yes_branch, d+1]);
+        if (n.no_branch) q.push([n.no_branch, d+1]);
+      }
+    }
+    // subtree width (= leaf count)
+    const widthOf = {};
+    const calcW = (id) => {
+      if (widthOf[id] !== undefined) return widthOf[id];
+      if (isLeaf(id)) return widthOf[id] = 1;
+      const n = NODE_LOOKUP[id];
+      const w = (n.yes_branch ? calcW(n.yes_branch) : 0) + (n.no_branch ? calcW(n.no_branch) : 0);
+      return widthOf[id] = Math.max(w, 1);
+    };
+    calcW(root);
+    // place
+    const place = (id, leftX, depth) => {
+      const w = widthOf[id] * SLOT;
+      const cx = leftX + w/2;
+      positions[id] = { x: cx, y: PADDING + depth * V_GAP, depth };
+      if (!isLeaf(id)) {
+        const n = NODE_LOOKUP[id];
+        let cursor = leftX;
+        if (n.yes_branch) {
+          place(n.yes_branch, cursor, depth+1);
+          cursor += widthOf[n.yes_branch] * SLOT;
+        }
+        if (n.no_branch) {
+          place(n.no_branch, cursor, depth+1);
+        }
+      }
+    };
+    place(root, PADDING, 0);
+
+    const xs = Object.values(positions).map(p => p.x);
+    const ys = Object.values(positions).map(p => p.y);
+    bounds = {
+      w: Math.max(...xs) + LEAF_W/2 + PADDING,
+      h: Math.max(...ys) + LEAF_H/2 + PADDING,
+    };
+  }
+
+  const elbow = (x1, y1, x2, y2) => {
+    const mid = (y1 + y2) / 2;
+    return `M ${x1} ${y1} L ${x1} ${mid} L ${x2} ${mid} L ${x2} ${y2}`;
+  };
+
+  function render() {
+    layout();
+    const svg = document.getElementById("tree-svg");
+    svg.setAttribute("viewBox", `0 0 ${bounds.w} ${bounds.h}`);
+    const ns = "http://www.w3.org/2000/svg";
+    svg.innerHTML = "";
+
+    const gRoot = document.createElementNS(ns, "g");
+    gRoot.setAttribute("id", "tree-root-g");
+    svg.appendChild(gRoot);
+
+    const gEdges = document.createElementNS(ns, "g");
+    const gNodes = document.createElementNS(ns, "g");
+    gRoot.appendChild(gEdges);
+    gRoot.appendChild(gNodes);
+
+    // edges
+    TREE.internal_nodes.forEach(n => {
+      const from = positions[n.id]; if (!from) return;
+      const fromY = from.y + NODE_R;
+      ["yes_branch", "no_branch"].forEach(b => {
+        const cid = n[b]; if (!cid || !positions[cid]) return;
+        const to = positions[cid];
+        const toY = to.y - (isLeaf(cid) ? LEAF_H/2 : NODE_R);
+        const p = document.createElementNS(ns, "path");
+        p.setAttribute("d", elbow(from.x, fromY, to.x, toY));
+        p.setAttribute("class", b === "yes_branch" ? "edge-yes" : "edge-no");
+        gEdges.appendChild(p);
+
+        const lbl = document.createElementNS(ns, "text");
+        lbl.setAttribute("x", (from.x + to.x)/2);
+        lbl.setAttribute("y", (fromY + toY)/2 - 4);
+        lbl.setAttribute("text-anchor", "middle");
+        lbl.setAttribute("class", "edge-label " + (b === "yes_branch" ? "yes" : "no"));
+        lbl.textContent = b === "yes_branch" ? "예" : "아니오";
+        gEdges.appendChild(lbl);
+      });
+    });
+
+    // nodes
+    Object.keys(positions).forEach(id => {
+      const p = positions[id];
+      const g = document.createElementNS(ns, "g");
+      g.setAttribute("data-id", id);
+      g.setAttribute("class", "node-group");
+
+      if (isLeaf(id)) {
+        const l = LEAF_LOOKUP[id];
+        const cls = (l.terminal_state || "INVALID").toLowerCase();
+        const labelText =
+          l.terminal_state === "AUTO" ? "자동" :
+          l.terminal_state === "REPAIR" ? "수리" :
+          l.terminal_state === "INVALID" ? "유효불가" :
+          (l.q_code || "격리");
+        const labelCls = (l.terminal_state === "REPAIR") ? "node-label dark" : "node-label";
+        const rect = document.createElementNS(ns, "rect");
+        rect.setAttribute("x", p.x - LEAF_W/2);
+        rect.setAttribute("y", p.y - LEAF_H/2);
+        rect.setAttribute("width", LEAF_W);
+        rect.setAttribute("height", LEAF_H);
+        rect.setAttribute("class", `node-rect ${cls}`);
+        rect.setAttribute("data-id", id);
+        g.appendChild(rect);
+
+        const t = document.createElementNS(ns, "text");
+        t.setAttribute("x", p.x); t.setAttribute("y", p.y);
+        t.setAttribute("class", labelCls);
+        t.setAttribute("font-size", "12");
+        t.textContent = labelText;
+        g.appendChild(t);
+      } else {
+        const n = NODE_LOOKUP[id];
+        const isForced = TREE.forced_nodes.includes(n.node_id);
+        const c = document.createElementNS(ns, "circle");
+        c.setAttribute("cx", p.x); c.setAttribute("cy", p.y);
+        c.setAttribute("r", NODE_R);
+        c.setAttribute("class", `node-circle ${isForced ? "forced" : "optional"}`);
+        c.setAttribute("data-id", id);
+        g.appendChild(c);
+
+        const t = document.createElementNS(ns, "text");
+        t.setAttribute("x", p.x); t.setAttribute("y", p.y);
+        t.setAttribute("class", "node-label");
+        t.setAttribute("font-size", "13");
+        t.textContent = n.node_id;
+        g.appendChild(t);
+      }
+
+      // 툴팁
+      const title = document.createElementNS(ns, "title");
+      if (isLeaf(id)) {
+        const l = LEAF_LOOKUP[id];
+        title.textContent = `${lblTerminalShort(l.terminal_state)}${l.q_code ? " · " + lblQ(l.q_code) : ""}`;
+      } else {
+        const n = NODE_LOOKUP[id];
+        const ko = lblNodeQuestion(n.node_id);
+        title.textContent = `${n.node_id}${ko ? " — " + ko.title : ""}`;
+      }
+      g.appendChild(title);
+
+      g.addEventListener("click", () => selectNode(id));
+      gNodes.appendChild(g);
+    });
+
+    fit();
+    bindInteractions(svg, gRoot);
+  }
+
+  function setTransform() {
+    const g = document.getElementById("tree-root-g");
+    if (g) g.setAttribute("transform", `translate(${viewport.panX},${viewport.panY}) scale(${viewport.scale})`);
+  }
+
+  function fit() {
+    // 기본 fit: viewBox = bounds 그대로 두고 transform identity
+    viewport.panX = 0; viewport.panY = 0; viewport.scale = 1;
+    setTransform();
+  }
+
+  function toggleExplore() {
+    viewport.exploring = !viewport.exploring;
+    const svg = document.getElementById("tree-svg");
+    const btn = document.getElementById("btn-explore");
+    svg.classList.toggle("exploring", viewport.exploring);
+    btn.classList.toggle("on", viewport.exploring);
+    if (!viewport.exploring) fit();
+  }
+
+  function bindInteractions(svg, gRoot) {
+    let dragging = false, sx = 0, sy = 0, spx = 0, spy = 0;
+    svg.addEventListener("mousedown", (e) => {
+      if (!viewport.exploring) return;
+      const isNode = e.target.closest("g[data-id]") &&
+                     (e.target.tagName === "circle" || e.target.tagName === "rect");
+      if (isNode) return;
+      dragging = true;
+      sx = e.clientX; sy = e.clientY;
+      spx = viewport.panX; spy = viewport.panY;
+      svg.classList.add("panning");
+    });
+    window.addEventListener("mousemove", (e) => {
+      if (!dragging) return;
+      viewport.panX = spx + (e.clientX - sx);
+      viewport.panY = spy + (e.clientY - sy);
+      setTransform();
+    });
+    window.addEventListener("mouseup", () => {
+      dragging = false;
+      svg.classList.remove("panning");
+    });
+    svg.addEventListener("wheel", (e) => {
+      if (!viewport.exploring) return;
+      e.preventDefault();
+      const rect = svg.getBoundingClientRect();
+      const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+      const oldScale = viewport.scale;
+      const factor = e.deltaY < 0 ? 1.12 : 1/1.12;
+      const newScale = Math.max(0.4, Math.min(4, oldScale * factor));
+      viewport.panX = mx - (mx - viewport.panX) * (newScale / oldScale);
+      viewport.panY = my - (my - viewport.panY) * (newScale / oldScale);
+      viewport.scale = newScale;
+      setTransform();
+    }, { passive: false });
+
+    window.addEventListener("resize", () => { /* viewBox 기반이라 별도 처리 불필요 */ });
+  }
+
+  function selectNode(id) {
+    SELECTED_ID = id;
+    document.querySelectorAll("#tree-svg .selected").forEach(el => el.classList.remove("selected"));
+    const target = document.querySelector(`#tree-svg [data-id="${id}"]`);
+    if (target) {
+      const inner = (target.tagName === "rect" || target.tagName === "circle")
+        ? target : target.querySelector("rect, circle");
+      if (inner) inner.classList.add("selected");
+    }
+    if (id.startsWith("tree_")) {
+      const n = NODE_LOOKUP[id];
+      if (n && TREE.forced_nodes.includes(n.node_id)) ForcedCounter.mark(n.node_id);
+      showInternalNodeDetail(id);
+      updateBreadcrumb(id, n);
+    } else if (id.startsWith("leaf_")) {
+      showLeafDetail(id);
+      updateBreadcrumb(id, null);
+    }
+    activateTab("detail");
+  }
+
+  function selectByIds(ids) {
+    document.querySelectorAll("#tree-svg .selected").forEach(el => el.classList.remove("selected"));
+    ids.forEach(id => {
+      const target = document.querySelector(`#tree-svg [data-id="${id}"]`);
+      if (target) {
+        const inner = (target.tagName === "rect" || target.tagName === "circle")
+          ? target : target.querySelector("rect, circle");
+        if (inner) inner.classList.add("selected");
+      }
+    });
+  }
+
+  return { render, fit, toggleExplore, selectNode, selectByIds };
+})();
+
+function updateBreadcrumb(id, node) {
+  const here = document.getElementById("crumb-here");
+  const meta = document.getElementById("crumb-meta");
+  if (id.startsWith("tree_") && node) {
+    const ko = lblNodeQuestion(node.node_id);
+    const isForced = TREE.forced_nodes.includes(node.node_id);
+    here.innerHTML = `현재: <b>${node.node_id}</b> · ${ko ? ko.title : node.node_id}`;
+    meta.innerHTML = `<b>${isForced ? "필수 게이트" : "선택 분기"}</b> · 트리 인스턴스 ${id}`;
+  } else if (id.startsWith("leaf_")) {
+    const l = LEAF_LOOKUP[id];
+    here.innerHTML = `현재: <b>${lblTerminalShort(l.terminal_state)}</b> 결과${l.q_code ? " · " + l.q_code : ""}`;
+    meta.innerHTML = `${l.action_sequence?.length || 0}개 변환 단계 · ${l.member_class_count}개 DC 클래스`;
+  } else {
+    here.textContent = "노드를 클릭하면 학습 시작됨";
+    meta.textContent = "";
+  }
+}
+
+// ════════════════════════════════════════════════════════════════════
+// ForcedCounter
+// ════════════════════════════════════════════════════════════════════
+const ForcedCounter = (() => {
+  const KEY = "pmx_v3_learned_forced";
+  const get = () => { try { return new Set(JSON.parse(localStorage.getItem(KEY) || "[]")); } catch { return new Set(); } };
+  const save = (s) => localStorage.setItem(KEY, JSON.stringify([...s]));
+  function render() {
+    const learned = get();
+    document.getElementById("forced-dots").innerHTML =
+      TREE.forced_nodes.map(n => `<span class="dot ${learned.has(n) ? "on" : ""}" title="${n}">●</span>`).join("");
+    document.getElementById("forced-count").textContent = `${learned.size}/7`;
+  }
+  function mark(nid) {
+    if (!TREE.forced_nodes.includes(nid)) return;
+    const s = get();
+    if (!s.has(nid)) { s.add(nid); save(s); render(); }
+  }
+  return { render, mark };
+})();
+
+// ════════════════════════════════════════════════════════════════════
+// 노드 상세 패널
+// ════════════════════════════════════════════════════════════════════
+const escapeHtml = (s) => (s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+
+function showInternalNodeDetail(treeId) {
+  const n = NODE_LOOKUP[treeId];
+  const meta = NODES_META.find(m => m.node_id === n.node_id);
+  const isForced = TREE.forced_nodes.includes(n.node_id);
+  const ko = lblNodeQuestion(n.node_id);
+  const rNode = R_LIB?.candidate_nodes?.[n.node_id];
+
+  const el = document.getElementById("node-info");
+  el.innerHTML = `
+    <div class="breadcrumb-side">트리 위치: <b>${treeId}</b> · 노드 타입: <b>${n.node_id}</b> · ${isForced ? '<span class="pill forced">필수 (FORCED)</span>' : '<span class="pill optional">선택 (OPTIONAL)</span>'}</div>
+    <h2>${ko ? ko.title : n.node_id} <span class="meta">${n.node_id}${meta ? " · " + meta.depends_on_axis : ""}</span></h2>
+    <p class="lead">${ko ? ko.question : n.question}</p>
+
+    ${renderPersona(rNode)}
+    ${renderContextCard(rNode)}
+    ${renderBeforeAfter(rNode)}
+    ${renderRCodeSection(n.node_id, rNode)}
+    ${renderBranchNav(n)}
+  `;
+}
+
+function renderPersona(rNode) {
+  const persona = rNode?.v3_persona_intro || rNode?.persona_intro;
+  if (!persona) return "";
+  return `<div class="persona">
+    <div class="persona-title">💬 미래의 내가 알려주는 베스트 코딩 방법</div>
+    <div class="persona-quote">"${persona}"</div>
+  </div>`;
+}
+
+function renderContextCard(rNode) {
+  if (!rNode) return "";
+  const c3 = rNode.v3_context_card;
+  if (c3) {
+    return `<div class="context-card">
+      ${c3.glossary ? `<div class="ctx-section glossary"><div class="ctx-label">📚 용어 풀이</div>${c3.glossary}</div>` : ""}
+      <div class="ctx-section"><div class="ctx-label">📍 지금 보고 있는 상황은?</div>${c3.situation}</div>
+      ${c3.raw_data_shape ? `<div class="ctx-section raw"><div class="ctx-label">📥 raw 데이터에서 보통 어떤 모양으로 옴?</div>${c3.raw_data_shape}</div>` : ""}
+      ${c3.practical_distribution ? `<div class="ctx-section dist"><div class="ctx-label">📊 실무 분포 — 얼마나 자주 마주침?</div>${c3.practical_distribution}</div>` : ""}
+      ${c3.nonmem_condition ? `<div class="ctx-section nonmem"><div class="ctx-label">✅ 이렇게 처리되면 NONMEM 잘 돌아감</div>${c3.nonmem_condition}</div>` : ""}
+      <div class="ctx-section why"><div class="ctx-label">⚠️ 이 판단이 중요한 이유</div>${c3.why_important}</div>
+    </div>`;
+  }
+  // legacy fallback
+  const c2 = rNode.context_card;
+  if (c2) {
+    return `<div class="context-card">
+      <div class="ctx-section"><div class="ctx-label">📍 지금 보고 있는 상황</div>${c2.situation}</div>
+      <div class="ctx-section why"><div class="ctx-label">⚠️ 이 판단이 중요한 이유</div>${c2.why_important}</div>
+    </div>`;
+  }
+  if (rNode.summary_ko) {
+    return `<div class="context-card"><div class="ctx-section"><div class="ctx-label">📍 지금 보고 있는 상황</div>${rNode.summary_ko}</div></div>`;
+  }
+  return "";
+}
+
+function renderBeforeAfter(rNode) {
+  if (!rNode) return "";
+  const dsb = rNode.data_state_before || {};
+  const dsa = rNode.data_state_after || {};
+
+  if (dsb.before_table_html || dsa.after_table_html) {
+    return `<div class="ba-section">
+      <h3>📊 데이터 모양 — Before / After</h3>
+      ${dsb.stage ? `<div class="ba-stage">📍 단계: ${dsb.stage}</div>` : ""}
+      <div class="ba-arrow">
+        <span class="badge before">📊 변환 전</span>
+        <span class="arrow-icon">→</span>
+        <span class="badge after">📊 변환 후</span>
+      </div>
+      ${dsb.before_table_html ? `<div class="ba-tbl-wrap"><div class="label">변환 전</div>${dsb.before_table_html}</div>` : ""}
+      ${(dsb.problem_cells||[]).length ? `<ul class="ba-note bad">${dsb.problem_cells.map(p => `<li>${p}</li>`).join("")}</ul>` : ""}
+      ${dsa.after_table_html ? `<div class="ba-tbl-wrap"><div class="label">변환 후</div>${dsa.after_table_html}</div>` : ""}
+      ${(dsa.changed_cells||[]).length ? `<ul class="ba-note good">${dsa.changed_cells.map(p => `<li>${p}</li>`).join("")}</ul>` : ""}
+    </div>`;
+  }
+  if (rNode.sample_transform_before || rNode.sample_transform_after) {
+    return `<div class="ba-section">
+      <h3>📊 데이터 모양 — Before / After</h3>
+      ${dsb.stage ? `<div class="ba-stage">📍 단계: ${dsb.stage}</div>` : ""}
+      <div class="ba-arrow">
+        <span class="badge before">📊 변환 전</span>
+        <span class="arrow-icon">→</span>
+        <span class="badge after">📊 변환 후</span>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:6px">
+        <div><div class="label" style="font-size:11px;font-weight:700;margin-bottom:4px;color:var(--ink-2)">변환 전</div><pre class="code" style="font-size:10px">${escapeHtml(rNode.sample_transform_before||"(없음)")}</pre></div>
+        <div><div class="label" style="font-size:11px;font-weight:700;margin-bottom:4px;color:var(--ink-2)">변환 후</div><pre class="code" style="font-size:10px">${escapeHtml(rNode.sample_transform_after||"(없음)")}</pre></div>
+      </div>
+    </div>`;
+  }
+  if (rNode.sample_input_table) {
+    return `<div class="ba-section">
+      <h3>📊 입력 데이터 모양</h3>
+      <pre class="code">${escapeHtml(rNode.sample_input_table)}</pre>
+    </div>`;
+  }
+  return "";
+}
+
+function renderRCodeSection(nodeId, rNode) {
+  if (!rNode) {
+    return `<div class="help-note">노드 <code>${nodeId}</code>의 R 학습 자료가 아직 라이브러리에 없음.</div>`;
+  }
+  const codeCheck = rNode.r_code_check_v2 || rNode.r_code_check;
+  const codePass = rNode.r_code_pass || rNode.r_code_yes_example;
+  const codeFail = rNode.r_code_fail;
+  const kpoints = rNode.v3_r_code_kpoint || {};
+
+  const blocks = [];
+  if (codeCheck) blocks.push(rBlock("check", "① R 판정 코드 — Y/N 분기 검사", codeCheck, kpoints.check_kpoint));
+  if (codePass) blocks.push(rBlock("pass", `② R 변환 코드 — YES면 처리${rNode.next_node_on_pass ? " → " + rNode.next_node_on_pass : ""}`, codePass, kpoints.pass_kpoint));
+  if (codeFail) blocks.push(rBlock("fail", "③ R 처리 코드 — NO면 격리", codeFail, kpoints.fail_kpoint));
+
+  const tips = rNode.v3_best_practice_tips || rNode.best_practice_tips || rNode.key_concepts;
+  const tipsBlock = tips ? `<div class="tips">
+    <div class="tips-title">💡 좋은 습관 정착 팁</div>
+    <ul>${tips.map(t => `<li>${t}</li>`).join("")}</ul>
+  </div>` : "";
+
+  return `<h3>💻 R 코드 학습</h3>${blocks.join("")}${tipsBlock}`;
+}
+
+function rBlock(kind, title, code, kpoint) {
+  const codeId = "code-" + Math.random().toString(36).slice(2, 9);
+  return `<div class="r-block ${kind}">
+    <div class="r-head">
+      <span>${title}</span>
+      <button class="copy-btn" onclick="copyCode('${codeId}', this)">📋 복사</button>
+    </div>
+    <pre><code id="${codeId}">${escapeHtml(code)}</code></pre>
+    ${kpoint ? `<div class="kpoint">${kpoint}</div>` : ""}
+  </div>`;
+}
+
+window.copyCode = (id, btn) => {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const text = el.textContent;
+  const done = () => {
+    btn.textContent = "✓ 복사됨";
+    btn.classList.add("copied");
+    setTimeout(() => { btn.textContent = "📋 복사"; btn.classList.remove("copied"); }, 1500);
+  };
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(text).then(done);
+  } else {
+    // file:// fallback
+    const ta = document.createElement("textarea");
+    ta.value = text; document.body.appendChild(ta);
+    ta.select(); document.execCommand("copy"); document.body.removeChild(ta);
+    done();
+  }
+};
+
+function renderBranchNav(n) {
+  return `<h3>🔀 다음 분기</h3>
+  <div class="branch-nav">
+    <button class="branch-btn yes" onclick="SvgTree.selectNode('${n.yes_branch}')">
+      <span class="branch-label">✅ YES — 통과하면</span>
+      <span class="branch-target">${describeBranch(n.yes_branch)}</span>
+    </button>
+    <button class="branch-btn no" onclick="SvgTree.selectNode('${n.no_branch}')">
+      <span class="branch-label">❌ NO — 실패하면</span>
+      <span class="branch-target">${describeBranch(n.no_branch)}</span>
+    </button>
+  </div>`;
+}
+
+function describeBranch(id) {
+  if (!id) return "<b>(없음)</b>";
+  if (id.startsWith("tree_")) {
+    const n = NODE_LOOKUP[id]; if (!n) return `<b>${id}</b>`;
+    const ko = lblNodeQuestion(n.node_id);
+    return `<b>${n.node_id}</b> ${ko ? "— " + ko.title : ""}`;
+  }
+  if (id.startsWith("leaf_")) {
+    const l = LEAF_LOOKUP[id]; if (!l) return `<b>${id}</b>`;
+    return `<b>${lblTerminalShort(l.terminal_state)}</b>${l.q_code ? " / " + lblQ(l.q_code) : ""}`;
+  }
+  return `<b>${id}</b>`;
+}
+
+function showLeafDetail(id) {
+  const l = LEAF_LOOKUP[id];
+  const cls = termCls(l.terminal_state);
+  const seq = Array.isArray(l.action_sequence) ? l.action_sequence : [];
+  document.getElementById("node-info").innerHTML = `
+    <div class="breadcrumb-side">트리 위치: <b>${l.id}</b> · 최종 결과 leaf</div>
+    <h2>최종 결과 — ${lblTerminalShort(l.terminal_state)} <span class="meta">${l.terminal_state}${l.q_code ? "/"+l.q_code : ""}</span></h2>
+    <div class="leaf-card ${cls}">
+      <div class="leaf-title">▼ ${lblTerminalShort(l.terminal_state)}</div>
+      ${l.q_code ? `<div class="leaf-sub">격리 사유: ${LBL?.q_code?.[l.q_code]?.label || ""} (${l.q_code})</div>` : ""}
+      <div class="leaf-sub">변환 단계 ${seq.length}개 / 속한 DC 클래스 ${l.member_class_count}개</div>
+    </div>
+    <h3>이 결과까지의 변환 단계</h3>
+    <ol style="font-size:11px;line-height:1.7;margin-left:18px;padding:0;color:var(--ink-2)">
+      ${seq.map(a => `<li>${lblAction(a)} <span style="font-family:monospace;color:var(--soft);font-size:10px">${a}</span></li>`).join("")}
+    </ol>
+    ${(l.terminal_state === "AUTO" || l.terminal_state === "REPAIR") ? renderEndToEnd() : ""}
+  `;
+}
+
+function renderEndToEnd() {
+  const ex = R_LIB?.end_to_end_example;
+  if (!ex) return "";
+  return `<h3>▶ End-to-end R 파이프라인</h3>
+    <p class="lead"><b>${ex.title}</b> — ${ex.description}</p>
+    ${rBlock("pass", "Stage 0 → NONMEM-ready 전체 파이프라인", ex.r_pipeline)}`;
+}
+
+function renderInitialPanel() {
+  const stages = R_LIB?.pipeline_overview?.stages || [];
+  document.getElementById("node-info").innerHTML = `
+    <h2>📘 학습 시작</h2>
+    <p class="lead">좌측 트리에서 노드를 클릭하면 그 단계의 <b>실무 맥락 → 데이터 모양 → R 코드 → 다음 분기</b> 순서로 학습 자료가 펼쳐짐. 트리는 화면에 고정되어 있고, 자유 탐색 모드 켜야만 드래그·줌 가능함.</p>
+
+    <div class="persona">
+      <div class="persona-title">🎯 첫 클릭 추천</div>
+      <div class="persona-quote">"맨 위 빨간 원 <b>tree_N0</b>(AIC 검증)부터 시작하고, YES 화살표 따라 N1 → N2 → N3 → N4 → N5 → N8 순서로 7개 필수 게이트 학습. 다 클릭하면 상단 카운터가 ●●●●●●● 7/7로 채워짐."</div>
+    </div>
+
+    <h3>전체 학습 파이프라인 (Stage 0 → NONMEM-ready)</h3>
+    <ol style="font-size:11px;line-height:1.75;margin-left:18px;padding:0;color:var(--ink-2)">
+      ${stages.map(s => `<li>${s}</li>`).join("")}
+    </ol>
+
+    <h3>이 대시보드 활용법</h3>
+    <ul style="font-size:11px;line-height:1.75;margin-left:18px;padding:0;color:var(--ink-2)">
+      <li><b>노드 클릭</b> → 4섹션 학습 패널 (맥락 / 데이터 / R 코드 / 분기)</li>
+      <li><b>경로 추적</b> 탭 → 11개 축 상태 골라서 어떤 결과 도달하는지 추적</li>
+      <li><b>Quick Ref 📋</b> → NONMEM 컬럼 · terminal · Q-code 정리표</li>
+      <li><b>자유 탐색 🔍</b> → 켜면 드래그·휠로 트리 자유 이동 (기본은 OFF)</li>
+    </ul>
+  `;
+}
+
+// ════════════════════════════════════════════════════════════════════
+// 경로 추적 (universe 없이 custom 모드만)
+// ════════════════════════════════════════════════════════════════════
+function traverse(scenario) {
+  let cur = TREE.root;
+  const path = [];
+  while (cur && cur.startsWith("tree_")) {
+    const node = NODE_LOOKUP[cur];
+    const rule = DETECTION_RULES[node.node_id];
+    const decision = rule ? !!rule(scenario) : false;
+    path.push({
+      tree_id: node.id, node_id: node.node_id,
+      question: node.question, detection_rule: node.detection_rule,
+      decision, forced: TREE.forced_nodes.includes(node.node_id),
+    });
+    cur = decision ? node.yes_branch : node.no_branch;
+    if (!cur) break;
+  }
+  const leaf = cur && cur.startsWith("leaf_") ? LEAF_LOOKUP[cur] : null;
+  return { path, leaf };
+}
+
+function initTraceUI() {
+  const grid = document.getElementById("custom-axis-grid");
+  AXIS_DICT.axes.forEach(ax => {
+    const states = (ax.states || []).map(s => s.state_code);
+    const axisKO = LBL?.axis_state?.[ax.axis_id];
+    const div = document.createElement("div");
+    div.innerHTML = `<label class="field">${axisKO?.name || ax.axis_id} <span style="color:var(--soft);font-weight:400">(${ax.axis_id})</span></label>
+      <select data-axis="${ax.axis_id}_state">
+        ${states.map(s => `<option value="${s}">${lblAxisState(ax.axis_id, s)}</option>`).join("")}
+      </select>`;
+    grid.appendChild(div);
+  });
+  const aux = [
+    { key: "modality_class", values: ["SMALL_MOLECULE","PEPTIDE","MAB","ADC","BISPECIFIC","CELL_THERAPY","GENE_THERAPY","MRNA","VACCINE","OLIGO_ASO_SIRNA","RADIOPHARMACEUTICAL","OTHER_CUSTOM"], labeler: lblModality, ko: "약물 형태" },
+    { key: "endpoint_data_type", values: ["","PK_CONCENTRATION","EXPOSURE_METRIC","CONTINUOUS_PD","CATEGORICAL_PD","COUNT_PD","TTE_EVENT","CELLULAR_KINETICS","IMMUNOGENICITY","MILK_PK","MATERNAL_INFANT_PK"], labeler: lblEndpoint, ko: "엔드포인트" },
+    { key: "analyte_role", values: ["","PARENT","ACTIVE_METABOLITE","PAYLOAD","TOTAL_ANTIBODY","NAKED_AB","CONJUGATED_AB","VECTOR","TRANSGENE_PRODUCT","VICTIM","PERPETRATOR"], labeler: lblAnalyteRole, ko: "분석물질 역할" },
+  ];
+  aux.forEach(a => {
+    const div = document.createElement("div");
+    div.innerHTML = `<label class="field">${a.ko} <span style="color:var(--soft);font-weight:400">(${a.key})</span></label>
+      <select data-axis="${a.key}">
+        ${a.values.map(v => `<option value="${v}">${v ? a.labeler(v) : "(없음)"}</option>`).join("")}
+      </select>`;
+    grid.appendChild(div);
+  });
+  document.getElementById("trace-run").addEventListener("click", () => {
+    const s = {};
+    document.querySelectorAll("#custom-axis-grid select").forEach(sel => { s[sel.dataset.axis] = sel.value; });
+    s.action_sequence = "";
+    const r = traverse(s);
+    renderTrace(s, r);
+  });
+  document.getElementById("trace-clear").addEventListener("click", () => {
+    document.getElementById("trace-result").innerHTML = "";
+    document.querySelectorAll("#tree-svg .selected").forEach(el => el.classList.remove("selected"));
+  });
+}
+
+function renderTrace(scenario, result) {
+  const { path, leaf } = result;
+  const out = document.getElementById("trace-result");
+  const steps = path.map((p, idx) => {
+    const ko = lblNodeQuestion(p.node_id);
+    return `<div class="trace-step ${p.decision ? "yes" : "no"} ${p.forced ? "forced" : ""}">
+      <div class="head">${idx+1}. <b>${p.node_id}</b> ${ko ? "— " + ko.title : ""}
+        <span class="pill ${p.forced ? "forced" : "optional"}">${p.forced ? "필수" : "선택"}</span>
+        → <b style="color:${p.decision ? "var(--c-auto)" : "var(--c-quarantine)"}">${p.decision ? "예" : "아니오"}</b>
+      </div>
+      <div>${ko ? ko.question : p.question}</div>
+      <div class="rule">${p.detection_rule}</div>
+    </div>`;
+  }).join("");
+  const leafHtml = leaf ? `<div class="leaf-card ${termCls(leaf.terminal_state)}">
+    <div class="leaf-title">▼ 도달: ${lblTerminalShort(leaf.terminal_state)}${leaf.q_code ? " · " + (LBL?.q_code?.[leaf.q_code]?.label || leaf.q_code) : ""}</div>
+    <div class="leaf-sub">코드: ${leaf.terminal_state}${leaf.q_code ? "/" + leaf.q_code : ""}</div>
+  </div>` : `<div class="leaf-card invalid">잎에 도달 못함</div>`;
+  out.innerHTML = `<h3>결정 경로 <span class="meta">(${path.length}단계)</span></h3>${steps}${leafHtml}`;
+  const ids = path.map(p => p.tree_id);
+  if (leaf) ids.push(leaf.id);
+  SvgTree.selectByIds(ids);
+}
+
+function renderOverview() {
+  document.getElementById("overview-info").innerHTML = `
+    <p class="lead">PMX v5.1 의사결정 트리 학습용 단일 파일 대시보드임. 데이터·로직은 이미 검증됨, 본 v3는 디자인·서술·배포 방식을 다듬은 버전임.</p>
+
+    <h3>필수 게이트 7개 — 순서 고정</h3>
+    <div class="code">${TREE.node_order.slice(0,7).map(n => {
+      const ko = lblNodeQuestion(n);
+      return `${n} ${ko ? "— " + ko.title : ""}`;
+    }).join("\n")}</div>
+
+    <h3>선택 게이트 12개 — ILP 선택</h3>
+    <div class="code">${TREE.node_order.slice(7).map(n => {
+      const ko = lblNodeQuestion(n);
+      return `${n} ${ko ? "— " + ko.title : ""}`;
+    }).join("\n")}</div>
+
+    <h3>트리 규모</h3>
+    <div class="kv">
+      <div class="k">내부 노드</div><div class="v">${SUMMARY.internal_node_count}개 인스턴스 / 19개 distinct</div>
+      <div class="k">잎 (최종 결과)</div><div class="v">${SUMMARY.leaf_count}개</div>
+      <div class="k">커버리지</div><div class="v">${SUMMARY.scenario_count.toLocaleString()} 시나리오 → ${SUMMARY.dc_class_count} DC 클래스</div>
+    </div>
+
+    <h3>버전</h3>
+    <p class="lead">v${SUMMARY.version} · 생성 ${SUMMARY.generated_at_utc?.slice(0,10) || "—"}</p>
+  `;
+}
+
+// ════════════════════════════════════════════════════════════════════
+// Tabs
+// ════════════════════════════════════════════════════════════════════
+function initTabs() {
+  document.querySelectorAll(".tab").forEach(t => {
+    t.addEventListener("click", () => activateTab(t.dataset.tab));
+  });
+}
+function activateTab(name) {
+  document.querySelectorAll(".tab").forEach(t => t.classList.toggle("active", t.dataset.tab === name));
+  ["detail","trace","overview"].forEach(n => {
+    document.getElementById(`tab-${n}`).classList.toggle("hidden", n !== name);
+  });
+}
+
+// ════════════════════════════════════════════════════════════════════
+// Quick Reference
+// ════════════════════════════════════════════════════════════════════
+const QuickRef = (() => {
+  const NONMEM_COLS = [
+    ["ID",   "환자 정수 ID (1, 2, 3, …)",         "개체 구분 불가"],
+    ["TIME", "투약 후 경과 시간 (hour)",            "시간 축 없음"],
+    ["AMT",  "투여량 (투여=값, 관측=0)",            "용량-반응 관계 없음"],
+    ["DV",   "농도 관측값 (관측=값, 투여=0)",       "모델링 불가"],
+    ["EVID", "이벤트 종류 (0=관측, 1=투여, …)",    "투약/관측 구분 불가"],
+    ["CMT",  "구획 번호 (1=흡수, 2=중심, …)",      "다구획 모델 불가"],
+    ["MDV",  "Missing DV 플래그 (BLQ/투약행=1)",  "BLQ 처리 오류"],
+  ];
+  const TERM = [
+    ["AUTO",       "녹색",  "정책 충족, 자동 처리 가능",     "R 코드 바로 실행"],
+    ["REPAIR",     "주황",  "AIC 정책 선언 후 수리 가능",    "분석자에게 정책 확인"],
+    ["QUARANTINE", "진빨강","처리 보류, 사유 기록",          "Q-code 확인 후 의뢰자 문의"],
+    ["INVALID",    "회색",  "처리 불가",                    "데이터 재수령 필요"],
+  ];
+  function build() {
+    const qcodes = Object.entries(LBL?.q_code || {})
+      .filter(([code, _]) => code !== "Q17");  // v4.2 기각 코드 제외
+    document.getElementById("qref-content").innerHTML = `
+      <h3>① NONMEM 필수 컬럼</h3>
+      <table class="qref-tbl">
+        <thead><tr><th>컬럼</th><th>의미</th><th>없으면?</th></tr></thead>
+        <tbody>${NONMEM_COLS.map(r => `<tr><td><code>${r[0]}</code></td><td>${r[1]}</td><td>${r[2]}</td></tr>`).join("")}</tbody>
+      </table>
+
+      <h3>② terminal_state 4종</h3>
+      <table class="qref-tbl">
+        <thead><tr><th>상태</th><th>색</th><th>의미</th><th>다음 행동</th></tr></thead>
+        <tbody>${TERM.map(r => `<tr><td><b>${r[0]}</b></td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td></tr>`).join("")}</tbody>
+      </table>
+
+      <h3>③ Q-code 목록 (Q01–Q19, Q17 제외)</h3>
+      <table class="qref-tbl">
+        <thead><tr><th>코드</th><th>라벨</th><th>설명</th></tr></thead>
+        <tbody>${qcodes.map(([c, e]) => `<tr><td><code>${c}</code></td><td><b>${e.label}</b></td><td>${e.desc}</td></tr>`).join("")}</tbody>
+      </table>
+
+      <h3>④ tidyverse 패키지</h3>
+      <table class="qref-tbl">
+        <thead><tr><th>패키지</th><th>용도</th></tr></thead>
+        <tbody>${(R_LIB?.packages_needed || []).map(p => `<tr><td><code>${p.name}</code></td><td>${p.use}</td></tr>`).join("")}</tbody>
+      </table>
+    `;
+  }
+  function open() {
+    document.getElementById("qref-overlay").classList.add("open");
+    document.getElementById("qref-panel").classList.add("open");
+    document.getElementById("qref-panel").setAttribute("aria-hidden","false");
+  }
+  function close() {
+    document.getElementById("qref-overlay").classList.remove("open");
+    document.getElementById("qref-panel").classList.remove("open");
+    document.getElementById("qref-panel").setAttribute("aria-hidden","true");
+  }
+  window.addEventListener("keydown", (e) => { if (e.key === "Escape") close(); });
+  return { build, open, close };
+})();
+
+load();
+</script>
+</body>
+</html>
