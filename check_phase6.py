@@ -34,11 +34,11 @@ nd = BASE / "config/candidate_node_dictionary_v5_1.csv"
 if nd.is_file():
     with nd.open("r", encoding="utf-8", newline="") as f:
         rows = list(csv.DictReader(f))
-    print(f"\n[Nodes: {len(rows)} expected 9]")
-    if len(rows) == 9:
-        print("  [OK] 9 nodes")
+    print(f"\n[Nodes: {len(rows)} expected 9 or 30 per PATCH P92]")
+    if len(rows) in (9, 30):
+        print(f"  [OK] {len(rows)} nodes")
     else:
-        failures.append(f"nodes {len(rows)}/9")
+        failures.append(f"nodes {len(rows)}/9 or 30")
     forced = [r for r in rows if r["forced_inclusion"] == "TRUE"]
     forced_ids = sorted([r["node_id"] for r in forced])
     expected = ["N0","N1","N2","N3","N4","N5","N8"]

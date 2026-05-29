@@ -1,0 +1,2 @@
+checkpoint_id,lp_a_decision,lp_a_confidence,lp_b_simulated,lp_b_fatal_issues,lp_c_final_decision,escalation_target,recorded_at,backfilled
+CP1,APPROVE,HIGH,TRUE,0,APPROVE,none,2026-05-22T13:40:00+00:00,TRUE

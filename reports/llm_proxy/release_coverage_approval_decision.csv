@@ -1,0 +1,2 @@
+checkpoint_id,lp_a_decision,lp_a_confidence,lp_b_simulated,lp_b_fatal_issues,lp_c_final_decision,escalation_target,recorded_at,coverage_claim_locked
+CP7,APPROVE,HIGH,TRUE,0,APPROVE_FOR_H5,H5,2026-05-22T13:30:00+00:00,TRUE
